@@ -1,0 +1,16 @@
+|-- .gitignore
+|-- eslint.config.js
+|-- index.html
+|-- package-lock.json
+|-- package.json
+|-- postcss.config.js
+|-- public
+|-- src
+    |-- App.css
+    |-- App.jsx
+    |-- api
+        |-- axios.js
+    |-- index.css
+    |-- main.jsx
+|-- tailwind.config.js
+|-- vite.config.js
