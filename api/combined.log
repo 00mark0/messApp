@@ -1,0 +1,9 @@
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-10-30T17:30:10.143Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-10-30T17:30:48.123Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-10-30T17:30:51.238Z"}
+{"level":"warn","message":"Invalid credentials: user not found or not an admin","service":"user-service","timestamp":"2024-10-30T17:37:41.382Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-10-30T17:39:58.681Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-10-30T17:42:42.916Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-10-30T17:47:46.432Z"}
+{"level":"warn","message":"Invalid credentials: user not found or not an admin","service":"user-service","timestamp":"2024-10-30T17:51:25.093Z"}
+{"level":"info","message":"Admin logged in successfully: 00marko.r@gmail.com","service":"user-service","timestamp":"2024-10-30T17:51:40.369Z"}

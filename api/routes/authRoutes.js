@@ -2,8 +2,7 @@
 
 import express from "express";
 import { body } from "express-validator";
-import { register, login } from "../controllers/authController.js";
-import adminMiddleware from "../middleware/admin.js";
+import { register, login, adminLogin } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -51,8 +50,7 @@ router.post(
       return true;
     }),
   ],
-  login,
-  adminMiddleware // Apply admin middleware after login
+  adminLogin
 );
 
 export default router;

@@ -18,10 +18,11 @@
 |-- api
     |-- .env
     |-- .gitignore
+    |-- combined.log
     |-- controllers
         |-- authController.js
+    |-- error.log
     |-- middleware
-        |-- admin.js
         |-- auth.js
         |-- errorHandler.js
     |-- package-lock.json
@@ -38,6 +39,8 @@
         |-- authRoutes.js
         |-- userRoutes.js
     |-- server.js
+    |-- utils
+        |-- logger.js
 |-- client
     |-- .gitignore
     |-- eslint.config.js
