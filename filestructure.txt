@@ -21,6 +21,8 @@
     |-- combined.log
     |-- controllers
         |-- authController.js
+        |-- contactController.js
+        |-- messageController.js
     |-- error.log
     |-- middleware
         |-- auth.js
@@ -37,6 +39,8 @@
         |-- schema.prisma
     |-- routes
         |-- authRoutes.js
+        |-- contactRoutes.js
+        |-- messageRoutes.js
         |-- userRoutes.js
     |-- server.js
     |-- utils
