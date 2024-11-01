@@ -86,6 +86,20 @@ export const sendMessage = async (req, res) => {
       },
     });
 
+    // Fetch sender's username
+    const sender = await prisma.user.findUnique({
+      where: { id: senderId },
+      select: { username: true },
+    });
+
+    // Create a notification for the recipient
+    await prisma.notification.create({
+      data: {
+        userId: recipientId,
+        content: `${sender.username} sent you a message: "${content}"`,
+      },
+    });
+
     res.status(201).json({ message });
   } catch (error) {
     console.error("Error in sendMessage:", error);
