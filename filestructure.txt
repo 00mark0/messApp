@@ -22,7 +22,9 @@
     |-- controllers
         |-- authController.js
         |-- contactController.js
+        |-- contactRequestController.js
         |-- messageController.js
+        |-- notificationController.js
     |-- error.log
     |-- middleware
         |-- auth.js
@@ -35,12 +37,16 @@
                 |-- migration.sql
             |-- 20241030160627_add_password_field
                 |-- migration.sql
+            |-- 20241101174616_add_contact_request_model
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
         |-- authRoutes.js
+        |-- contactRequestRoutes.js
         |-- contactRoutes.js
         |-- messageRoutes.js
+        |-- notificationRoutes.js
         |-- userRoutes.js
     |-- server.js
     |-- utils

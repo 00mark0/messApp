@@ -23,24 +23,45 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ message: "Recipient not found" });
     }
 
+    // **Check if recipient is in sender's contact list**
+    const isContact = await prisma.contact.findFirst({
+      where: {
+        userId: senderId,
+        contactUserId: recipientId,
+      },
+    });
+
+    if (!isContact) {
+      return res.status(403).json({
+        message:
+          "Recipient is not in your contacts. Please add them as a contact first.",
+      });
+    }
+
     // Check if a conversation already exists between the two users
     let conversation = await prisma.conversation.findFirst({
       where: {
         participants: {
-          every: {
-            userId: {
-              in: [senderId, recipientId],
-            },
+          some: {
+            userId: senderId,
           },
-        },
-        participants: {
-          every: {},
         },
       },
       include: {
         participants: true,
       },
     });
+
+    // Filter conversations to find one with exactly two participants
+    if (conversation) {
+      const participantIds = conversation.participants.map((p) => p.userId);
+      if (
+        !participantIds.includes(recipientId) ||
+        participantIds.length !== 2
+      ) {
+        conversation = null;
+      }
+    }
 
     if (!conversation) {
       // Create a new conversation between sender and recipient
@@ -67,6 +88,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json({ message });
   } catch (error) {
+    console.error("Error in sendMessage:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

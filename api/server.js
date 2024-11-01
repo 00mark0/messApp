@@ -6,6 +6,8 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import contactRequestRoutes from "./routes/contactRequestRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +24,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/contacts", contactRoutes);
+app.use("/api/contact-requests", contactRequestRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use(errorHandler);
 
