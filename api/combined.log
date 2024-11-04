@@ -40,3 +40,5 @@
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-04T08:18:36.577Z"}
 {"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-04T08:18:50.935Z"}
 {"level":"info","message":"User logged in successfully: user4@example.com","service":"user-service","timestamp":"2024-11-04T08:19:03.990Z"}
+{"level":"info","message":"User registered successfully: sokedraw75@gmail.com","service":"user-service","timestamp":"2024-11-04T09:01:40.606Z"}
+{"level":"info","message":"User logged in successfully: sokedraw75@gmail.com","service":"user-service","timestamp":"2024-11-04T09:06:57.283Z"}

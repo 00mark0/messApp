@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
 import rateLimit from "express-rate-limit";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -21,6 +22,9 @@ app.use(
   })
 );
 
+// Serve static files from the "uploads" directory
+app.use("/uploads", express.static("uploads"));
+
 // Rate limiting middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -28,6 +32,10 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
+
+// Serve static files from the client
+const __dirname = path.resolve();
+app.use(express.static(path.join(__dirname, "../client/dist")));
 
 // Routes
 app.use("/api/auth", authRoutes);
