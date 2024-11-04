@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { validationResult, body } from "express-validator";
+import { validationResult, body, query } from "express-validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -153,6 +153,56 @@ export const uploadProfilePicture = [
       res.json({ message: "Profile picture updated successfully", user });
     } catch (error) {
       console.error("Error in uploadProfilePicture:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  },
+];
+
+export const deleteAccount = async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    // Delete the user account
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error in deleteAccount:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const searchUsers = [
+  query("q").trim().isLength({ min: 1 }).escape(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { q } = req.query;
+
+    try {
+      const users = await prisma.user.findMany({
+        where: {
+          OR: [
+            { username: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          profilePicture: true,
+        },
+      });
+
+      res.json({ users });
+    } catch (error) {
+      console.error("Error in searchUsers:", error);
       res.status(500).json({ message: "Server error" });
     }
   },

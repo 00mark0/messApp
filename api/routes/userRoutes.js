@@ -5,6 +5,8 @@ import {
   requestPasswordReset,
   resetPassword,
   uploadProfilePicture,
+  deleteAccount,
+  searchUsers,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -14,8 +16,10 @@ router.get("/profile", authMiddleware, async (req, res) => {
 });
 
 router.put("/profile", authMiddleware, updateProfile);
-router.post("/request-password-reset", authMiddleware, requestPasswordReset); // Ensure authMiddleware is applied here
+router.post("/request-password-reset", authMiddleware, requestPasswordReset);
 router.post("/reset-password", resetPassword);
 router.post("/upload-profile-picture", authMiddleware, uploadProfilePicture);
+router.delete("/delete-account", authMiddleware, deleteAccount);
+router.get("/search", authMiddleware, searchUsers);
 
 export default router;
