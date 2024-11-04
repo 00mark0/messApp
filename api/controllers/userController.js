@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -31,7 +33,24 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPEG, PNG and GIF are allowed."));
+    }
+  },
+});
+
+// Define __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const updateProfile = [
   // Validate and sanitize inputs
@@ -47,19 +66,20 @@ export const updateProfile = [
     const { username, email } = req.body;
 
     try {
-      // Check if username or email is already taken
+      // Check if username is already taken
       if (username) {
         const existingUser = await prisma.user.findUnique({
           where: { username },
         });
-        if (existingUser) {
+        if (existingUser && existingUser.id !== userId) {
           return res.status(400).json({ message: "Username is already taken" });
         }
       }
 
+      // Check if email is already taken
       if (email) {
         const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
+        if (existingUser && existingUser.id !== userId) {
           return res.status(400).json({ message: "Email is already taken" });
         }
       }
@@ -67,7 +87,10 @@ export const updateProfile = [
       // Update user profile
       const user = await prisma.user.update({
         where: { id: userId },
-        data: { username, email },
+        data: {
+          ...(username && { username }),
+          ...(email && { email }),
+        },
       });
 
       res.json({ message: "Profile updated successfully", user });
@@ -145,6 +168,38 @@ export const uploadProfilePicture = [
     const profilePicture = `/uploads/${req.file.filename}`;
 
     try {
+      // Fetch the current user to get the existing profile picture
+      const currentUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { profilePicture: true },
+      });
+
+      // Log the current user's profile picture
+      console.log(
+        "Current user's profile picture:",
+        currentUser.profilePicture
+      );
+
+      // Delete the previous profile picture if it exists
+      if (currentUser && currentUser.profilePicture) {
+        const previousProfilePicturePath = path.join(
+          __dirname,
+          "..",
+          currentUser.profilePicture
+        );
+        console.log(
+          "Previous profile picture path:",
+          previousProfilePicturePath
+        );
+        if (fs.existsSync(previousProfilePicturePath)) {
+          fs.unlinkSync(previousProfilePicturePath);
+          console.log("Previous profile picture deleted.");
+        } else {
+          console.log("Previous profile picture does not exist.");
+        }
+      }
+
+      // Update user profile with the new profile picture
       const user = await prisma.user.update({
         where: { id: userId },
         data: { profilePicture },
@@ -162,6 +217,24 @@ export const deleteAccount = async (req, res) => {
   const userId = req.user.userId;
 
   try {
+    // Fetch the user's profile picture
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { profilePicture: true },
+    });
+
+    // Delete the user's profile picture if it exists
+    if (user && user.profilePicture) {
+      const profilePicturePath = path.join(
+        __dirname,
+        "..",
+        user.profilePicture
+      );
+      if (fs.existsSync(profilePicturePath)) {
+        fs.unlinkSync(profilePicturePath);
+      }
+    }
+
     // Delete the user account
     await prisma.user.delete({
       where: { id: userId },

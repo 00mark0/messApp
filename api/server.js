@@ -11,19 +11,19 @@ import contactRoutes from "./routes/contactRoutes.js";
 import contactRequestRoutes from "./routes/contactRequestRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js"; // Import group routes
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-  })
-);
+app.use(cors());
 
 // Serve static files from the "uploads" directory
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Rate limiting middleware
 const limiter = rateLimit({
@@ -34,7 +34,6 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Serve static files from the client
-const __dirname = path.resolve();
 app.use(express.static(path.join(__dirname, "../client/dist")));
 
 // Routes
@@ -47,6 +46,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/groups", groupRoutes); // Add group routes
 
 app.use(errorHandler);
+
+// Handle all other routes with the client build
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

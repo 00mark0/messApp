@@ -23,8 +23,10 @@
         |-- authController.js
         |-- contactController.js
         |-- contactRequestController.js
+        |-- groupController.js
         |-- messageController.js
         |-- notificationController.js
+        |-- userController.js
     |-- error.log
     |-- middleware
         |-- auth.js
@@ -39,16 +41,23 @@
                 |-- migration.sql
             |-- 20241101174616_add_contact_request_model
                 |-- migration.sql
+            |-- 20241104080053_add_group_conversations
+                |-- migration.sql
+            |-- 20241104090605_add_profile_picture
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
         |-- authRoutes.js
         |-- contactRequestRoutes.js
         |-- contactRoutes.js
+        |-- groupRoutes.js
         |-- messageRoutes.js
         |-- notificationRoutes.js
         |-- userRoutes.js
     |-- server.js
+    |-- uploads
+        |-- 7-1730734647600.png
     |-- utils
         |-- logger.js
 |-- client
@@ -59,12 +68,26 @@
     |-- package.json
     |-- postcss.config.js
     |-- public
+        |-- default-avatar.png
     |-- src
         |-- App.css
         |-- App.jsx
         |-- api
             |-- axios.js
+        |-- components
+            |-- Auth
+                |-- Login.jsx
+                |-- Register.jsx
+            |-- Navbar.jsx
+            |-- Profile
+                |-- PasswordReset.jsx
+            |-- ThemeToggle.jsx
+        |-- context
+            |-- AuthContext.jsx
         |-- index.css
         |-- main.jsx
+        |-- pages
+            |-- Home.jsx
+            |-- Profile.jsx
     |-- tailwind.config.js
     |-- vite.config.js

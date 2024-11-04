@@ -4,7 +4,6 @@ import {
   sendMessage,
   getConversations,
   getConversationMessages,
-  getDirectMessages,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -34,18 +33,6 @@ router.get(
       .withMessage("Conversation ID must be an integer"),
   ],
   getConversationMessages
-);
-
-// Get direct messages with another user
-router.get(
-  "/direct/:otherUserId",
-  authMiddleware,
-  [
-    param("otherUserId")
-      .isInt()
-      .withMessage("Other User ID must be an integer"),
-  ],
-  getDirectMessages
 );
 
 export default router;
