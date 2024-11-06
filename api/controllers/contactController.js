@@ -17,6 +17,7 @@ export const getContacts = async (req, res) => {
             id: true,
             username: true,
             email: true,
+            profilePicture: true,
           },
         },
       },

@@ -67,7 +67,7 @@ function Login() {
             value={credentials.identifier}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-md dark:text-white dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
 
@@ -81,7 +81,7 @@ function Login() {
             value={credentials.password}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-md dark:text-white dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
 

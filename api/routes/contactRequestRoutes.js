@@ -1,5 +1,3 @@
-// api/routes/contactRequestRoutes.js
-
 import express from "express";
 import { param, body } from "express-validator";
 import {
@@ -25,7 +23,7 @@ router.post(
 );
 
 // Respond to a contact request (accept or reject)
-router.post(
+router.put(
   "/respond/:requestId",
   authMiddleware,
   [

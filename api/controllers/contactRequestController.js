@@ -97,6 +97,9 @@ export const respondToContactRequest = async (req, res) => {
   const requestId = parseInt(req.params.requestId, 10);
   const { action } = req.body;
 
+  console.log("Request ID:", requestId); // Debugging log
+  console.log("Action:", action); // Debugging log
+
   try {
     // Fetch the contact request
     const contactRequest = await prisma.contactRequest.findUnique({
@@ -163,7 +166,12 @@ export const getPendingContactRequests = async (req, res) => {
       },
       include: {
         sender: {
-          select: { id: true, username: true, email: true },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            profilePicture: true,
+          },
         },
       },
     });

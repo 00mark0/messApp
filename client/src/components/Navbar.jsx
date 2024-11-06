@@ -93,6 +93,17 @@ function Navbar() {
                 />
               </Link>
               <ThemeToggle />
+              <Link
+                to="/contacts"
+                onClick={toggleMenu}
+                className="
+                hover:underline text-xl
+                focus:outline-none
+                dark:text-gray-900
+              "
+              >
+                Contacts
+              </Link>
               <button
                 onClick={handleLogout}
                 className="hover:underline text-xl focus:outline-none text-red-500"

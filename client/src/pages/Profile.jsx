@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
-import Navbar from "../components/Navbar";
 import PasswordReset from "../components/Profile/PasswordReset";
 import { useNavigate } from "react-router-dom";
 
@@ -105,7 +104,6 @@ function Profile() {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen mx-auto dark:bg-gray-800">
         <div className="max-w-md mx-auto bg-white dark:bg-gray-800 shadow-md p-6">
           <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">

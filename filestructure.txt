@@ -57,6 +57,7 @@
         |-- userRoutes.js
     |-- server.js
     |-- uploads
+        |-- 11-1730932794043.png
         |-- 7-1730734647600.png
     |-- utils
         |-- logger.js
@@ -78,6 +79,12 @@
             |-- Auth
                 |-- Login.jsx
                 |-- Register.jsx
+            |-- Contacts
+                |-- AddContacts.jsx
+                |-- PendingReqs.jsx
+                |-- SentReqs.jsx
+                |-- YourContacts.jsx
+            |-- Layout.jsx
             |-- Navbar.jsx
             |-- Profile
                 |-- PasswordReset.jsx
@@ -87,6 +94,7 @@
         |-- index.css
         |-- main.jsx
         |-- pages
+            |-- Contacts.jsx
             |-- Home.jsx
             |-- Profile.jsx
     |-- tailwind.config.js
