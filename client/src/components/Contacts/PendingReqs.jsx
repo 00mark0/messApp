@@ -14,8 +14,6 @@ function PendingReqs() {
   const [filteredReqs, setFilteredReqs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  console.log(pendingReqs);
-
   useEffect(() => {
     const fetchPendingReqs = async () => {
       try {
@@ -98,7 +96,11 @@ function PendingReqs() {
               className="flex items-center space-x-4 p-4 bg-white dark:bg-gray-700 rounded-lg shadow"
             >
               <img
-                src={req.sender.profilePicture || "/default-avatar.png"}
+                src={
+                  req.profilePicture
+                    ? `http://localhost:3000${req.profilePicture}`
+                    : "/default-avatar.png"
+                }
                 alt="avatar"
                 className="w-12 h-12 rounded-full"
               />

@@ -7,7 +7,7 @@ export const getNotifications = async (req, res) => {
 
   try {
     const notifications = await prisma.notification.findMany({
-      where: { userId },
+      where: { userId, isRead: false },
       orderBy: { createdAt: "desc" },
     });
 
@@ -24,7 +24,7 @@ export const markNotificationAsRead = async (req, res) => {
 
   try {
     const notification = await prisma.notification.findUnique({
-      where: { id: notificationId },
+      where: { id: notificationId, isRead: false },
     });
 
     if (!notification || notification.userId !== userId) {

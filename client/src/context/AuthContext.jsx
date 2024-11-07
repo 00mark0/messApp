@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import axios from "../api/axios";
 
 const AuthContext = createContext();
 
@@ -26,6 +27,23 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("user");
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (token && !user) {
+        try {
+          const response = await axios.get("/user/profile", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUser(response.data.user);
+        } catch (err) {
+          console.error("Failed to fetch user profile", err);
+        }
+      }
+    };
+
+    fetchUser();
+  }, [token, user]);
 
   const login = (newToken, userInfo, rememberMe) => {
     setToken(newToken);

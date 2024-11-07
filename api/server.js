@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import rateLimit from "express-rate-limit";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -19,17 +21,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
 app.use(express.json());
 app.use(cors());
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Rate limiting middleware
+// Rate limiting middleware with custom handler
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
+  max: 1000, // Limit each IP to 100 requests per windowMs
+  handler: (req, res, next, options) => {
+    console.warn(`Rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      message: "Too many requests, please try again later.",
+    });
+  },
 });
 app.use(limiter);
 
@@ -52,7 +66,20 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/dist/index.html"));
 });
 
+// WebSocket connection
+io.on("connection", (socket) => {
+  console.log("New client connected");
+
+  //
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+export { io };

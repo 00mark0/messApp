@@ -91,6 +91,7 @@
             |-- ThemeToggle.jsx
         |-- context
             |-- AuthContext.jsx
+            |-- SocketContext.jsx
         |-- index.css
         |-- main.jsx
         |-- pages

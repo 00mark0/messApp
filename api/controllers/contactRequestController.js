@@ -2,6 +2,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { validationResult } from "express-validator";
+import { io } from "../server.js";
 
 const prisma = new PrismaClient();
 
@@ -97,9 +98,6 @@ export const respondToContactRequest = async (req, res) => {
   const requestId = parseInt(req.params.requestId, 10);
   const { action } = req.body;
 
-  console.log("Request ID:", requestId); // Debugging log
-  console.log("Action:", action); // Debugging log
-
   try {
     // Fetch the contact request
     const contactRequest = await prisma.contactRequest.findUnique({
@@ -130,6 +128,12 @@ export const respondToContactRequest = async (req, res) => {
         data: { status: "accepted" },
       });
 
+      // Fetch sender's info
+      const senderInfo = await prisma.user.findUnique({
+        where: { id: contactRequest.senderId },
+        select: { id: true, username: true, email: true, profilePicture: true },
+      });
+
       // Add each other as contacts
       await prisma.contact.createMany({
         data: [
@@ -137,6 +141,21 @@ export const respondToContactRequest = async (req, res) => {
           { userId: contactRequest.senderId, contactUserId: userId },
         ],
       });
+
+      // Emit the contact-accepted event to the sender's room
+      io.to(contactRequest.senderId.toString()).emit("contact-accepted", {
+        id: userId,
+        username: req.user.username,
+        email: req.user.email,
+        profilePicture: req.user.profilePicture,
+      });
+
+      // Emit the contact-accepted event to the receiver's room
+      io.to(userId.toString()).emit("contact-accepted", senderInfo);
+
+      console.log(
+        `Emitted contact-accepted event for user ${contactRequest.senderId}`
+      ); // Debugging log
 
       res.status(200).json({ message: "Contact request accepted." });
     } else if (action === "reject") {

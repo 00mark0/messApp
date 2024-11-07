@@ -51,6 +51,16 @@ export const removeContact = async (req, res) => {
       return res.status(404).json({ message: "Contact not found" });
     }
 
+    // Delete the contact request if it exists
+    await prisma.contactRequest.deleteMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: contactUserId },
+          { senderId: contactUserId, receiverId: userId },
+        ],
+      },
+    });
+
     // Delete both contact entries
     await prisma.contact.deleteMany({
       where: {

@@ -3,14 +3,14 @@ import axios from "../../api/axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faUserFriends } from "@fortawesome/free-solid-svg-icons";
 import AuthContext from "../../context/AuthContext";
+import SocketContext from "../../context/SocketContext";
 
 function YourContacts() {
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { token } = useContext(AuthContext);
-
-  console.log(contacts);
+  const { socket } = useContext(SocketContext);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -26,6 +26,20 @@ function YourContacts() {
     };
     fetchContacts();
   }, [token]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("contact-accepted", (newContact) => {
+      console.log("New contact accepted:", newContact);
+      setContacts((prevContacts) => [...prevContacts, newContact]);
+      setFilteredContacts((prevContacts) => [...prevContacts, newContact]);
+    });
+
+    return () => {
+      socket.off("contact-accepted");
+    };
+  }, [socket]);
 
   const removeContact = async (contactId) => {
     try {
