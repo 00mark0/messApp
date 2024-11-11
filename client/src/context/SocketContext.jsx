@@ -1,3 +1,5 @@
+// context/SocketContext.jsx
+
 import React, { createContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import AuthContext from "./AuthContext";
@@ -10,14 +12,16 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !user.id) return; // Ensure user and user.id are available
+
+    console.log(`Initializing socket for user ${user.id}`);
 
     const newSocket = io("http://localhost:3000", {
       query: { userId: user.id },
     });
 
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket");
+      console.log("Socket connected");
     });
 
     setSocket(newSocket);
@@ -35,7 +39,7 @@ export const SocketProvider = ({ children }) => {
 };
 
 SocketProvider.propTypes = {
-  children: PropTypes.node,
+  children: PropTypes.node.isRequired,
 };
 
 export default SocketContext;

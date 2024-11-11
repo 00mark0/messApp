@@ -70,7 +70,14 @@ app.get("*", (req, res) => {
 io.on("connection", (socket) => {
   console.log("New client connected");
 
-  //
+  // Join the room for the user
+  const userId = socket.handshake.query.userId;
+  if (userId) {
+    socket.join(userId);
+    console.log(`User ${userId} joined room`);
+  } else {
+    console.log("User ID not provided in query");
+  }
 
   socket.on("disconnect", () => {
     console.log("Client disconnected");

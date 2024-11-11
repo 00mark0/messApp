@@ -12,6 +12,9 @@ function YourContacts() {
   const { token } = useContext(AuthContext);
   const { socket } = useContext(SocketContext);
 
+  console.log("Contacts:", contacts);
+  console.log("Filtered contacts:", filteredContacts);
+
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -28,10 +31,15 @@ function YourContacts() {
   }, [token]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log("Socket not available yet");
+      return;
+    }
+
+    console.log("Setting up socket event listener for contact-accepted");
 
     socket.on("contact-accepted", (newContact) => {
-      console.log("New contact accepted:", newContact);
+      console.log("Received contact-accepted event:", newContact);
       setContacts((prevContacts) => [...prevContacts, newContact]);
       setFilteredContacts((prevContacts) => [...prevContacts, newContact]);
     });
