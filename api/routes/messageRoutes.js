@@ -4,6 +4,7 @@ import {
   sendMessage,
   getConversations,
   getConversationMessages,
+  markMessagesAsSeen,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -33,6 +34,13 @@ router.get(
       .withMessage("Conversation ID must be an integer"),
   ],
   getConversationMessages
+);
+
+// Mark messages as seen in a conversation
+router.post(
+  "/conversations/:conversationId/seen",
+  authMiddleware,
+  markMessagesAsSeen
 );
 
 export default router;

@@ -5,6 +5,7 @@ import { param } from "express-validator";
 import {
   getContacts,
   removeContact,
+  searchContacts,
 } from "../controllers/contactController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -24,5 +25,8 @@ router.delete(
   ],
   removeContact
 );
+
+// Search contacts
+router.get("/search", authMiddleware, searchContacts);
 
 export default router;

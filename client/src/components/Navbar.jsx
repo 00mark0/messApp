@@ -216,7 +216,6 @@ function Navbar() {
                   className="
                   text-xl
                   font-semibold
-                  text-gray-800
                   dark:text-gray-900
                   mt-2 
                 "

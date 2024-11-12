@@ -280,3 +280,29 @@ export const searchUsers = [
     }
   },
 ];
+
+// Get User info by ID param
+export const getUserById = async (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        profilePicture: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    console.error("Error in getUserById:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

@@ -8,6 +8,7 @@ import {
   uploadProfilePicture,
   deleteAccount,
   searchUsers,
+  getUserById,
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -37,5 +38,6 @@ router.post("/reset-password", resetPassword);
 router.post("/upload-profile-picture", authMiddleware, uploadProfilePicture);
 router.delete("/delete-account", authMiddleware, deleteAccount);
 router.get("/search", authMiddleware, searchUsers);
+router.get("/:id", authMiddleware, getUserById);
 
 export default router;

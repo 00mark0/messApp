@@ -1,6 +1,7 @@
 // api/controllers/contactController.js
 
 import { PrismaClient } from "@prisma/client";
+import { validationResult, body, query } from "express-validator";
 
 const prisma = new PrismaClient();
 
@@ -77,3 +78,48 @@ export const removeContact = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const searchContacts = [
+  query("q").trim().isLength({ min: 1 }).escape(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { q } = req.query;
+    const userId = req.user.userId;
+
+    try {
+      const contacts = await prisma.contact.findMany({
+        where: {
+          userId,
+          contact: {
+            OR: [
+              { username: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+            ],
+          },
+        },
+        include: {
+          contact: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              profilePicture: true,
+            },
+          },
+        },
+      });
+
+      // Map the contacts to return only the contact user details
+      const contactList = contacts.map((contact) => contact.contact);
+
+      res.json({ contacts: contactList });
+    } catch (error) {
+      console.error("Error in searchContacts:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  },
+];

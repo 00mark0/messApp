@@ -1,6 +1,7 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import axios from "../api/axios";
+import axiosInstance, { setupInterceptors } from "../api/axios";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -11,6 +12,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(
     () => JSON.parse(localStorage.getItem("user")) || null
   );
+  const navigate = useNavigate();
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  }, [navigate]);
 
   useEffect(() => {
     if (token) {
@@ -32,18 +42,21 @@ export const AuthProvider = ({ children }) => {
     const fetchUser = async () => {
       if (token && !user) {
         try {
-          const response = await axios.get("/user/profile", {
+          const response = await axiosInstance.get("/user/profile", {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUser(response.data.user);
         } catch (err) {
           console.error("Failed to fetch user profile", err);
+          if (err.response && err.response.status === 401) {
+            logout();
+          }
         }
       }
     };
 
     fetchUser();
-  }, [token, user]);
+  }, [token, user, logout]);
 
   const login = (newToken, userInfo, rememberMe) => {
     setToken(newToken);
@@ -54,12 +67,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  };
+  useEffect(() => {
+    // Set up Axios interceptors
+    setupInterceptors(logout);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout }}>

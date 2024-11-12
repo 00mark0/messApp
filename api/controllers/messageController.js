@@ -100,7 +100,7 @@ export const sendMessage = async (req, res) => {
       },
     });
 
-    res.status(201).json({ message });
+    res.status(201).json({ message, conversationId: conversation.id });
   } catch (error) {
     console.error("Error in sendMessage:", error);
     res.status(500).json({ message: "Server error" });
@@ -213,6 +213,36 @@ export const getDirectMessages = async (req, res) => {
 
     res.json({ messages });
   } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const markMessagesAsSeen = async (req, res) => {
+  const userId = req.user.userId;
+  const { conversationId } = req.params;
+
+  try {
+    await prisma.message.updateMany({
+      where: {
+        conversationId: parseInt(conversationId),
+        senderId: {
+          not: userId,
+        },
+        NOT: {
+          seenBy: {
+            has: userId,
+          },
+        },
+      },
+      data: {
+        seenBy: {
+          push: userId,
+        },
+      },
+    });
+    res.status(200).json({ message: "Messages marked as seen" });
+  } catch (error) {
+    console.error("Error in markMessagesAsSeen:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

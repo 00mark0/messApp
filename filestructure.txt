@@ -45,6 +45,8 @@
                 |-- migration.sql
             |-- 20241104090605_add_profile_picture
                 |-- migration.sql
+            |-- 20241112172411_added_seen_messages
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
@@ -85,6 +87,8 @@
                 |-- SentReqs.jsx
                 |-- YourContacts.jsx
             |-- Layout.jsx
+            |-- Messages
+                |-- Chat.jsx
             |-- Navbar.jsx
             |-- Profile
                 |-- PasswordReset.jsx
@@ -96,7 +100,7 @@
         |-- main.jsx
         |-- pages
             |-- Contacts.jsx
-            |-- Home.jsx
+            |-- Inbox.jsx
             |-- Profile.jsx
     |-- tailwind.config.js
     |-- vite.config.js
