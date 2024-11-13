@@ -1,9 +1,11 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { io } from "socket.io-client";
+import debounce from "lodash.debounce";
 
 function Inbox() {
   const { token, user } = useContext(AuthContext);
@@ -12,6 +14,61 @@ function Inbox() {
   const [conversations, setConversations] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([]);
   const navigate = useNavigate();
+  const socket = useRef(null);
+  const [typingConversations, setTypingConversations] = useState([]);
+
+  useEffect(() => {
+    socket.current = io("http://localhost:3000", {
+      query: { userId: user.id },
+    });
+
+    const handleTyping = debounce((data) => {
+      if (data.userId !== user.id) {
+        setTypingConversations((prev) => ({
+          ...prev,
+          [data.conversationId]: true,
+        }));
+      }
+    }, 300);
+
+    const handleStopTyping = debounce((data) => {
+      if (data.userId !== user.id) {
+        setTypingConversations((prev) => {
+          const updated = { ...prev };
+          delete updated[data.conversationId];
+          return updated;
+        });
+      }
+    }, 300);
+
+    socket.current.on("typing", handleTyping);
+    socket.current.on("stopTyping", handleStopTyping);
+
+    // Listen for incoming messages
+    socket.current.on("receiveMessage", (message) => {
+      setConversations((prevConversations) => {
+        const updatedConversations = prevConversations.map((conv) => {
+          if (conv.id === message.conversationId) {
+            return {
+              ...conv,
+              messages: [message, ...conv.messages],
+            };
+          }
+          return conv;
+        });
+        setFilteredConversations(updatedConversations);
+        return updatedConversations;
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.current.off("typing", handleTyping);
+      socket.current.off("stopTyping", handleStopTyping);
+      socket.current.off("receiveMessage");
+      socket.current.disconnect();
+    };
+  }, [user.id]);
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -74,10 +131,31 @@ function Inbox() {
     );
   };
 
+  const handleDeleteConversation = async (conversationId) => {
+    if (window.confirm("Are you sure you want to delete this conversation?")) {
+      try {
+        await axios.delete(`/messages/conversations/${conversationId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Remove the conversation from state
+        setConversations((prev) =>
+          prev.filter((conv) => conv.id !== conversationId)
+        );
+        setFilteredConversations((prev) =>
+          prev.filter((conv) => conv.id !== conversationId)
+        );
+      } catch (error) {
+        console.error("Failed to delete conversation:", error);
+      }
+    }
+  };
+
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 min-h-screen">
       <h2 className="text-2xl font-bold mb-4">Inbox</h2>
 
+      {/* New Conversation Section */}
       <div className="mb-4">
         <h3 className="text-xl font-semibold mb-2">New Conversation</h3>
         <form onSubmit={handleSearch} className="flex mb-4">
@@ -120,6 +198,7 @@ function Inbox() {
         )}
       </div>
 
+      {/* Conversations Section */}
       <input
         type="text"
         placeholder="Filter conversations..."
@@ -135,13 +214,14 @@ function Inbox() {
           );
 
           const lastMessage = conv.messages[0];
+          const isUnread = lastMessage && !lastMessage.seenBy.includes(user.id);
+          const isTyping = typingConversations[conv.id];
 
           return (
             <div
               key={conv.id}
-              className="p-2 flex justify-between items-center cursor-pointer hover:bg-gray-200
-                dark:hover:bg-gray-600 rounded-lg mb-2 
-              "
+              className={`p-2 flex justify-between items-center cursor-pointer hover:bg-gray-200
+                dark:hover:bg-gray-600 rounded-lg mb-2`}
               onClick={() =>
                 openConversation(conv.id, otherParticipant.user.id)
               }
@@ -149,23 +229,40 @@ function Inbox() {
               <div>
                 <p
                   className="
-                    font-semibold 
-                    dark:text-white 
+                  font-semibold
+                  dark:text-white
+                  text-gray-900
                 "
                 >
                   {otherParticipant?.user.username || "Unknown User"}
                 </p>
                 <p
-                  className="text-gray-600 
-                    dark:text-gray-400 truncate w-52 
-                "
+                  className={`truncate w-52 ${
+                    isUnread
+                      ? "font-bold text-white"
+                      : "font-normal text-gray-600"
+                  } dark:text-gray-400`}
                 >
-                  {lastMessage ? lastMessage.content : "No messages yet"}
+                  {isTyping ? (
+                    <span className="italic text-gray-500">Typing...</span>
+                  ) : lastMessage ? (
+                    lastMessage.content
+                  ) : (
+                    "No messages yet"
+                  )}
                 </p>
               </div>
-              {lastMessage && !lastMessage.seenBy.includes(user.id) && (
-                <span className="text-red-500">●</span>
-              )}
+              {/* Remove the red dot indicator */}
+              {/* Delete Conversation Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteConversation(conv.id);
+                }}
+                className="text-red-500 hover:text-red-700 focus:outline-none"
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
             </div>
           );
         })

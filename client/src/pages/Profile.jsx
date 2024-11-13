@@ -143,7 +143,7 @@ function Profile() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                  className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
               <div>
@@ -154,7 +154,7 @@ function Profile() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                  className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
               <button

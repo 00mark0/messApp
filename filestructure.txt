@@ -47,6 +47,8 @@
                 |-- migration.sql
             |-- 20241112172411_added_seen_messages
                 |-- migration.sql
+            |-- 20241113164022_add_deleted_at_to_conversation_participant
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
@@ -59,8 +61,8 @@
         |-- userRoutes.js
     |-- server.js
     |-- uploads
-        |-- 11-1730932794043.png
-        |-- 7-1730734647600.png
+        |-- 1-1731517650378.png
+        |-- 2-1731518826519.png
     |-- utils
         |-- logger.js
 |-- client
