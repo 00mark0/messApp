@@ -212,3 +212,14 @@
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-12T20:33:40.005Z"}
 {"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-12T20:34:45.268Z"}
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-12T20:35:11.666Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-13T16:08:36.964Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-13T16:53:13.119Z"}
+{"level":"info","message":"User logged in successfully: user6@example.com","service":"user-service","timestamp":"2024-11-13T16:57:57.134Z"}
+{"level":"info","message":"User registered successfully: user1@example.com","service":"user-service","timestamp":"2024-11-13T17:06:11.228Z"}
+{"level":"info","message":"User registered successfully: user2@example.com","service":"user-service","timestamp":"2024-11-13T17:06:21.573Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-13T17:06:31.781Z"}
+{"level":"info","message":"User registered successfully: user3@example.com","service":"user-service","timestamp":"2024-11-13T17:06:54.940Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-13T17:07:02.841Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-13T17:08:07.838Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-13T17:26:23.065Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-13T18:10:24.105Z"}

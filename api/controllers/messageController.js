@@ -23,7 +23,7 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ message: "Recipient not found" });
     }
 
-    // **Check if recipient is in sender's contact list**
+    // Check if recipient is in sender's contact list
     const isContact = await prisma.contact.findFirst({
       where: {
         userId: senderId,
@@ -41,40 +41,57 @@ export const sendMessage = async (req, res) => {
     // Check if a conversation already exists between the two users
     let conversation = await prisma.conversation.findFirst({
       where: {
-        participants: {
-          some: {
-            userId: senderId,
+        AND: [
+          {
+            participants: {
+              some: {
+                userId: senderId,
+              },
+            },
           },
-        },
+          {
+            participants: {
+              some: {
+                userId: recipientId,
+              },
+            },
+          },
+        ],
       },
       include: {
         participants: true,
       },
     });
 
-    // Filter conversations to find one with exactly two participants
     if (conversation) {
+      // Ensure the conversation has exactly two participants
       const participantIds = conversation.participants.map((p) => p.userId);
-      if (
-        !participantIds.includes(recipientId) ||
-        participantIds.length !== 2
-      ) {
+      if (participantIds.length !== 2) {
         conversation = null;
       }
     }
 
     if (!conversation) {
-      // Create a new conversation between sender and recipient
+      // Create a new conversation since it doesn't exist
       conversation = await prisma.conversation.create({
         data: {
           participants: {
-            createMany: {
-              data: [{ userId: senderId }, { userId: recipientId }],
-            },
+            create: [{ userId: senderId }, { userId: recipientId }],
           },
         },
       });
     }
+
+    // Reset deletedAt for both participants
+    await prisma.conversationParticipant.updateMany({
+      where: {
+        conversationId: conversation.id,
+        userId: { in: [senderId, recipientId] },
+      },
+      data: {
+        deletedAt: null,
+      },
+    });
 
     // Create message associated with the conversation
     const message = await prisma.message.create({
@@ -117,6 +134,7 @@ export const getConversations = async (req, res) => {
         participants: {
           some: {
             userId: userId,
+            deletedAt: null,
           },
         },
       },
@@ -148,7 +166,7 @@ export const getConversationMessages = async (req, res) => {
   const { conversationId } = req.params;
 
   try {
-    // Check if user is part of the conversation
+    // Check if the user is a participant in the conversation (regardless of deletedAt)
     const isParticipant = await prisma.conversationParticipant.findFirst({
       where: {
         conversationId: parseInt(conversationId),
@@ -158,6 +176,21 @@ export const getConversationMessages = async (req, res) => {
 
     if (!isParticipant) {
       return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Reset deletedAt for this user (since they are accessing the conversation)
+    if (isParticipant.deletedAt) {
+      await prisma.conversationParticipant.update({
+        where: {
+          conversationId_userId: {
+            conversationId: parseInt(conversationId),
+            userId: userId,
+          },
+        },
+        data: {
+          deletedAt: null,
+        },
+      });
     }
 
     // Fetch messages in the conversation
@@ -177,42 +210,7 @@ export const getConversationMessages = async (req, res) => {
 
     res.json({ messages });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const getDirectMessages = async (req, res) => {
-  const userId = req.user.userId;
-  const { otherUserId } = req.params;
-
-  try {
-    // Fetch direct messages between the two users without a conversation
-    const messages = await prisma.message.findMany({
-      where: {
-        OR: [
-          {
-            senderId: userId,
-            recipientId: parseInt(otherUserId),
-          },
-          {
-            senderId: parseInt(otherUserId),
-            recipientId: userId,
-          },
-        ],
-        conversationId: null,
-      },
-      include: {
-        sender: {
-          select: { id: true, username: true },
-        },
-      },
-      orderBy: {
-        timestamp: "asc",
-      },
-    });
-
-    res.json({ messages });
-  } catch (error) {
+    console.error("Error in getConversationMessages:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -243,6 +241,31 @@ export const markMessagesAsSeen = async (req, res) => {
     res.status(200).json({ message: "Messages marked as seen" });
   } catch (error) {
     console.error("Error in markMessagesAsSeen:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deleteConversation = async (req, res) => {
+  const userId = req.user.userId;
+  const { conversationId } = req.params;
+
+  try {
+    // Set deletedAt to current timestamp for the user
+    await prisma.conversationParticipant.update({
+      where: {
+        conversationId_userId: {
+          conversationId: parseInt(conversationId),
+          userId: userId,
+        },
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    res.status(200).json({ message: "Conversation deleted" });
+  } catch (error) {
+    console.error("Error in deleteConversation:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -5,6 +5,7 @@ import {
   getConversations,
   getConversationMessages,
   markMessagesAsSeen,
+  deleteConversation,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -41,6 +42,13 @@ router.post(
   "/conversations/:conversationId/seen",
   authMiddleware,
   markMessagesAsSeen
+);
+
+// Delete a conversation
+router.delete(
+  "/conversations/:conversationId",
+  authMiddleware,
+  deleteConversation
 );
 
 export default router;

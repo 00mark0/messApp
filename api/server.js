@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
+import { PrismaClient } from "@prisma/client";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import rateLimit from "express-rate-limit";
@@ -16,6 +17,8 @@ import groupRoutes from "./routes/groupRoutes.js"; // Import group routes
 import { fileURLToPath } from "url";
 
 dotenv.config();
+
+const prisma = new PrismaClient();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +81,111 @@ io.on("connection", (socket) => {
   } else {
     console.log("User ID not provided in query");
   }
+
+  // Handle markAsSeen
+  socket.on("markAsSeen", async (data) => {
+    const { conversationId, userId } = data;
+
+    try {
+      await prisma.message.updateMany({
+        where: {
+          conversationId: parseInt(conversationId),
+          senderId: {
+            not: userId,
+          },
+          NOT: {
+            seenBy: {
+              has: userId,
+            },
+          },
+        },
+        data: {
+          seenBy: {
+            push: userId,
+          },
+        },
+      });
+
+      // Notify the sender
+      const messages = await prisma.message.findMany({
+        where: {
+          conversationId: parseInt(conversationId),
+          senderId: {
+            not: userId,
+          },
+        },
+      });
+
+      // Get unique sender IDs
+      const senderIds = [...new Set(messages.map((msg) => msg.senderId))];
+
+      senderIds.forEach((senderId) => {
+        io.to(senderId.toString()).emit("messagesSeen", {
+          conversationId,
+          seenBy: userId,
+        });
+      });
+    } catch (error) {
+      console.error("Error in markAsSeen via Socket.IO:", error);
+    }
+  });
+
+  socket.on("typing", (data) => {
+    const { conversationId, userId } = data;
+    socket
+      .to(conversationId.toString())
+      .emit("typing", { conversationId, userId });
+  });
+
+  socket.on("stopTyping", (data) => {
+    const { conversationId, userId } = data;
+    socket
+      .to(conversationId.toString())
+      .emit("stopTyping", { conversationId, userId });
+  });
+
+  socket.on("joinConversation", (conversationId) => {
+    socket.join(conversationId.toString());
+  });
+
+  // Handle sending messages
+  socket.on("sendMessage", async (data) => {
+    const { conversationId, senderId, recipientId, content } = data;
+
+    try {
+      // Save message to database
+      const message = await prisma.message.create({
+        data: {
+          senderId,
+          recipientId,
+          content,
+          conversationId,
+        },
+        include: {
+          sender: {
+            select: { id: true, username: true },
+          },
+        },
+      });
+
+      // Reset deletedAt for conversation participants
+      await prisma.conversationParticipant.updateMany({
+        where: {
+          conversationId: conversationId,
+          userId: { in: [senderId, recipientId] },
+        },
+        data: {
+          deletedAt: null,
+        },
+      });
+
+      // Emit the message to both participants
+      io.to(recipientId.toString()).emit("receiveMessage", message);
+      io.to(senderId.toString()).emit("receiveMessage", message);
+    } catch (error) {
+      console.error("Error in sendMessage via Socket.IO:", error);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected");
