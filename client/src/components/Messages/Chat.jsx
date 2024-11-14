@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
 import { io } from "socket.io-client";
-import debounce from "lodash.debounce";
 
 function Chat() {
   const { token, user } = useContext(AuthContext);
@@ -18,6 +17,8 @@ function Chat() {
   const chatContainerRef = useRef(null);
   const socket = useRef(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,7 +30,6 @@ function Chat() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRecipient(userResponse.data.user);
-        console.log(userResponse.data.user);
 
         // Fetch Messages if Existing Conversation
         if (conversationId !== "new") {
@@ -64,13 +64,11 @@ function Chat() {
 
   const handleReceiveMessage = useCallback(
     (message) => {
-      console.log("Received message:", message);
       if (parseInt(message.conversationId) === parseInt(conversationId)) {
         setMessages((prevMessages) => {
           // Check if the message already exists
           if (!prevMessages.find((msg) => msg.id === message.id)) {
             const updatedMessages = [...prevMessages, message];
-            console.log("Updated messages array:", updatedMessages);
             return updatedMessages;
           }
           return prevMessages;
@@ -96,10 +94,11 @@ function Chat() {
     const handleMessagesSeen = (data) => {
       const { conversationId: convId, seenBy } = data;
       if (parseInt(convId) === parseInt(conversationId)) {
+        const seenByNumber = Number(seenBy); // Ensure it's a number
         setMessages((prevMessages) =>
           prevMessages.map((msg) => {
-            if (!msg.seenBy.includes(seenBy)) {
-              return { ...msg, seenBy: [...msg.seenBy, seenBy] };
+            if (!msg.seenBy.includes(seenByNumber)) {
+              return { ...msg, seenBy: [...msg.seenBy, seenByNumber] };
             }
             return msg;
           })
@@ -144,32 +143,22 @@ function Chat() {
     }
   }, [messages, conversationId, user.id]);
 
-  const [isTyping, setIsTyping] = useState(false);
-  const [otherUserTyping, setOtherUserTyping] = useState(false);
-
-  const emitTypingEvent = useCallback(
-    debounce(() => {
-      setIsTyping(false);
-      socket.current.emit("stopTyping", {
-        conversationId,
-        userId: user.id,
-      });
-    }, 500),
-    [conversationId, user.id]
-  );
-
   const handleInputChange = (e) => {
     setInput(e.target.value);
 
-    if (!isTyping) {
+    if (e.target.value && !isTyping) {
       setIsTyping(true);
       socket.current.emit("typing", {
         conversationId,
         userId: user.id,
       });
+    } else if (!e.target.value && isTyping) {
+      setIsTyping(false);
+      socket.current.emit("stopTyping", {
+        conversationId,
+        userId: user.id,
+      });
     }
-
-    emitTypingEvent();
   };
 
   const handleScroll = () => {
@@ -190,26 +179,22 @@ function Chat() {
     if (!input.trim()) return;
 
     try {
-      if (conversationId === "new") {
-        // Start New Conversation via API
-        const response = await axios.post(
-          `/messages/${recipientId}`,
-          { content: input },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        navigate(`/chat/${response.data.conversationId}/${recipientId}`);
-      } else {
-        // Send Message via Socket.IO
-        const messageData = {
-          conversationId: parseInt(conversationId),
-          senderId: user.id,
-          recipientId: parseInt(recipientId),
-          content: input,
-        };
+      const response = await axios.post(
+        `/messages/${recipientId}`,
+        { content: input },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-        socket.current.emit("sendMessage", messageData);
-        setInput("");
+      if (conversationId === "new") {
+        navigate(`/chat/${response.data.conversationId}/${recipientId}`);
       }
+
+      setInput("");
+      setIsTyping(false);
+      socket.current.emit("stopTyping", {
+        conversationId,
+        userId: user.id,
+      });
     } catch (err) {
       console.error(
         "Error sending message:",
@@ -284,9 +269,9 @@ function Chat() {
           ) : (
             <p
               className="
-                text-center text-gray-500 dark:text-gray-400
-                mt-4 
-            "
+                  text-center text-gray-500 dark:text-gray-400
+                  mt-4 
+              "
             >
               No messages yet. Start the conversation!
             </p>

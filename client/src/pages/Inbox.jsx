@@ -5,7 +5,7 @@ import AuthContext from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { io } from "socket.io-client";
-import debounce from "lodash.debounce";
+import { formatDistanceToNow } from "date-fns";
 
 function Inbox() {
   const { token, user } = useContext(AuthContext);
@@ -15,57 +15,93 @@ function Inbox() {
   const [filteredConversations, setFilteredConversations] = useState([]);
   const navigate = useNavigate();
   const socket = useRef(null);
-  const [typingConversations, setTypingConversations] = useState([]);
+  const [typingConversations, setTypingConversations] = useState({});
 
   useEffect(() => {
     socket.current = io("http://localhost:3000", {
       query: { userId: user.id },
     });
 
-    const handleTyping = debounce((data) => {
-      if (data.userId !== user.id) {
+    const handleTyping = (data) => {
+      const { conversationId, userId } = data;
+      if (userId !== user.id) {
         setTypingConversations((prev) => ({
           ...prev,
-          [data.conversationId]: true,
+          [conversationId]: true,
         }));
       }
-    }, 300);
+    };
 
-    const handleStopTyping = debounce((data) => {
-      if (data.userId !== user.id) {
+    const handleStopTyping = (data) => {
+      const { conversationId, userId } = data;
+      if (userId !== user.id) {
         setTypingConversations((prev) => {
           const updated = { ...prev };
-          delete updated[data.conversationId];
+          delete updated[conversationId];
           return updated;
         });
       }
-    }, 300);
+    };
 
-    socket.current.on("typing", handleTyping);
-    socket.current.on("stopTyping", handleStopTyping);
-
-    // Listen for incoming messages
-    socket.current.on("receiveMessage", (message) => {
+    const handleReceiveMessage = (message) => {
       setConversations((prevConversations) => {
         const updatedConversations = prevConversations.map((conv) => {
           if (conv.id === message.conversationId) {
-            return {
-              ...conv,
-              messages: [message, ...conv.messages],
-            };
+            // Insert the new message at the beginning
+            const updatedMessage = [message, ...conv.messages];
+            return { ...conv, messages: updatedMessage };
           }
           return conv;
         });
         setFilteredConversations(updatedConversations);
         return updatedConversations;
       });
-    });
+    };
+
+    const handleMessagesSeen = (data) => {
+      const { conversationId, seenBy } = data;
+
+      setConversations((prevConversations) => {
+        const updatedConversations = prevConversations.map((conv) => {
+          if (conv.id.toString() === conversationId.toString()) {
+            // Update the last message's seenBy array
+            if (conv.messages.length > 0) {
+              const latestMessage = conv.messages[0];
+
+              if (!latestMessage.seenBy.includes(parseInt(seenBy))) {
+                const updatedMessages = conv.messages.map((msg, index) => {
+                  if (index === 0) {
+                    return {
+                      ...msg,
+                      seenBy: [...msg.seenBy, parseInt(seenBy)],
+                    };
+                  }
+                  return msg;
+                });
+                return { ...conv, messages: updatedMessages };
+              }
+            }
+          }
+          return conv;
+        });
+
+        // Update both conversations and filteredConversations
+        setFilteredConversations(updatedConversations);
+        return updatedConversations;
+      });
+    };
+
+    socket.current.on("typing", handleTyping);
+    socket.current.on("stopTyping", handleStopTyping);
+    socket.current.on("receiveMessage", handleReceiveMessage);
+    socket.current.on("messagesSeen", handleMessagesSeen);
 
     // Cleanup on unmount
     return () => {
       socket.current.off("typing", handleTyping);
       socket.current.off("stopTyping", handleStopTyping);
-      socket.current.off("receiveMessage");
+      socket.current.off("receiveMessage", handleReceiveMessage);
+      socket.current.off("messagesSeen", handleMessagesSeen);
       socket.current.disconnect();
     };
   }, [user.id]);
@@ -77,8 +113,20 @@ function Inbox() {
         const response = await axios.get("/messages/conversations", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setConversations(response.data.conversations || []);
-        setFilteredConversations(response.data.conversations || []);
+
+        // Ensure messages are sorted from newest to oldest
+        const conversations = (response.data.conversations || []).map(
+          (conv) => {
+            const sortedMessages = conv.messages.sort(
+              (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+            );
+
+            return { ...conv, messages: sortedMessages };
+          }
+        );
+
+        setConversations(conversations);
+        setFilteredConversations(conversations);
       } catch (error) {
         console.error("Failed to fetch conversations:", error);
         setConversations([]);
@@ -214,8 +262,19 @@ function Inbox() {
           );
 
           const lastMessage = conv.messages[0];
-          const isUnread = lastMessage && !lastMessage.seenBy.includes(user.id);
           const isTyping = typingConversations[conv.id];
+
+          const recipientId = otherParticipant?.user.id;
+
+          let isUnread = false;
+
+          if (lastMessage) {
+            if (lastMessage.senderId === user.id) {
+              isUnread = !lastMessage.seenBy.includes(recipientId);
+            } else {
+              isUnread = !lastMessage.seenBy.includes(user.id);
+            }
+          }
 
           return (
             <div
@@ -236,23 +295,76 @@ function Inbox() {
                 >
                   {otherParticipant?.user.username || "Unknown User"}
                 </p>
-                <p
+                <div
                   className={`truncate w-52 ${
                     isUnread
-                      ? "font-bold text-white"
+                      ? "font-bold dark:text-gray-50"
                       : "font-normal text-gray-600"
                   } dark:text-gray-400`}
                 >
                   {isTyping ? (
                     <span className="italic text-gray-500">Typing...</span>
                   ) : lastMessage ? (
-                    lastMessage.content
+                    <div>
+                      {lastMessage.senderId === user.id ? (
+                        <span
+                          className="
+                          dark:text-gray-400
+                          text-gray-600
+                          font-normal 
+                        "
+                        >
+                          {isUnread
+                            ? "Sent " +
+                              formatDistanceToNow(
+                                new Date(lastMessage.timestamp),
+                                {
+                                  addSuffix: true,
+                                }
+                              )
+                            : "Seen " +
+                              formatDistanceToNow(
+                                new Date(lastMessage.timestamp),
+                                {
+                                  addSuffix: true,
+                                }
+                              )}
+                        </span>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span
+                            className="
+                            dark:text-gray-400
+                            text-gray-600
+                            truncate
+                            w-40 
+                          "
+                          >
+                            {lastMessage.content}
+                          </span>
+                          <span
+                            className="
+                            dark:text-gray-400
+                            text-gray-600
+                            font-normal
+                            ml-2
+                            "
+                          >
+                            {formatDistanceToNow(
+                              new Date(lastMessage.timestamp),
+                              {
+                                addSuffix: true,
+                              }
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     "No messages yet"
                   )}
-                </p>
+                </div>
               </div>
-              {/* Remove the red dot indicator */}
               {/* Delete Conversation Button */}
               <button
                 onClick={(e) => {

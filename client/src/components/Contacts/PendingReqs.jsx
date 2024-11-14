@@ -61,7 +61,7 @@ function PendingReqs() {
   const formatDate = (dateString) => {
     const options = {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
@@ -105,7 +105,15 @@ function PendingReqs() {
                 className="w-12 h-12 rounded-full"
               />
               <p className="flex-grow">{req.sender.username}</p>
-              <p>{formatDate(req.createdAt)}</p>
+              <p
+                className="
+                text-sm
+                text-gray-500
+                dark:text-gray-400
+              "
+              >
+                {formatDate(req.createdAt)}
+              </p>
               <button
                 onClick={() => respondToReq(req.id, "accept")}
                 className="text-green-500"
