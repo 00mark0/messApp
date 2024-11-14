@@ -213,14 +213,18 @@ export const getConversationMessages = async (req, res) => {
   }
 };
 
-export const markMessagesAsSeen = async (req, res) => {
-  const userId = req.user.userId;
-  const { conversationId } = req.params;
-
+/**
+ * Marks messages as seen in a conversation and notifies senders via Socket.IO.
+ * @param {string} conversationId - The ID of the conversation.
+ * @param {number} userId - The ID of the user who has seen the messages.
+ * @returns {Promise<Array<number>>} - List of sender IDs to notify.
+ */
+export const markMessagesAsSeenLogic = async (conversationId, userId) => {
   try {
+    // Update messages to include the userId in seenBy
     await prisma.message.updateMany({
       where: {
-        conversationId: parseInt(conversationId),
+        conversationId: parseInt(conversationId, 10),
         senderId: {
           not: userId,
         },
@@ -236,9 +240,49 @@ export const markMessagesAsSeen = async (req, res) => {
         },
       },
     });
+
+    // Retrieve messages to find unique sender IDs
+    const messages = await prisma.message.findMany({
+      where: {
+        conversationId: parseInt(conversationId, 10),
+        senderId: {
+          not: userId,
+        },
+      },
+      select: {
+        senderId: true,
+      },
+    });
+
+    // Extract unique sender IDs
+    const senderIds = [...new Set(messages.map((msg) => msg.senderId))];
+
+    // Emit "messagesSeen" event to each sender
+    senderIds.forEach((senderId) => {
+      io.to(senderId.toString()).emit("messagesSeen", {
+        conversationId: conversationId.toString(),
+        seenBy: userId,
+      });
+    });
+
+    return senderIds;
+  } catch (error) {
+    console.error("Error in markMessagesAsSeenLogic:", error);
+    throw error;
+  }
+};
+
+/**
+ * Controller for marking messages as seen via HTTP request.
+ */
+export const markMessagesAsSeen = async (req, res) => {
+  const userId = req.user.userId;
+  const { conversationId } = req.params;
+
+  try {
+    await markMessagesAsSeenLogic(conversationId, userId);
     res.status(200).json({ message: "Messages marked as seen" });
   } catch (error) {
-    console.error("Error in markMessagesAsSeen:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

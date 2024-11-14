@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -15,6 +16,7 @@ import contactRequestRoutes from "./routes/contactRequestRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js"; // Import group routes
 import { fileURLToPath } from "url";
+import { markMessagesAsSeenLogic } from "./controllers/messageController.js"; // Import the logic
 
 dotenv.config();
 
@@ -76,7 +78,7 @@ io.on("connection", (socket) => {
   // Join the room for the user
   const userId = socket.handshake.query.userId;
   if (userId) {
-    const userRoom = userId;
+    const userRoom = userId.toString(); // Ensure it's a string
     socket.join(userRoom);
     console.log(`User ${userId} joined room ${userRoom}`);
   } else {
@@ -88,46 +90,11 @@ io.on("connection", (socket) => {
     const { conversationId, userId } = data;
 
     try {
-      await prisma.message.updateMany({
-        where: {
-          conversationId: parseInt(conversationId),
-          senderId: {
-            not: userId,
-          },
-          NOT: {
-            seenBy: {
-              has: userId,
-            },
-          },
-        },
-        data: {
-          seenBy: {
-            push: userId,
-          },
-        },
-      });
-
-      // Notify the sender
-      const messages = await prisma.message.findMany({
-        where: {
-          conversationId: parseInt(conversationId),
-          senderId: {
-            not: userId,
-          },
-        },
-      });
-
-      // Get unique sender IDs
-      const senderIds = [...new Set(messages.map((msg) => msg.senderId))];
-
-      senderIds.forEach((senderId) => {
-        io.to(senderId.toString()).emit("messagesSeen", {
-          conversationId,
-          seenBy: userId,
-        });
-      });
+      await markMessagesAsSeenLogic(conversationId, parseInt(userId, 10));
     } catch (error) {
       console.error("Error in markAsSeen via Socket.IO:", error);
+      // Optionally, emit an error event to the client
+      socket.emit("error", { message: "Failed to mark messages as seen." });
     }
   });
 
@@ -147,6 +114,7 @@ io.on("connection", (socket) => {
 
   socket.on("joinConversation", (conversationId) => {
     socket.join(conversationId.toString());
+    console.log(`Socket joined conversation room: ${conversationId}`);
   });
 
   socket.on("disconnect", () => {
