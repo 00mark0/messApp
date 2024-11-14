@@ -76,8 +76,9 @@ io.on("connection", (socket) => {
   // Join the room for the user
   const userId = socket.handshake.query.userId;
   if (userId) {
-    socket.join(userId);
-    console.log(`User ${userId} joined room`);
+    const userRoom = userId;
+    socket.join(userRoom);
+    console.log(`User ${userId} joined room ${userRoom}`);
   } else {
     console.log("User ID not provided in query");
   }
@@ -146,45 +147,6 @@ io.on("connection", (socket) => {
 
   socket.on("joinConversation", (conversationId) => {
     socket.join(conversationId.toString());
-  });
-
-  // Handle sending messages
-  socket.on("sendMessage", async (data) => {
-    const { conversationId, senderId, recipientId, content } = data;
-
-    try {
-      // Save message to database
-      const message = await prisma.message.create({
-        data: {
-          senderId,
-          recipientId,
-          content,
-          conversationId,
-        },
-        include: {
-          sender: {
-            select: { id: true, username: true },
-          },
-        },
-      });
-
-      // Reset deletedAt for conversation participants
-      await prisma.conversationParticipant.updateMany({
-        where: {
-          conversationId: conversationId,
-          userId: { in: [senderId, recipientId] },
-        },
-        data: {
-          deletedAt: null,
-        },
-      });
-
-      // Emit the message to both participants
-      io.to(recipientId.toString()).emit("receiveMessage", message);
-      io.to(senderId.toString()).emit("receiveMessage", message);
-    } catch (error) {
-      console.error("Error in sendMessage via Socket.IO:", error);
-    }
   });
 
   socket.on("disconnect", () => {

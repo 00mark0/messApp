@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { validationResult } from "express-validator";
+import { io } from "../server.js";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,7 @@ export const sendMessage = async (req, res) => {
   // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log("Validation errors:", errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -20,6 +22,7 @@ export const sendMessage = async (req, res) => {
       where: { id: recipientId },
     });
     if (!recipient) {
+      console.log("Recipient not found:", recipientId);
       return res.status(404).json({ message: "Recipient not found" });
     }
 
@@ -32,47 +35,31 @@ export const sendMessage = async (req, res) => {
     });
 
     if (!isContact) {
+      console.log("Recipient is not in sender's contacts:", recipientId);
       return res.status(403).json({
         message:
           "Recipient is not in your contacts. Please add them as a contact first.",
       });
     }
 
-    // Check if a conversation already exists between the two users
+    // Check for existing conversation
     let conversation = await prisma.conversation.findFirst({
       where: {
-        AND: [
-          {
-            participants: {
-              some: {
-                userId: senderId,
-              },
+        participants: {
+          every: {
+            userId: {
+              in: [senderId, recipientId],
             },
           },
-          {
-            participants: {
-              some: {
-                userId: recipientId,
-              },
-            },
-          },
-        ],
+        },
       },
       include: {
         participants: true,
       },
     });
 
-    if (conversation) {
-      // Ensure the conversation has exactly two participants
-      const participantIds = conversation.participants.map((p) => p.userId);
-      if (participantIds.length !== 2) {
-        conversation = null;
-      }
-    }
-
     if (!conversation) {
-      // Create a new conversation since it doesn't exist
+      // Create new conversation
       conversation = await prisma.conversation.create({
         data: {
           participants: {
@@ -80,6 +67,9 @@ export const sendMessage = async (req, res) => {
           },
         },
       });
+      console.log("Created new conversation:", conversation.id);
+    } else {
+      console.log("Found existing conversation:", conversation.id);
     }
 
     // Reset deletedAt for both participants
@@ -93,7 +83,7 @@ export const sendMessage = async (req, res) => {
       },
     });
 
-    // Create message associated with the conversation
+    // Create the message
     const message = await prisma.message.create({
       data: {
         senderId,
@@ -101,21 +91,29 @@ export const sendMessage = async (req, res) => {
         content,
         conversationId: conversation.id,
       },
-    });
-
-    // Fetch sender's username
-    const sender = await prisma.user.findUnique({
-      where: { id: senderId },
-      select: { username: true },
-    });
-
-    // Create a notification for the recipient
-    await prisma.notification.create({
-      data: {
-        userId: recipientId,
-        content: `${sender.username} sent you a message: "${content}"`,
+      include: {
+        sender: {
+          select: { id: true, username: true },
+        },
       },
     });
+    console.log("Created message:", message.id);
+
+    // Create a notification for the recipient
+    const notification = await prisma.notification.create({
+      data: {
+        userId: recipientId,
+        content: `${message.sender.username} sent you a message: "${content}"`,
+      },
+    });
+    console.log("Created notification:", notification.id);
+
+    // Emit the message to both participants via Socket.IO
+    io.to(recipientId.toString()).emit("receiveMessage", message);
+    io.to(senderId.toString()).emit("receiveMessage", message);
+
+    // Emit the notification to the recipient
+    io.to(recipientId.toString()).emit("notification", notification);
 
     res.status(201).json({ message, conversationId: conversation.id });
   } catch (error) {
