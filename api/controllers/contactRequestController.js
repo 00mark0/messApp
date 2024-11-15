@@ -80,6 +80,12 @@ export const sendContactRequest = async (req, res) => {
       },
     });
 
+    // Emit the contact-request event to the receiver's room
+    io.to(receiverId.toString()).emit("contact-request", {
+      id: senderId,
+      username: sender.username,
+    });
+
     res.status(201).json({ message: "Contact request sent.", contactRequest });
   } catch (error) {
     console.error("Error in sendContactRequest:", error);

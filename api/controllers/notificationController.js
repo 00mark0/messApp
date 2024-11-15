@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { io } from "../server.js";
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,13 @@ export const getNotifications = async (req, res) => {
       where: { userId, isRead: false },
       orderBy: { createdAt: "desc" },
     });
+
+    const unreadCount = await prisma.notification.count({
+      where: { userId, isRead: false },
+    });
+
+    // emit notification event
+    io.to(userId).emit("notification", { count: unreadCount });
 
     res.status(200).json({ notifications });
   } catch (error) {

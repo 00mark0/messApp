@@ -8,6 +8,7 @@ import {
   adminLogin,
   logout,
   getOnlineUsers,
+  updateOnlineVisibility,
 } from "../controllers/authController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -65,5 +66,8 @@ router.post(
 
 // Get online users route
 router.get("/online", authMiddleware, getOnlineUsers);
+
+// Update online visibility route
+router.put("/online", authMiddleware, updateOnlineVisibility);
 
 export default router;

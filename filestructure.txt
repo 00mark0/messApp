@@ -51,6 +51,8 @@
                 |-- migration.sql
             |-- 20241115004817_add_is_online_to_user
                 |-- migration.sql
+            |-- 20241115163311_add_online_visibility
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
@@ -97,6 +99,7 @@
             |-- Profile
                 |-- PasswordReset.jsx
             |-- ThemeToggle.jsx
+            |-- ToggleSwitch.jsx
         |-- context
             |-- AuthContext.jsx
             |-- SocketContext.jsx

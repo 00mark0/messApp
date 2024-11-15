@@ -1,7 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faTimes, faInbox } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBars,
+  faTimes,
+  faInbox,
+  faCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import ThemeToggle from "./ThemeToggle";
@@ -9,9 +14,9 @@ import "../App.css";
 import io from "socket.io-client"; // Import socket.io-client
 
 function Navbar() {
-  const { logout, token } = useContext(AuthContext);
+  const { logout, token, user, onlineStatusToggle } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -26,7 +31,7 @@ function Navbar() {
       const response = await axios.get("/user/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUser(response.data.user);
+      setProfile(response.data.user);
     } catch (err) {
       console.error(err);
     } finally {
@@ -44,7 +49,7 @@ function Navbar() {
 
   useEffect(() => {
     const socket = io("http://localhost:3000", {
-      query: { token },
+      query: { userId: user.id },
     });
 
     socket.on("connect", () => {
@@ -56,10 +61,23 @@ function Navbar() {
       setUnreadCount((prev) => prev + 1);
     });
 
+    socket.on("contact-request", (data) => {
+      setNotifications((prev) => [
+        {
+          id: data.id,
+          content: `${data.username} has sent you a contact request.`,
+          createdAt: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -206,22 +224,30 @@ function Navbar() {
         className={`menu ${isMenuOpen ? "open" : "close"} dark:bg-gray-200`}
       >
         <div className="menu-content">
-          {user && (
+          {profile && (
             <>
               <Link
                 to="/profile"
                 onClick={toggleMenu}
                 className="flex flex-col items-center justify-center"
               >
-                <img
-                  src={
-                    user.profilePicture
-                      ? `http://localhost:3000${user.profilePicture}`
-                      : "/default-avatar.png"
-                  }
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={
+                      user.profilePicture
+                        ? `http://localhost:3000${user.profilePicture}`
+                        : "/default-avatar.png"
+                    }
+                    alt="Profile"
+                    className="w-16 h-16 rounded-full object-cover mr-4"
+                  />
+                  {onlineStatusToggle && (
+                    <FontAwesomeIcon
+                      icon={faCircle}
+                      className="text-green-500 text-xl absolute bottom-0 right-2"
+                    />
+                  )}
+                </div>
                 <p
                   className="
                   text-xl
@@ -230,7 +256,7 @@ function Navbar() {
                   mt-2 
                 "
                 >
-                  {user.username}
+                  {profile.username}
                 </p>
               </Link>
               <ThemeToggle />

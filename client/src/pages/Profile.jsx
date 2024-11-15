@@ -3,10 +3,14 @@ import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import PasswordReset from "../components/Profile/PasswordReset";
 import { useNavigate } from "react-router-dom";
+import ToggleSwitch from "../components/ToggleSwitch";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircle } from "@fortawesome/free-solid-svg-icons";
 
 function Profile() {
   const navigate = useNavigate();
-  const { token, logout } = useContext(AuthContext);
+  const { token, logout, onlineStatusToggle, setOnlineStatusToggle } =
+    useContext(AuthContext);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -99,6 +103,23 @@ function Profile() {
     }
   };
 
+  const handleOnlineStatusToggle = async () => {
+    const newStatus = !onlineStatusToggle;
+    setOnlineStatusToggle(newStatus);
+
+    try {
+      await axios.put(
+        "/auth/online",
+        { isVisible: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    } catch (err) {
+      console.error("Failed to update online status", err);
+    }
+  };
+
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
 
@@ -110,15 +131,23 @@ function Profile() {
             Profile
           </h2>
           <div className="flex items-center mb-4">
-            <img
-              src={
-                user.profilePicture
-                  ? `http://localhost:3000${user.profilePicture}`
-                  : "/default-avatar.png"
-              }
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover mr-4"
-            />
+            <div className="relative">
+              <img
+                src={
+                  user.profilePicture
+                    ? `http://localhost:3000${user.profilePicture}`
+                    : "/default-avatar.png"
+                }
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover mr-4"
+              />
+              {onlineStatusToggle && (
+                <FontAwesomeIcon
+                  icon={faCircle}
+                  className="text-green-500 text-xl absolute bottom-1 right-5"
+                />
+              )}
+            </div>
             <div>
               <p className="text-xl text-gray-800 dark:text-gray-200">
                 {user.username}
@@ -126,12 +155,24 @@ function Profile() {
               <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
             </div>
           </div>
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mb-4"
-          >
-            {editMode ? "Cancel" : "Edit Profile"}
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mb-4"
+            >
+              {editMode ? "Cancel" : "Edit Profile"}
+            </button>
+
+            <div className="flex flex-col justify-center items-center mb-4">
+              <span className="text-gray-800 dark:text-gray-200 mr-2">
+                Online Status
+              </span>
+              <ToggleSwitch
+                isOn={onlineStatusToggle}
+                handleToggle={handleOnlineStatusToggle}
+              />
+            </div>
+          </div>
 
           {editMode && (
             <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -214,7 +255,7 @@ function Profile() {
                 <div className="flex justify-end space-x-4">
                   <button
                     onClick={() => setShowDeleteModal(false)}
-                    className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700"
+                    className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 dark:text-white"
                   >
                     Cancel
                   </button>

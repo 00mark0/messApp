@@ -162,10 +162,28 @@ export const logout = async (req, res) => {
   }
 };
 
+export const updateOnlineVisibility = async (req, res) => {
+  const userId = req.user.userId;
+  const { isVisible } = req.body;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { isVisible },
+    });
+
+    logger.info("User visibility updated: %s", user.email);
+    res.json({ message: "User visibility updated" });
+  } catch (error) {
+    logger.error("Server error: %o", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const getOnlineUsers = async (req, res) => {
   try {
     const onlineUsers = await prisma.user.findMany({
-      where: { isOnline: true },
+      where: { isOnline: true, isVisible: true },
       select: { id: true, username: true },
     });
 

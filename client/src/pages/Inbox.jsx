@@ -8,7 +8,7 @@ import { io } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
 
 function Inbox() {
-  const { token, user } = useContext(AuthContext);
+  const { token, user, onlineStatusToggle } = useContext(AuthContext);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [conversations, setConversations] = useState([]);
@@ -17,6 +17,7 @@ function Inbox() {
   const socket = useRef(null);
   const [typingConversations, setTypingConversations] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
     socket.current = io("http://localhost:3000", {
@@ -191,9 +192,27 @@ function Inbox() {
 
     fetchOnlineUsers(); // Initial fetch
 
-    const intervalId = setInterval(fetchOnlineUsers, 10000); // Fetch every 30 seconds
+    const intervalId = setInterval(fetchOnlineUsers, 10000);
 
     return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [token]);
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const response = await axios.get("/contacts", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setContacts(response.data.contacts);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchContacts();
+
+    const intervalId = setInterval(fetchContacts, 10000);
+
+    return () => clearInterval(intervalId);
   }, [token]);
 
   // Handle search form submission
@@ -257,10 +276,6 @@ function Inbox() {
       }
     }
   };
-
-  useEffect(() => {
-    console.log(onlineUsers);
-  }, [onlineUsers]);
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 min-h-screen">
@@ -357,11 +372,13 @@ function Inbox() {
                 "
                 >
                   {otherParticipant?.user.username || "Unknown User"}
-                  {onlineUsers.some((user) => user.id === recipientId) && (
-                    <span className="text-green-500 ml-2">
-                      <FontAwesomeIcon icon={faCircle} size="xs" />
-                    </span>
-                  )}
+                  {onlineUsers.some((user) => user.id === recipientId) &&
+                    onlineStatusToggle &&
+                    contacts.some((contact) => contact.id === recipientId) && (
+                      <span className="text-green-500 ml-2">
+                        <FontAwesomeIcon icon={faCircle} size="xs" />
+                      </span>
+                    )}
                 </p>
                 <div className="truncate w-52">
                   {isTyping ? (
@@ -399,7 +416,7 @@ function Inbox() {
                             ${
                               isUnread
                                 ? "font-bold dark:text-white text-black"
-                                : "font-normal text-gray-600"
+                                : "font-normal text-gray-600 dark:text-gray-400"
                             }
                             `}
                           >

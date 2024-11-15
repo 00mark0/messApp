@@ -196,11 +196,13 @@ function Chat() {
         userId: user.id,
       });
     } catch (err) {
-      console.error(
-        "Error sending message:",
-        err.response ? err.response.data : err.message
-      );
-      setError("Failed to send message.");
+      if (err.response && err.response.status === 403) {
+        console.error("Error sending message: User not in your contact list.");
+        setError("User not in your contact list.");
+      } else {
+        console.error("Error sending message:", err.response || err.message);
+        setError("Failed to send message.");
+      }
     }
   };
 

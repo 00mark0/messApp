@@ -14,11 +14,32 @@ export const AuthProvider = ({ children }) => {
   );
   const navigate = useNavigate();
 
+  const [onlineStatusToggle, setOnlineStatusToggle] = useState(() => {
+    const storedValue = localStorage.getItem("onlineStatusToggle");
+    if (
+      storedValue === null ||
+      storedValue === undefined ||
+      storedValue === "undefined"
+    ) {
+      return true; // Default value
+    }
+
+    try {
+      return JSON.parse(storedValue);
+    } catch (e) {
+      console.error("Error parsing onlineStatusToggle:", e);
+      // Optional: Remove the invalid entry from localStorage
+      localStorage.removeItem("onlineStatusToggle");
+      return true; // Default value
+    }
+  });
+
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("onlineStatusToggle");
     navigate("/login");
   }, [navigate]);
 
@@ -39,6 +60,15 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   useEffect(() => {
+    if (onlineStatusToggle !== undefined) {
+      localStorage.setItem(
+        "onlineStatusToggle",
+        JSON.stringify(onlineStatusToggle)
+      );
+    }
+  }, [onlineStatusToggle]);
+
+  useEffect(() => {
     const fetchUser = async () => {
       if (token && !user) {
         try {
@@ -46,6 +76,7 @@ export const AuthProvider = ({ children }) => {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUser(response.data.user);
+          setOnlineStatusToggle(response.data.user.isVisible);
         } catch (err) {
           console.error("Failed to fetch user profile", err);
           if (err.response && err.response.status === 401) {
@@ -61,6 +92,7 @@ export const AuthProvider = ({ children }) => {
   const login = (newToken, userInfo, rememberMe) => {
     setToken(newToken);
     setUser(userInfo);
+    setOnlineStatusToggle(userInfo.isVisible);
     if (rememberMe) {
       localStorage.setItem("token", newToken);
       localStorage.setItem("user", JSON.stringify(userInfo));
@@ -73,7 +105,16 @@ export const AuthProvider = ({ children }) => {
   }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        user,
+        login,
+        logout,
+        onlineStatusToggle,
+        setOnlineStatusToggle,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
