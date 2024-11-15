@@ -2,7 +2,14 @@
 
 import express from "express";
 import { body } from "express-validator";
-import { register, login, adminLogin } from "../controllers/authController.js";
+import {
+  register,
+  login,
+  adminLogin,
+  logout,
+  getOnlineUsers,
+} from "../controllers/authController.js";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -38,6 +45,9 @@ router.post(
   login
 );
 
+// Logout route
+router.post("/logout", authMiddleware, logout);
+
 // Admin login route
 router.post(
   "/admin/login",
@@ -52,5 +62,8 @@ router.post(
   ],
   adminLogin
 );
+
+// Get online users route
+router.get("/online", authMiddleware, getOnlineUsers);
 
 export default router;

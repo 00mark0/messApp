@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTrash, faCircle } from "@fortawesome/free-solid-svg-icons";
 import { io } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
 
@@ -16,6 +16,7 @@ function Inbox() {
   const navigate = useNavigate();
   const socket = useRef(null);
   const [typingConversations, setTypingConversations] = useState({});
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
     socket.current = io("http://localhost:3000", {
@@ -53,8 +54,22 @@ function Inbox() {
           }
           return conv;
         });
-        setFilteredConversations(updatedConversations);
-        return updatedConversations;
+
+        // Sort conversations by last message timestamp
+        const sortedConversation = updatedConversations.sort((a, b) => {
+          const latestMessageA = a.messages[0];
+          const latestMessageB = b.messages[0];
+
+          return (
+            new Date(latestMessageB.timestamp) -
+            new Date(latestMessageA.timestamp)
+          );
+        });
+
+        // Update both conversations and filteredConversations
+        setConversations(sortedConversation);
+        setFilteredConversations(sortedConversation);
+        return sortedConversation;
       });
     };
 
@@ -85,9 +100,21 @@ function Inbox() {
           return conv;
         });
 
+        // Sort conversations by last message timestamp
+        const sortedConversations = updatedConversations.sort((a, b) => {
+          const latestMessageA = a.messages[0];
+          const latestMessageB = b.messages[0];
+
+          return (
+            new Date(latestMessageB.timestamp) -
+            new Date(latestMessageA.timestamp)
+          );
+        });
+
         // Update both conversations and filteredConversations
-        setFilteredConversations(updatedConversations);
-        return updatedConversations;
+        setConversations(sortedConversations);
+        setFilteredConversations(sortedConversations);
+        return sortedConversations;
       });
     };
 
@@ -125,8 +152,19 @@ function Inbox() {
           }
         );
 
-        setConversations(conversations);
-        setFilteredConversations(conversations);
+        // Sort conversations by last message timestamp
+        const sortedConversations = conversations.sort((a, b) => {
+          const latestMessageA = a.messages[0];
+          const latestMessageB = b.messages[0];
+
+          return (
+            new Date(latestMessageB.timestamp) -
+            new Date(latestMessageA.timestamp)
+          );
+        });
+
+        setConversations(sortedConversations);
+        setFilteredConversations(sortedConversations);
       } catch (error) {
         console.error("Failed to fetch conversations:", error);
         setConversations([]);
@@ -135,6 +173,27 @@ function Inbox() {
     };
 
     fetchConversations();
+  }, [token]);
+
+  // Fetch online users
+  useEffect(() => {
+    const fetchOnlineUsers = async () => {
+      try {
+        const response = await axios.get("/auth/online", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setOnlineUsers(response.data.onlineUsers);
+      } catch (error) {
+        console.error("Failed to fetch online users:", error);
+      }
+    };
+
+    fetchOnlineUsers(); // Initial fetch
+
+    const intervalId = setInterval(fetchOnlineUsers, 10000); // Fetch every 30 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, [token]);
 
   // Handle search form submission
@@ -198,6 +257,10 @@ function Inbox() {
       }
     }
   };
+
+  useEffect(() => {
+    console.log(onlineUsers);
+  }, [onlineUsers]);
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 min-h-screen">
@@ -294,14 +357,13 @@ function Inbox() {
                 "
                 >
                   {otherParticipant?.user.username || "Unknown User"}
+                  {onlineUsers.some((user) => user.id === recipientId) && (
+                    <span className="text-green-500 ml-2">
+                      <FontAwesomeIcon icon={faCircle} size="xs" />
+                    </span>
+                  )}
                 </p>
-                <div
-                  className={`truncate w-52 ${
-                    isUnread
-                      ? "font-bold dark:text-gray-50"
-                      : "font-normal text-gray-600"
-                  } dark:text-gray-400`}
-                >
+                <div className="truncate w-52">
                   {isTyping ? (
                     <span className="italic text-gray-500">Typing...</span>
                   ) : lastMessage ? (
@@ -333,12 +395,13 @@ function Inbox() {
                       ) : (
                         <div className="flex items-center justify-between">
                           <span
-                            className="
-                            dark:text-gray-400
-                            text-gray-600
-                            truncate
-                            w-40 
-                          "
+                            className={`
+                            ${
+                              isUnread
+                                ? "font-bold dark:text-white text-black"
+                                : "font-normal text-gray-600"
+                            }
+                            `}
                           >
                             {lastMessage.content}
                           </span>

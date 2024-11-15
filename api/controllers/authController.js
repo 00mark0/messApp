@@ -86,6 +86,11 @@ export const login = async (req, res) => {
       expiresIn: "1h",
     });
 
+    const updateOnlineStatus = await prisma.user.update({
+      where: { id: user.id },
+      data: { isOnline: true },
+    });
+
     logger.info("User logged in successfully: %s", user.email);
     res.json({ token });
   } catch (error) {
@@ -134,6 +139,37 @@ export const adminLogin = async (req, res) => {
 
     logger.info("Admin logged in successfully: %s", user.email);
     res.json({ token });
+  } catch (error) {
+    logger.error("Server error: %o", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const logout = async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { isOnline: false },
+    });
+
+    logger.info("User logged out successfully: %s", user.email);
+    res.json({ message: "User logged out successfully" });
+  } catch (error) {
+    logger.error("Server error: %o", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getOnlineUsers = async (req, res) => {
+  try {
+    const onlineUsers = await prisma.user.findMany({
+      where: { isOnline: true },
+      select: { id: true, username: true },
+    });
+
+    res.json({ onlineUsers });
   } catch (error) {
     logger.error("Server error: %o", error);
     res.status(500).json({ message: "Server error" });

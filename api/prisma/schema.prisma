@@ -22,6 +22,7 @@ model User {
   conversations            ConversationParticipant[]
   contactRequestsSent      ContactRequest[]          @relation("ContactRequestSender")
   contactRequestsReceived  ContactRequest[]          @relation("ContactRequestReceiver")
+  isOnline                 Boolean                   @default(false)
 }
 
 model Message {

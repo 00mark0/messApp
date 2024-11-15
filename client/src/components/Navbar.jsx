@@ -132,10 +132,20 @@ function Navbar() {
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-    setIsMenuOpen(false);
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "/auth/logout",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      logout();
+      navigate("/login");
+      setIsMenuOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const toggleMenu = () => {

@@ -1,6 +1,9 @@
 // api/middleware/auth.js
 
 import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -17,7 +20,30 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    if (error.name === "TokenExpiredError") {
+      // Update isOnline status
+      const decoded = jwt.decode(token);
+
+      if (decoded && decoded.userId) {
+        const updateOnlineStatus = async () => {
+          await prisma.user.update({
+            where: { id: decoded.userId },
+            data: { isOnline: false },
+          });
+        };
+
+        updateOnlineStatus()
+          .then(() => res.status(401).json({ message: "Token expired" }))
+          .catch((err) => {
+            console.error("Failed to update online status:", err);
+            res.status(500).json({ message: "Server error" });
+          });
+
+        return;
+      }
+    } else {
+      res.status(401).json({ message: "Invalid token" });
+    }
   }
 };
 
