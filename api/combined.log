@@ -412,3 +412,8 @@
 {"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:03:42.031Z"}
 {"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:03:55.058Z"}
 {"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:04:11.020Z"}
+{"level":"info","message":"User logged out successfully: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:16:35.695Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:17:12.850Z"}
+{"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:20:06.616Z"}
+{"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:20:54.326Z"}
+{"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T18:20:54.758Z"}

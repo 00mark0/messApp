@@ -17,9 +17,6 @@ function YourContacts() {
   const { socket } = useContext(SocketContext);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  console.log("Contacts:", contacts);
-  console.log("Filtered contacts:", filteredContacts);
-
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -100,10 +97,6 @@ function YourContacts() {
       )
     );
   };
-
-  useEffect(() => {
-    console.log(onlineUsers);
-  }, [onlineUsers]);
 
   return (
     <div className="p-4 min-h-screen w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-50">

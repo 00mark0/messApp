@@ -389,8 +389,6 @@ function Inbox() {
 
               const recipientId = otherParticipant?.user.id;
 
-              console.log(onlineUsers);
-
               let isUnread = false;
 
               if (lastMessage) {
