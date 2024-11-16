@@ -258,12 +258,8 @@ function Chat() {
                       : "bg-gray-200"
                   } max-w-md`}
                 >
-                  <div
-                    className="
-                      flex gap-2 
-                  "
-                  >
-                    <div className="relative">
+                  <div className="flex gap-2 items-start">
+                    <div className="relative flex-shrink-0">
                       {!isCurrentUserSender && recipient && (
                         <img
                           src={`http://localhost:3000${
@@ -287,18 +283,20 @@ function Chat() {
                           </span>
                         )}
                     </div>
-                    <p>{msg.content}</p>
+                    <div className="flex-1">
+                      <p className="break-words">{msg.content}</p>
+                      <p className="text-xs text-gray-600 text-end">
+                        {new Date(msg.timestamp).toLocaleString()}
+                      </p>
+                      {/* Show 'Seen' indicator if applicable */}
+                      {isLastMessageByUser &&
+                        isCurrentUserSender &&
+                        recipient &&
+                        msg.seenBy.includes(recipient.id) && (
+                          <p className="text-xs text-green-500">Seen</p>
+                        )}
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600 text-end">
-                    {new Date(msg.timestamp).toLocaleString()}
-                  </p>
-                  {/* Show 'Seen' indicator if applicable */}
-                  {isLastMessageByUser &&
-                    isCurrentUserSender &&
-                    recipient &&
-                    msg.seenBy.includes(recipient.id) && (
-                      <p className="text-xs text-green-500">Seen</p>
-                    )}
                 </div>
               );
             })

@@ -389,6 +389,8 @@ function Inbox() {
 
               const recipientId = otherParticipant?.user.id;
 
+              console.log(onlineUsers);
+
               let isUnread = false;
 
               if (lastMessage) {
@@ -464,13 +466,7 @@ function Inbox() {
                                         addSuffix: true,
                                       }
                                     )
-                                  : "Seen " +
-                                    formatDistanceToNow(
-                                      new Date(lastMessage.timestamp),
-                                      {
-                                        addSuffix: true,
-                                      }
-                                    )}
+                                  : "Seen "}
                               </span>
                             ) : (
                               <div className="flex items-center">

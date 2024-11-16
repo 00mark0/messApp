@@ -181,9 +181,25 @@ export const updateOnlineVisibility = async (req, res) => {
 };
 
 export const getOnlineUsers = async (req, res) => {
+  const userId = req.user.userId;
+
   try {
+    // Fetch the current user's contacts
+    const usersContacts = await prisma.contact.findMany({
+      where: { userId },
+      select: { contact: true },
+    });
+
+    // Extract contact IDs
+    const contactIds = usersContacts.map((contact) => contact.contact.id);
+
+    // Fetch online contacts
     const onlineUsers = await prisma.user.findMany({
-      where: { isOnline: true, isVisible: true },
+      where: {
+        id: { in: contactIds },
+        isOnline: true,
+        isVisible: true,
+      },
       select: { id: true, username: true },
     });
 
