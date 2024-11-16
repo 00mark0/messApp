@@ -293,13 +293,13 @@ function Inbox() {
     <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 min-h-screen">
       <h2 className="text-2xl font-bold mb-4">Inbox</h2>
 
-      <div className="mb-4">
+      <div className="w-full flex justify-between mb-4">
         <button
           onClick={() => handleTabSelect("chat")}
           className={`px-4 py-2 mr-2 rounded ${
             selectedTab === "chat"
               ? "bg-blue-500 text-white"
-              : "bg-blue-200 text-black"
+              : "bg-blue-200 text-gray-500"
           }`}
         >
           Chat
@@ -309,7 +309,7 @@ function Inbox() {
           className={`px-4 py-2 rounded ${
             selectedTab === "groupChat"
               ? "bg-blue-500 text-white"
-              : "bg-blue-200 text-black"
+              : "bg-blue-200 text-gray-500"
           }`}
         >
           Group Chat
@@ -399,6 +399,8 @@ function Inbox() {
                 }
               }
 
+              const contact = contacts.find((c) => c.id === recipientId);
+
               return (
                 <div
                   key={conv.id}
@@ -408,88 +410,104 @@ function Inbox() {
                     openConversation(conv.id, otherParticipant.user.id)
                   }
                 >
-                  <div>
-                    <p
-                      className="
-                      font-semibold
-                      dark:text-white
-                      text-gray-900
-                    "
-                    >
-                      {otherParticipant?.user.username || "Unknown User"}
+                  <div className="flex items-center">
+                    <div className="relative">
+                      <img
+                        src={
+                          contact?.profilePicture
+                            ? `http://localhost:3000${contact.profilePicture}`
+                            : "/default-avatar.png"
+                        }
+                        className="w-10 h-10 rounded-full mr-2"
+                        alt="profile picture"
+                      />
                       {onlineUsers.some((user) => user.id === recipientId) &&
                         onlineStatusToggle &&
                         contacts.some(
                           (contact) => contact.id === recipientId
                         ) && (
-                          <span className="text-green-500 ml-2">
+                          <span className="text-green-500 absolute top-6 left-7">
                             <FontAwesomeIcon icon={faCircle} size="xs" />
                           </span>
                         )}
-                    </p>
-                    <div className="truncate w-52">
-                      {isTyping ? (
-                        <span className="italic text-gray-500">Typing...</span>
-                      ) : lastMessage ? (
-                        <div>
-                          {lastMessage.senderId === user.id ? (
-                            <span
-                              className="
+                    </div>
+                    <div className="flex flex-col">
+                      <p
+                        className="
+                      font-semibold
+                      dark:text-white
+                      text-gray-900
+                    "
+                      >
+                        {otherParticipant?.user.username || "Unknown User"}
+                      </p>
+                      <div className="truncate w-52">
+                        {isTyping ? (
+                          <span className="italic text-gray-500">
+                            Typing...
+                          </span>
+                        ) : lastMessage ? (
+                          <div>
+                            {lastMessage.senderId === user.id ? (
+                              <span
+                                className="
                               dark:text-gray-400
                               text-gray-600
                               font-normal 
                             "
-                            >
-                              {isUnread
-                                ? "Sent " +
-                                  formatDistanceToNow(
-                                    new Date(lastMessage.timestamp),
-                                    {
-                                      addSuffix: true,
-                                    }
-                                  )
-                                : "Seen " +
-                                  formatDistanceToNow(
-                                    new Date(lastMessage.timestamp),
-                                    {
-                                      addSuffix: true,
-                                    }
-                                  )}
-                            </span>
-                          ) : (
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`
+                              >
+                                {isUnread
+                                  ? "Sent " +
+                                    formatDistanceToNow(
+                                      new Date(lastMessage.timestamp),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )
+                                  : "Seen " +
+                                    formatDistanceToNow(
+                                      new Date(lastMessage.timestamp),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )}
+                              </span>
+                            ) : (
+                              <div className="flex items-center">
+                                <span
+                                  className={`
                                 ${
                                   isUnread
                                     ? "font-bold dark:text-white text-black"
                                     : "font-normal text-gray-600 dark:text-gray-400"
                                 }
                                 `}
-                              >
-                                {lastMessage.content}
-                              </span>
-                              <span
-                                className="
+                                >
+                                  {lastMessage.content}
+                                </span>
+                                <span
+                                  className=" flex items-center
                                 dark:text-gray-400
                                 text-gray-600
                                 font-normal
                                 ml-2
                                 "
-                              >
-                                {formatDistanceToNow(
-                                  new Date(lastMessage.timestamp),
-                                  {
-                                    addSuffix: true,
-                                  }
-                                )}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        "No messages yet"
-                      )}
+                                >
+                                  <span className="h-1 w-1 mr-2 inline-block bg-gray-600 rounded-full"></span>
+                                  {formatDistanceToNow(
+                                    new Date(lastMessage.timestamp),
+                                    {
+                                      addSuffix: true,
+                                    }
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          "No messages yet"
+                        )}
+                      </div>
                     </div>
                   </div>
                   {/* Delete Conversation Button */}

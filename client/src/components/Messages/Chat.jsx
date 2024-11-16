@@ -4,9 +4,11 @@ import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
 import { io } from "socket.io-client";
 import ReactScrollableFeed from "react-scrollable-feed";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCircle } from "@fortawesome/free-solid-svg-icons";
 
 function Chat() {
-  const { token, user } = useContext(AuthContext);
+  const { token, user, onlineStatusToggle } = useContext(AuthContext);
   const { conversationId, recipientId } = useParams();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -17,6 +19,7 @@ function Chat() {
   const socket = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -190,6 +193,27 @@ function Chat() {
     }
   };
 
+  // Fetch online users
+  useEffect(() => {
+    const fetchOnlineUsers = async () => {
+      try {
+        const response = await axios.get("/auth/online", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setOnlineUsers(response.data.onlineUsers);
+      } catch (error) {
+        console.error("Failed to fetch online users:", error);
+      }
+    };
+
+    fetchOnlineUsers(); // Initial fetch
+
+    const intervalId = setInterval(fetchOnlineUsers, 10000);
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [token]);
+
   if (loading) {
     return <div className="container mx-auto p-4">Loading...</div>;
   }
@@ -239,15 +263,30 @@ function Chat() {
                       flex gap-2 
                   "
                   >
-                    {!isCurrentUserSender && recipient && (
-                      <img
-                        src={`http://localhost:3000${
-                          recipient.profilePicture || "/default-avatar.png"
-                        }`}
-                        alt="Recipient Profile"
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
+                    <div className="relative">
+                      {!isCurrentUserSender && recipient && (
+                        <img
+                          src={`http://localhost:3000${
+                            recipient.profilePicture || "/default-avatar.png"
+                          }`}
+                          alt="Recipient Profile"
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                      {onlineStatusToggle &&
+                        !isCurrentUserSender &&
+                        recipient &&
+                        onlineUsers.some(
+                          (user) => user.id === recipient.id
+                        ) && (
+                          <span>
+                            <FontAwesomeIcon
+                              icon={faCircle}
+                              className="text-green-500 text-xs absolute bottom-0 right-0"
+                            />
+                          </span>
+                        )}
+                    </div>
                     <p>{msg.content}</p>
                   </div>
                   <p className="text-xs text-gray-600 text-end">
