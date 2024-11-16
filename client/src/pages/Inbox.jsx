@@ -11,9 +11,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { io } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
+import GroupChat from "../components/Messages/GroupChat";
 
 function Inbox() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
+  const [selectedTab, setSelectedTab] = useState("chat");
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [conversations, setConversations] = useState([]);
@@ -23,6 +25,11 @@ function Inbox() {
   const [typingConversations, setTypingConversations] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
+
+  // Function to handle tab selection
+  const handleTabSelect = (tab) => {
+    setSelectedTab(tab);
+  };
 
   useEffect(() => {
     socket.current = io("http://localhost:3000", {
@@ -286,193 +293,224 @@ function Inbox() {
     <div className="p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-50 min-h-screen">
       <h2 className="text-2xl font-bold mb-4">Inbox</h2>
 
-      {/* New Conversation Section */}
       <div className="mb-4">
-        <h3 className="text-xl font-semibold mb-2">New Conversation</h3>
-        <form onSubmit={handleSearch} className="flex mb-4">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search contacts..."
-            className="flex-grow p-2 rounded-l border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <button
-            type="submit"
-            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-r"
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </button>
-        </form>
-        {searchResults.length > 0 && (
-          <button
-            className="block bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded mb-2"
-            onClick={() => setSearchResults([])}
-          >
-            <FontAwesomeIcon icon={faX} />
-          </button>
-        )}
-
-        {searchResults.length > 0 && (
-          <ul className="space-y-4 max-h-64 overflow-y-auto mb-6">
-            {searchResults.map((contact) => (
-              <li
-                key={contact.id}
-                className="flex items-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow cursor-pointer"
-                onClick={() => handleUserClick(contact.id)}
-              >
-                <img
-                  src={
-                    contact.profilePicture
-                      ? `http://localhost:3000${contact.profilePicture}`
-                      : "/default-avatar.png"
-                  }
-                  alt={contact.username}
-                  className="w-12 h-12 rounded-full mr-4"
-                />
-                <span className="flex-grow">{contact.username}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <button
+          onClick={() => handleTabSelect("chat")}
+          className={`px-4 py-2 mr-2 rounded ${
+            selectedTab === "chat"
+              ? "bg-blue-500 text-white"
+              : "bg-blue-200 text-black"
+          }`}
+        >
+          Chat
+        </button>
+        <button
+          onClick={() => handleTabSelect("groupChat")}
+          className={`px-4 py-2 rounded ${
+            selectedTab === "groupChat"
+              ? "bg-blue-500 text-white"
+              : "bg-blue-200 text-black"
+          }`}
+        >
+          Group Chat
+        </button>
       </div>
 
-      {/* Conversations Section */}
-      <input
-        type="text"
-        placeholder="Filter conversations..."
-        onChange={handleFilter}
-        className="mb-4 p-2 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-      />
+      {selectedTab === "chat" ? (
+        <div>
+          {/* Existing Chat Content */}
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold mb-2">New Conversation</h3>
+            <form onSubmit={handleSearch} className="flex mb-4">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search contacts..."
+                className="flex-grow p-2 rounded-l border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+              <button
+                type="submit"
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-r"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+            </form>
+            {searchResults.length > 0 && (
+              <button
+                className="block bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded mb-2"
+                onClick={() => setSearchResults([])}
+              >
+                <FontAwesomeIcon icon={faX} />
+              </button>
+            )}
 
-      <h2 className="text-xl font-semibold mb-2">Conversations</h2>
-      {filteredConversations.length > 0 ? (
-        filteredConversations.map((conv) => {
-          const otherParticipant = conv.participants.find(
-            (p) => p.user.id !== user.id
-          );
+            {searchResults.length > 0 && (
+              <ul className="space-y-4 max-h-64 overflow-y-auto mb-6">
+                {searchResults.map((contact) => (
+                  <li
+                    key={contact.id}
+                    className="flex items-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow cursor-pointer"
+                    onClick={() => handleUserClick(contact.id)}
+                  >
+                    <img
+                      src={
+                        contact.profilePicture
+                          ? `http://localhost:3000${contact.profilePicture}`
+                          : "/default-avatar.png"
+                      }
+                      alt={contact.username}
+                      className="w-12 h-12 rounded-full mr-4"
+                    />
+                    <span className="flex-grow">{contact.username}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-          const lastMessage = conv.messages[0];
-          const isTyping = typingConversations[conv.id];
+          {/* Conversations Section */}
+          <input
+            type="text"
+            placeholder="Filter conversations..."
+            onChange={handleFilter}
+            className="mb-4 p-2 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
 
-          const recipientId = otherParticipant?.user.id;
+          <h2 className="text-xl font-semibold mb-2">Chat</h2>
+          {filteredConversations.length > 0 ? (
+            filteredConversations.map((conv) => {
+              const otherParticipant = conv.participants.find(
+                (p) => p.user.id !== user.id
+              );
 
-          let isUnread = false;
+              const lastMessage = conv.messages[0];
+              const isTyping = typingConversations[conv.id];
 
-          if (lastMessage) {
-            if (lastMessage.senderId === user.id) {
-              isUnread = !lastMessage.seenBy.includes(recipientId);
-            } else {
-              isUnread = !lastMessage.seenBy.includes(user.id);
-            }
-          }
+              const recipientId = otherParticipant?.user.id;
 
-          return (
-            <div
-              key={conv.id}
-              className={`p-2 flex justify-between items-center cursor-pointer hover:bg-gray-200
-                dark:hover:bg-gray-600 rounded-lg mb-2`}
-              onClick={() =>
-                openConversation(conv.id, otherParticipant.user.id)
+              let isUnread = false;
+
+              if (lastMessage) {
+                if (lastMessage.senderId === user.id) {
+                  isUnread = !lastMessage.seenBy.includes(recipientId);
+                } else {
+                  isUnread = !lastMessage.seenBy.includes(user.id);
+                }
               }
-            >
-              <div>
-                <p
-                  className="
-                  font-semibold
-                  dark:text-white
-                  text-gray-900
-                "
+
+              return (
+                <div
+                  key={conv.id}
+                  className={`p-2 flex justify-between items-center cursor-pointer hover:bg-gray-200
+                    dark:hover:bg-gray-600 rounded-lg mb-2`}
+                  onClick={() =>
+                    openConversation(conv.id, otherParticipant.user.id)
+                  }
                 >
-                  {otherParticipant?.user.username || "Unknown User"}
-                  {onlineUsers.some((user) => user.id === recipientId) &&
-                    onlineStatusToggle &&
-                    contacts.some((contact) => contact.id === recipientId) && (
-                      <span className="text-green-500 ml-2">
-                        <FontAwesomeIcon icon={faCircle} size="xs" />
-                      </span>
-                    )}
-                </p>
-                <div className="truncate w-52">
-                  {isTyping ? (
-                    <span className="italic text-gray-500">Typing...</span>
-                  ) : lastMessage ? (
-                    <div>
-                      {lastMessage.senderId === user.id ? (
-                        <span
-                          className="
-                          dark:text-gray-400
-                          text-gray-600
-                          font-normal 
-                        "
-                        >
-                          {isUnread
-                            ? "Sent " +
-                              formatDistanceToNow(
-                                new Date(lastMessage.timestamp),
-                                {
-                                  addSuffix: true,
-                                }
-                              )
-                            : "Seen " +
-                              formatDistanceToNow(
-                                new Date(lastMessage.timestamp),
-                                {
-                                  addSuffix: true,
-                                }
-                              )}
-                        </span>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`
-                            ${
-                              isUnread
-                                ? "font-bold dark:text-white text-black"
-                                : "font-normal text-gray-600 dark:text-gray-400"
-                            }
-                            `}
-                          >
-                            {lastMessage.content}
+                  <div>
+                    <p
+                      className="
+                      font-semibold
+                      dark:text-white
+                      text-gray-900
+                    "
+                    >
+                      {otherParticipant?.user.username || "Unknown User"}
+                      {onlineUsers.some((user) => user.id === recipientId) &&
+                        onlineStatusToggle &&
+                        contacts.some(
+                          (contact) => contact.id === recipientId
+                        ) && (
+                          <span className="text-green-500 ml-2">
+                            <FontAwesomeIcon icon={faCircle} size="xs" />
                           </span>
-                          <span
-                            className="
-                            dark:text-gray-400
-                            text-gray-600
-                            font-normal
-                            ml-2
+                        )}
+                    </p>
+                    <div className="truncate w-52">
+                      {isTyping ? (
+                        <span className="italic text-gray-500">Typing...</span>
+                      ) : lastMessage ? (
+                        <div>
+                          {lastMessage.senderId === user.id ? (
+                            <span
+                              className="
+                              dark:text-gray-400
+                              text-gray-600
+                              font-normal 
                             "
-                          >
-                            {formatDistanceToNow(
-                              new Date(lastMessage.timestamp),
-                              {
-                                addSuffix: true,
-                              }
-                            )}
-                          </span>
+                            >
+                              {isUnread
+                                ? "Sent " +
+                                  formatDistanceToNow(
+                                    new Date(lastMessage.timestamp),
+                                    {
+                                      addSuffix: true,
+                                    }
+                                  )
+                                : "Seen " +
+                                  formatDistanceToNow(
+                                    new Date(lastMessage.timestamp),
+                                    {
+                                      addSuffix: true,
+                                    }
+                                  )}
+                            </span>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`
+                                ${
+                                  isUnread
+                                    ? "font-bold dark:text-white text-black"
+                                    : "font-normal text-gray-600 dark:text-gray-400"
+                                }
+                                `}
+                              >
+                                {lastMessage.content}
+                              </span>
+                              <span
+                                className="
+                                dark:text-gray-400
+                                text-gray-600
+                                font-normal
+                                ml-2
+                                "
+                              >
+                                {formatDistanceToNow(
+                                  new Date(lastMessage.timestamp),
+                                  {
+                                    addSuffix: true,
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          )}
                         </div>
+                      ) : (
+                        "No messages yet"
                       )}
                     </div>
-                  ) : (
-                    "No messages yet"
-                  )}
+                  </div>
+                  {/* Delete Conversation Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteConversation(conv.id);
+                    }}
+                    className="text-red-500 hover:text-red-700 focus:outline-none"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
                 </div>
-              </div>
-              {/* Delete Conversation Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteConversation(conv.id);
-                }}
-                className="text-red-500 hover:text-red-700 focus:outline-none"
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
-            </div>
-          );
-        })
+              );
+            })
+          ) : (
+            <p>No conversations yet.</p>
+          )}
+        </div>
       ) : (
-        <p>No conversations yet.</p>
+        <GroupChat />
       )}
     </div>
   );

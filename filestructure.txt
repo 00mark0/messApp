@@ -95,6 +95,7 @@
             |-- Layout.jsx
             |-- Messages
                 |-- Chat.jsx
+                |-- GroupChat.jsx
             |-- Navbar.jsx
             |-- Profile
                 |-- PasswordReset.jsx
