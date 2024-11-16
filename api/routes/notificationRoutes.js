@@ -8,6 +8,6 @@ import {
 const router = express.Router();
 
 router.get("/", authMiddleware, getNotifications);
-router.post("/:notificationId/read", authMiddleware, markNotificationAsRead);
+router.post("/mark-as-read", authMiddleware, markNotificationAsRead);
 
 export default router;

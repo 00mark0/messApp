@@ -105,25 +105,25 @@ function Navbar() {
 
     if (!showNotifications) {
       try {
-        // Create an array of promises to mark each notification as read
-        const markReadPromises = notifications.map((notif) =>
-          axios.post(
-            `/notifications/${notif.id}/read`,
-            {},
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          )
-        );
+        // Collect all unread notif IDs
+        const unreadNotificationIds = notifications
+          .filter((notif) => !notif.read)
+          .map((notif) => notif.id);
 
-        // Wait for all promises to resolve
-        await Promise.all(markReadPromises);
+        if (unreadNotificationIds.length > 0) {
+          // Send a req to mark all unread notifs as read
+          await axios.post(
+            "/notifications/mark-as-read",
+            { notificationIds: unreadNotificationIds },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
 
-        // Update local state
-        setUnreadCount(0);
-        setNotifications((prev) =>
-          prev.map((notif) => ({ ...notif, read: true }))
-        );
+          // Update local state
+          setUnreadCount(0);
+          setNotifications((prev) =>
+            prev.map((notif) => ({ ...notif, read: true }))
+          );
+        }
       } catch (err) {
         console.error("Failed to mark notifications as read", err);
       }
@@ -203,10 +203,26 @@ function Navbar() {
                           notif.read ? "bg-gray-100" : "bg-white"
                         }`}
                       >
-                        <p className="text-sm text-gray-800">{notif.content}</p>
-                        <span className="text-xs text-gray-500">
-                          {new Date(notif.createdAt).toLocaleString()}
-                        </span>
+                        <Link
+                          to={
+                            notif.content.includes("message")
+                              ? "/"
+                              : notif.content.includes("contact request")
+                              ? "/contacts"
+                              : "#"
+                          }
+                          className="block"
+                          onClick={() => {
+                            setShowNotifications(false);
+                          }}
+                        >
+                          <p className="text-sm text-gray-800">
+                            {notif.content}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {new Date(notif.createdAt).toLocaleString()}
+                          </span>
+                        </Link>
                       </li>
                     ))}
                 </ul>
@@ -244,7 +260,7 @@ function Navbar() {
                   {onlineStatusToggle && (
                     <FontAwesomeIcon
                       icon={faCircle}
-                      className="text-green-500 text-xl absolute bottom-0 right-2"
+                      className="text-green-500 text-md absolute bottom-0 right-3"
                     />
                   )}
                 </div>

@@ -28,19 +28,15 @@ export const getNotifications = async (req, res) => {
 
 export const markNotificationAsRead = async (req, res) => {
   const userId = req.user.userId;
-  const notificationId = parseInt(req.params.notificationId, 10);
+  const { notificationIds } = req.body;
 
   try {
-    const notification = await prisma.notification.findUnique({
-      where: { id: notificationId, isRead: false },
-    });
-
-    if (!notification || notification.userId !== userId) {
-      return res.status(404).json({ message: "Notification not found." });
-    }
-
-    await prisma.notification.update({
-      where: { id: notificationId },
+    await prisma.notification.updateMany({
+      where: {
+        id: { in: notificationIds },
+        userId: userId,
+        isRead: false,
+      },
       data: { isRead: true },
     });
 
