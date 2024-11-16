@@ -327,3 +327,14 @@
 {"level":"info","message":"User visibility updated: user1@example.com","service":"user-service","timestamp":"2024-11-16T13:20:12.357Z"}
 {"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:20:17.059Z"}
 {"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:20:28.139Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-16T13:32:45.786Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:34:55.283Z"}
+{"level":"info","message":"User logged out successfully: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:39:32.507Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-16T13:39:36.156Z"}
+{"level":"info","message":"User logged out successfully: user3@example.com","service":"user-service","timestamp":"2024-11-16T13:39:50.870Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:39:57.075Z"}
+{"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:43:10.138Z"}
+{"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:43:31.924Z"}
+{"level":"info","message":"User visibility updated: user2@example.com","service":"user-service","timestamp":"2024-11-16T13:43:46.061Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-16T14:34:09.041Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-16T14:44:33.927Z"}

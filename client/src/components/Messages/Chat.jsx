@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
 import { io } from "socket.io-client";
+import ReactScrollableFeed from "react-scrollable-feed";
 
 function Chat() {
   const { token, user } = useContext(AuthContext);
@@ -13,10 +14,7 @@ function Chat() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const messagesEndRef = useRef(null);
-  const chatContainerRef = useRef(null);
   const socket = useRef(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
 
@@ -161,20 +159,6 @@ function Chat() {
     }
   };
 
-  const handleScroll = () => {
-    if (chatContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } =
-        chatContainerRef.current;
-      setIsAtBottom(scrollTop + clientHeight >= scrollHeight - 10);
-    }
-  };
-
-  useEffect(() => {
-    if (isAtBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isAtBottom]);
-
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -230,11 +214,7 @@ function Chat() {
           Chat with {recipient ? recipient.username : "User"}
         </h1>
 
-        <div
-          className="flex-1 overflow-y-auto mb-4"
-          ref={chatContainerRef}
-          onScroll={handleScroll}
-        >
+        <ReactScrollableFeed className="flex-1 overflow-y-auto mb-4">
           {messages.length > 0 ? (
             messages.map((msg, index) => {
               const isCurrentUserSender = msg.senderId === user.id;
@@ -254,8 +234,23 @@ function Chat() {
                       : "bg-gray-200"
                   } max-w-md`}
                 >
-                  <p>{msg.content}</p>
-                  <p className="text-xs text-gray-600">
+                  <div
+                    className="
+                      flex gap-2 
+                  "
+                  >
+                    {!isCurrentUserSender && recipient && (
+                      <img
+                        src={`http://localhost:3000${
+                          recipient.profilePicture || "/default-avatar.png"
+                        }`}
+                        alt="Recipient Profile"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <p>{msg.content}</p>
+                  </div>
+                  <p className="text-xs text-gray-600 text-end">
                     {new Date(msg.timestamp).toLocaleString()}
                   </p>
                   {/* Show 'Seen' indicator if applicable */}
@@ -279,8 +274,7 @@ function Chat() {
             </p>
           )}
           {otherUserTyping && <p className="text-gray-500 italic">Typing...</p>}
-          <div ref={messagesEndRef} />
-        </div>
+        </ReactScrollableFeed>
 
         <div className="flex">
           <input

@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrash, faCircle } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPlus,
+  faTrash,
+  faCircle,
+  faX,
+} from "@fortawesome/free-solid-svg-icons";
 import { io } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
 
@@ -299,6 +304,14 @@ function Inbox() {
             <FontAwesomeIcon icon={faPlus} />
           </button>
         </form>
+        {searchResults.length > 0 && (
+          <button
+            className="block bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded mb-2"
+            onClick={() => setSearchResults([])}
+          >
+            <FontAwesomeIcon icon={faX} />
+          </button>
+        )}
 
         {searchResults.length > 0 && (
           <ul className="space-y-4 max-h-64 overflow-y-auto mb-6">

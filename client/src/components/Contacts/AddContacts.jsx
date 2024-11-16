@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import axios from "../../api/axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faSearch, faX } from "@fortawesome/free-solid-svg-icons";
 import AuthContext from "../../context/AuthContext";
 
 function AddContacts() {
@@ -56,6 +56,15 @@ function AddContacts() {
           <FontAwesomeIcon icon={faSearch} />
         </button>
       </form>
+
+      {searchResults.length > 0 && (
+        <button
+          className="block bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded mb-2"
+          onClick={() => setSearchResults([])}
+        >
+          <FontAwesomeIcon icon={faX} />
+        </button>
+      )}
 
       {searchResults.length > 0 && (
         <ul className="space-y-4 max-h-64 overflow-y-auto">
