@@ -41,7 +41,7 @@ function Profile() {
       }
     };
     fetchUserProfile();
-  }, [token]);
+  }, [token, setOnlineStatusToggle]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
