@@ -32,6 +32,7 @@ function Profile() {
         setUser(response.data.user);
         setUsername(response.data.user.username);
         setEmail(response.data.user.email);
+        setOnlineStatusToggle(response.data.user.isVisible);
       } catch (err) {
         setError("Failed to fetch user profile.");
         console.error(err);

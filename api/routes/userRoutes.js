@@ -23,6 +23,7 @@ router.get("/profile", authMiddleware, async (req, res) => {
         username: true,
         email: true,
         profilePicture: true,
+        isVisible: true,
       },
     });
     res.json({ user });
