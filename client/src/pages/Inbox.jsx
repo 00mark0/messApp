@@ -11,7 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { io } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
-import GroupChat from "../components/Messages/GroupChat";
+import GroupInbox from "../components/Messages/GroupInbox";
 
 function Inbox() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -522,7 +522,7 @@ function Inbox() {
           )}
         </div>
       ) : (
-        <GroupChat />
+        <GroupInbox />
       )}
     </div>
   );

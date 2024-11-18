@@ -53,6 +53,8 @@
                 |-- migration.sql
             |-- 20241115163311_add_online_visibility
                 |-- migration.sql
+            |-- 20241116171909_added_seen_timestamps
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
@@ -95,7 +97,7 @@
             |-- Layout.jsx
             |-- Messages
                 |-- Chat.jsx
-                |-- GroupChat.jsx
+                |-- GroupInbox.jsx
             |-- Navbar.jsx
             |-- Profile
                 |-- PasswordReset.jsx

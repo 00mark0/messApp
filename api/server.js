@@ -39,19 +39,6 @@ app.use(cors());
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Rate limiting middleware with custom handler
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 100 requests per windowMs
-  handler: (req, res, next, options) => {
-    console.warn(`Rate limit exceeded for IP: ${req.ip}`);
-    res.status(429).json({
-      message: "Too many requests, please try again later.",
-    });
-  },
-});
-app.use(limiter);
-
 // Serve static files from the client
 app.use(express.static(path.join(__dirname, "../client/dist")));
 
