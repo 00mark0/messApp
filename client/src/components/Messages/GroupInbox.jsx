@@ -1,4 +1,6 @@
+// GroupInbox.jsx
 import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -7,15 +9,19 @@ import {
   faUserMinus,
   faAdd,
   faX,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import socket from "../../api/socket";
 
 function GroupInbox() {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupParticipants, setGroupParticipants] = useState([]);
   const [filter, setFilter] = useState("");
+  const [groupConvos, setGroupConvos] = useState([]);
 
   // Fetch contacts when the menu is open
   useEffect(() => {
@@ -75,6 +81,7 @@ function GroupInbox() {
       // Reset state variables
       setGroupName("");
       setGroupParticipants([]);
+      setIsMenuOpen(false);
     } catch (err) {
       console.log(err);
     }
@@ -84,6 +91,79 @@ function GroupInbox() {
   const filteredContacts = contacts.filter((contact) =>
     contact.username.toLowerCase().includes(filter.toLowerCase())
   );
+
+  // Fetch group convos
+  useEffect(() => {
+    const fetchGroupConvos = async () => {
+      try {
+        const res = await axios.get("/groups/conversations", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Sort the groups by last message date
+        const sortedGroups = res.data.groups.sort((a, b) => {
+          if (!a.lastMessage) return 1;
+          if (!b.lastMessage) return -1;
+          return (
+            new Date(b.lastMessage.timestamp) -
+            new Date(a.lastMessage.timestamp)
+          );
+        });
+
+        console.log(res.data.groups);
+        setGroupConvos(sortedGroups);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchGroupConvos();
+  }, [token]);
+
+  // Handle incoming new message events
+  useEffect(() => {
+    const handleNewMessage = (message) => {
+      setGroupConvos((prevConvos) =>
+        prevConvos.map((group) => {
+          if (group.id === message.groupId) {
+            return {
+              ...group,
+              lastMessage: message,
+              unseenMessages: group.unseenMessages + 1,
+            };
+          }
+          return group;
+        })
+      );
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, []);
+
+  const handleGroupClick = (groupId) => {
+    navigate(`/group/${groupId}`);
+  };
+
+  const handleGroupDelete = async (groupId) => {
+    try {
+      await axios.delete(`/groups/${groupId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const updatedGroups = groupConvos.filter((group) => group.id !== groupId);
+      setGroupConvos(updatedGroups);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -102,7 +182,7 @@ function GroupInbox() {
       </button>
 
       {isMenuOpen && (
-        <div className="flex gap-8">
+        <div className="flex gap-8 mt-4">
           <div className="w-1/2">
             <h2 className="text-xl font-bold mb-4">Contacts</h2>
             <input
@@ -146,7 +226,7 @@ function GroupInbox() {
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder="Group Name"
-                className="w-full px-4 py-2 border rounded"
+                className="w-full dark:text-gray-800 px-4 py-2 border rounded"
                 required
               />
               <div className="flex flex-wrap gap-4 mt-4">
@@ -170,6 +250,7 @@ function GroupInbox() {
                       />
                       <p>{participant?.username}</p>
                       <button
+                        type="button"
                         onClick={() => removeParticipant(participantId)}
                         className="bg-red-500 text-white px-2 py-1 rounded"
                       >
@@ -191,6 +272,58 @@ function GroupInbox() {
       )}
 
       {/* Render the convos you are a member of, redirect to group chat of that convo on click*/}
+      <h2 className="text-xl font-bold mt-8">Group Conversations</h2>
+      <div className="space-y-4 rounded">
+        {groupConvos.map((group) => (
+          <div
+            key={group.id}
+            className="flex items-center gap-4 p-4 border rounded cursor-pointer"
+            onClick={() => handleGroupClick(group.id)}
+          >
+            <div className="relative">
+              {group.participants.slice(0, 2).map((participant, index) => (
+                <img
+                  key={participant.id}
+                  src={
+                    participant.profilePicture
+                      ? `http://localhost:3000${participant.profilePicture}`
+                      : "/default-avatar.png"
+                  }
+                  alt="profile picture"
+                  className={`w-10 h-10 rounded-full border-2 border-white ${
+                    index === 0 ? "z-10" : "z-0 -ml-4 -mt-4"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold">{group.name}</h3>
+              {group.lastMessage ? (
+                <p className="text-sm text-gray-600">
+                  {group.unseenMessages > 0
+                    ? `${group.unseenMessages} new messages`
+                    : group.lastMessage.content}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-600">No messages yet</p>
+              )}
+            </div>
+            {group.participants.some(
+              (participant) => participant.isAdmin && participant.id === user.id
+            ) && (
+              <button
+                className="text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGroupDelete(group.id);
+                }}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

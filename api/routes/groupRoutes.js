@@ -6,6 +6,11 @@ import {
   removeParticipant,
   sendMessageToGroup,
   getGroupMessages,
+  getGroupConversations,
+  removeGroup,
+  leaveGroup,
+  giveAdminRights,
+  getGroupParticipants,
 } from "../controllers/groupController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -61,6 +66,44 @@ router.get(
   authMiddleware,
   [param("groupId").isInt().withMessage("Group ID must be an integer")],
   getGroupMessages
+);
+
+// Get conversations for a user
+router.get("/conversations", authMiddleware, getGroupConversations);
+
+// Remove a group as group admin
+router.delete(
+  "/:groupId",
+  authMiddleware,
+  [param("groupId").isInt().withMessage("Group ID must be an integer")],
+  removeGroup
+);
+
+// Leave a group
+router.delete(
+  "/:groupId/leave",
+  authMiddleware,
+  [param("groupId").isInt().withMessage("Group ID must be an integer")],
+  leaveGroup
+);
+
+// Give admin rights to a group participant
+router.post(
+  "/:groupId/admin",
+  authMiddleware,
+  [
+    param("groupId").isInt().withMessage("Group ID must be an integer"),
+    body("userId").isInt().withMessage("User ID must be an integer"),
+  ],
+  giveAdminRights
+);
+
+// Get participants in a group
+router.get(
+  "/:groupId/participants",
+  authMiddleware,
+  [param("groupId").isInt().withMessage("Group ID must be an integer")],
+  getGroupParticipants
 );
 
 export default router;

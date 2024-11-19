@@ -129,6 +129,7 @@ export const getConversations = async (req, res) => {
     // Fetch conversations the user is part of
     const conversations = await prisma.conversation.findMany({
       where: {
+        isGroup: false,
         participants: {
           some: {
             userId: userId,

@@ -1,11 +1,11 @@
-import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
-import { io } from "socket.io-client";
 import ReactScrollableFeed from "react-scrollable-feed";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
+import socket from "../../api/socket";
 
 function Chat() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -16,7 +16,6 @@ function Chat() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const socket = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -80,16 +79,11 @@ function Chat() {
   );
 
   useEffect(() => {
-    // Connect to Socket.IO
-    socket.current = io("http://localhost:3000", {
-      query: { userId: user.id },
-    });
-
     // Join conversation room
-    socket.current.emit("joinConversation", conversationId);
+    socket.emit("joinConversation", conversationId);
 
     // Listen for incoming messages
-    socket.current.on("receiveMessage", handleReceiveMessage);
+    socket.on("receiveMessage", handleReceiveMessage);
 
     // Listen for messages seen
     const handleMessagesSeen = (data) => {
@@ -107,7 +101,7 @@ function Chat() {
       }
     };
 
-    socket.current.on("messagesSeen", handleMessagesSeen);
+    socket.on("messagesSeen", handleMessagesSeen);
 
     // Listen for typing events
     const handleTyping = (data) => {
@@ -122,22 +116,21 @@ function Chat() {
       }
     };
 
-    socket.current.on("typing", handleTyping);
-    socket.current.on("stopTyping", handleStopTyping);
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
 
     // Cleanup on unmount
     return () => {
-      socket.current.off("receiveMessage", handleReceiveMessage);
-      socket.current.off("messagesSeen", handleMessagesSeen);
-      socket.current.off("typing", handleTyping);
-      socket.current.off("stopTyping", handleStopTyping);
-      socket.current.disconnect();
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("messagesSeen", handleMessagesSeen);
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
     };
   }, [conversationId, user.id, handleReceiveMessage]);
 
   useEffect(() => {
-    if (socket.current && messages.length > 0) {
-      socket.current.emit("markAsSeen", {
+    if (socket && messages.length > 0) {
+      socket.emit("markAsSeen", {
         conversationId,
         userId: user.id,
       });
@@ -149,13 +142,13 @@ function Chat() {
 
     if (e.target.value && !isTyping) {
       setIsTyping(true);
-      socket.current.emit("typing", {
+      socket.emit("typing", {
         conversationId,
         userId: user.id,
       });
     } else if (!e.target.value && isTyping) {
       setIsTyping(false);
-      socket.current.emit("stopTyping", {
+      socket.emit("stopTyping", {
         conversationId,
         userId: user.id,
       });
@@ -178,7 +171,7 @@ function Chat() {
 
       setInput("");
       setIsTyping(false);
-      socket.current.emit("stopTyping", {
+      socket.emit("stopTyping", {
         conversationId,
         userId: user.id,
       });

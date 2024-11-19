@@ -85,6 +85,7 @@
         |-- App.jsx
         |-- api
             |-- axios.js
+            |-- socket.js
         |-- components
             |-- Auth
                 |-- Login.jsx
@@ -97,6 +98,7 @@
             |-- Layout.jsx
             |-- Messages
                 |-- Chat.jsx
+                |-- GroupChat.jsx
                 |-- GroupInbox.jsx
             |-- Navbar.jsx
             |-- Profile
@@ -105,7 +107,6 @@
             |-- ToggleSwitch.jsx
         |-- context
             |-- AuthContext.jsx
-            |-- SocketContext.jsx
         |-- index.css
         |-- main.jsx
         |-- pages

@@ -1,15 +1,15 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import socket from "../api/socket";
 import {
   faPlus,
   faTrash,
   faCircle,
   faX,
 } from "@fortawesome/free-solid-svg-icons";
-import { io } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
 import GroupInbox from "../components/Messages/GroupInbox";
 
@@ -21,7 +21,6 @@ function Inbox() {
   const [conversations, setConversations] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([]);
   const navigate = useNavigate();
-  const socket = useRef(null);
   const [typingConversations, setTypingConversations] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -32,9 +31,14 @@ function Inbox() {
   };
 
   useEffect(() => {
-    socket.current = io("http://localhost:3000", {
-      query: { userId: user.id },
-    });
+    // Join the conversation
+    if (socket && conversations.length > 0) {
+      conversations.forEach((conv) => {
+        if (!conv.isGroup) {
+          socket.emit("joinConversation", conv.id);
+        }
+      });
+    }
 
     const handleTyping = (data) => {
       const { conversationId, userId } = data;
@@ -131,20 +135,19 @@ function Inbox() {
       });
     };
 
-    socket.current.on("typing", handleTyping);
-    socket.current.on("stopTyping", handleStopTyping);
-    socket.current.on("receiveMessage", handleReceiveMessage);
-    socket.current.on("messagesSeen", handleMessagesSeen);
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("messagesSeen", handleMessagesSeen);
 
     // Cleanup on unmount
     return () => {
-      socket.current.off("typing", handleTyping);
-      socket.current.off("stopTyping", handleStopTyping);
-      socket.current.off("receiveMessage", handleReceiveMessage);
-      socket.current.off("messagesSeen", handleMessagesSeen);
-      socket.current.disconnect();
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("messagesSeen", handleMessagesSeen);
     };
-  }, [user.id]);
+  }, [user.id, conversations]);
 
   // Fetch conversations on mount
   useEffect(() => {
@@ -161,6 +164,7 @@ function Inbox() {
               (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
             );
 
+            console.log(response.data.conversations);
             return { ...conv, messages: sortedMessages };
           }
         );
@@ -170,10 +174,14 @@ function Inbox() {
           const latestMessageA = a.messages[0];
           const latestMessageB = b.messages[0];
 
-          return (
-            new Date(latestMessageB.timestamp) -
-            new Date(latestMessageA.timestamp)
-          );
+          const timestampA = latestMessageA
+            ? new Date(latestMessageA.timestamp)
+            : 0;
+          const timestampB = latestMessageB
+            ? new Date(latestMessageB.timestamp)
+            : 0;
+
+          return timestampB - timestampA;
         });
 
         setConversations(sortedConversations);

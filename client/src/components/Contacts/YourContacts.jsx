@@ -7,14 +7,13 @@ import {
   faCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import AuthContext from "../../context/AuthContext";
-import SocketContext from "../../context/SocketContext";
+import socket from "../../api/socket";
 
 function YourContacts() {
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { token, onlineStatusToggle } = useContext(AuthContext);
-  const { socket } = useContext(SocketContext);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
@@ -49,7 +48,7 @@ function YourContacts() {
     return () => {
       socket.off("contact-accepted");
     };
-  }, [socket]);
+  });
 
   // Fetch online users
   useEffect(() => {

@@ -11,7 +11,7 @@ import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import ThemeToggle from "./ThemeToggle";
 import "../App.css";
-import io from "socket.io-client"; // Import socket.io-client
+import socket from "../api/socket";
 
 function Navbar() {
   const { logout, token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -48,20 +48,16 @@ function Navbar() {
   }, [token, fetchUserProfile]);
 
   useEffect(() => {
-    const socket = io("http://localhost:3000", {
-      query: { userId: user.id },
-    });
-
-    socket.on("connect", () => {
+    const handleConnect = () => {
       console.log("Connected to WebSocket");
-    });
+    };
 
-    socket.on("notification", (data) => {
+    const handleNotification = (data) => {
       setNotifications((prev) => [data, ...prev]);
       setUnreadCount((prev) => prev + 1);
-    });
+    };
 
-    socket.on("contact-request", (data) => {
+    const handleContactRequest = (data) => {
       setNotifications((prev) => [
         {
           id: data.id,
@@ -72,10 +68,17 @@ function Navbar() {
         ...prev,
       ]);
       setUnreadCount((prev) => prev + 1);
-    });
+    };
 
+    socket.on("connect", handleConnect);
+    socket.on("notification", handleNotification);
+    socket.on("contact-request", handleContactRequest);
+
+    // Cleanup function to remove event listeners
     return () => {
-      socket.disconnect();
+      socket.off("connect", handleConnect);
+      socket.off("notification", handleNotification);
+      socket.off("contact-request", handleContactRequest);
     };
   }, [user]);
 

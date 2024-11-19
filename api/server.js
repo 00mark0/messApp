@@ -6,7 +6,6 @@ import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import rateLimit from "express-rate-limit";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -63,7 +62,7 @@ io.on("connection", (socket) => {
   console.log("New client connected");
 
   // Join the room for the user
-  const userId = socket.handshake.query.userId;
+  const userId = socket.handshake.auth.userId;
   if (userId) {
     const userRoom = userId.toString(); // Ensure it's a string
     socket.join(userRoom);
@@ -71,6 +70,18 @@ io.on("connection", (socket) => {
   } else {
     console.log("User ID not provided in query");
   }
+
+  // Handle joinConversation
+  socket.on("joinConversation", (conversationId) => {
+    socket.join(conversationId.toString());
+    console.log(`Socket joined conversation room: ${conversationId}`);
+  });
+
+  // Handle leaveConversation
+  socket.on("leaveConversation", (conversationId) => {
+    socket.leave(conversationId.toString());
+    console.log(`Socket left conversation room: ${conversationId}`);
+  });
 
   // Handle markAsSeen
   socket.on("markAsSeen", async (data) => {
@@ -99,9 +110,11 @@ io.on("connection", (socket) => {
       .emit("stopTyping", { conversationId, userId });
   });
 
-  socket.on("joinConversation", (conversationId) => {
-    socket.join(conversationId.toString());
-    console.log(`Socket joined conversation room: ${conversationId}`);
+  // Handle newMessage
+  socket.on("newMessage", (message) => {
+    const { conversationId } = message;
+    // Broadcast the new message to all participants in the conversation except the sender
+    socket.to(conversationId.toString()).emit("newMessage", message);
   });
 
   socket.on("disconnect", () => {
