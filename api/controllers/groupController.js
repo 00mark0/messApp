@@ -164,7 +164,55 @@ export const sendMessageToGroup = async (req, res) => {
     // Emit the new message to other participants via socket.io
     io.to(groupId.toString()).emit("newMessage", message);
 
-    res.status(201).json({ message });
+    // Fetch sender's username
+    const sender = await prisma.user.findUnique({
+      where: { id: senderId },
+      select: { username: true },
+    });
+
+    const senderUsername = sender ? sender.username : "Unknown";
+
+    // Fetch group's name
+    const group = await prisma.conversation.findUnique({
+      where: { id: parseInt(groupId, 10) },
+      select: { name: true },
+    });
+
+    const groupName = group ? group.name : "Unnamed Group";
+
+    // Get all participants excluding the sender
+    const participantsRes = await prisma.conversationParticipant.findMany({
+      where: {
+        conversationId: parseInt(groupId, 10),
+        userId: { not: senderId },
+      },
+    });
+
+    // Prepare notifications data
+    const notificationsData = participantsRes.map((participant) => ({
+      userId: participant.userId,
+      content: `${senderUsername} sent a new message in ${groupName}`,
+      createdAt: new Date(),
+    }));
+
+    // Insert notifications individually to get their IDs
+    const createdNotifications = await Promise.all(
+      notificationsData.map((data) =>
+        prisma.notification.create({
+          data,
+        })
+      )
+    );
+
+    // Emit 'groupMessageNotification' to each participant with the notification ID
+    createdNotifications.forEach((notification) => {
+      io.to(notification.userId.toString()).emit(
+        "groupMessageNotification",
+        notification
+      );
+    });
+
+    res.status(201).json({ message: "Message sent successfully." });
   } catch (error) {
     console.error("Error in sendMessageToGroup:", error);
     res.status(500).json({ message: "Server error" });

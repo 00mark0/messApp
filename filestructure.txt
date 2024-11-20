@@ -55,6 +55,10 @@
                 |-- migration.sql
             |-- 20241116171909_added_seen_timestamps
                 |-- migration.sql
+            |-- 20241120225329_make_fields_optional_in_notification
+                |-- migration.sql
+            |-- 20241120230531_restore_back_to_the_latest_git_log
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes

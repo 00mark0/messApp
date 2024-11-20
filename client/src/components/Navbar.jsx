@@ -70,15 +70,22 @@ function Navbar() {
       setUnreadCount((prev) => prev + 1);
     };
 
+    const handleGroupMessageNotification = (data) => {
+      setNotifications((prev) => [data, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    };
+
     socket.on("connect", handleConnect);
     socket.on("notification", handleNotification);
     socket.on("contact-request", handleContactRequest);
+    socket.on("groupMessageNotification", handleGroupMessageNotification);
 
     // Cleanup function to remove event listeners
     return () => {
       socket.off("connect", handleConnect);
       socket.off("notification", handleNotification);
       socket.off("contact-request", handleContactRequest);
+      socket.off("groupMessageNotification", handleGroupMessageNotification);
     };
   }, [user]);
 
