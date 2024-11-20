@@ -120,7 +120,7 @@ io.on("connection", (socket) => {
         where: { id: messageId },
         data: {
           seenBy: {
-            set: [...message.seenBy, userId],
+            push: userId,
           },
         },
       });

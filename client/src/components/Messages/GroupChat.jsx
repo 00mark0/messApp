@@ -108,6 +108,14 @@ function GroupChat() {
           }
           return prev;
         });
+
+        console.log("Emitting groupMarkAsSeen for message:", message.id);
+        // Emit 'groupMarkAsSeen' immediately after receiving a new message
+        socket.emit("groupMarkAsSeen", {
+          conversationId,
+          messageId: message.id,
+          userId: user.id,
+        });
       }
     };
 
