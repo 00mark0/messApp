@@ -96,6 +96,69 @@ io.on("connection", (socket) => {
     }
   });
 
+  // groupMarkAsSeenLogic
+  async function groupMarkMessagesAsSeenLogic(
+    conversationId,
+    messageId,
+    userId
+  ) {
+    // Fetch the message from the database
+    const message = await prisma.message.findFirst({
+      where: {
+        id: messageId,
+        conversationId: parseInt(conversationId, 10),
+      },
+      select: {
+        id: true,
+        seenBy: true,
+      },
+    });
+
+    if (message && !message.seenBy.includes(userId)) {
+      // Add userId to the seenBy array
+      await prisma.message.update({
+        where: { id: messageId },
+        data: {
+          seenBy: {
+            set: [...message.seenBy, userId],
+          },
+        },
+      });
+    }
+  }
+
+  // Handle groupMarkAsSeen
+  socket.on("groupMarkAsSeen", async (data) => {
+    const { conversationId, messageId, userId } = data;
+
+    try {
+      // Mark the message as seen by the user
+      await groupMarkMessagesAsSeenLogic(conversationId, messageId, userId);
+
+      // Fetch the updated message with necessary relations
+      const updatedMessage = await prisma.message.findUnique({
+        where: { id: messageId },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
+          conversation: true,
+        },
+      });
+
+      // Emit the updated message to all users in the group conversation
+      io.to(conversationId.toString()).emit("groupMessageSeen", updatedMessage);
+    } catch (error) {
+      console.error("Error in groupMarkAsSeen via Socket.IO:", error);
+      socket.emit("error", {
+        message: "Failed to mark group message as seen.",
+      });
+    }
+  });
+
   socket.on("typing", (data) => {
     const { conversationId, userId } = data;
     socket

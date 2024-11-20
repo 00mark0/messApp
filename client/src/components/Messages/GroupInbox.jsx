@@ -122,16 +122,34 @@ function GroupInbox() {
     fetchGroupConvos();
   }, [token]);
 
+  // Join group conversation rooms
+  useEffect(() => {
+    if (socket && groupConvos.length > 0) {
+      groupConvos.forEach((group) => {
+        socket.emit("joinConversation", group.id.toString());
+      });
+    }
+
+    return () => {
+      if (socket && groupConvos.length > 0) {
+        groupConvos.forEach((group) => {
+          socket.emit("leaveConversation", group.id.toString());
+        });
+      }
+    };
+  }, [groupConvos]);
+
   // Handle incoming new message events
   useEffect(() => {
+    // Correct the property in handleNewMessage
     const handleNewMessage = (message) => {
       setGroupConvos((prevConvos) =>
         prevConvos.map((group) => {
-          if (group.id === message.groupId) {
+          if (group.id === message.conversationId) {
             return {
               ...group,
               lastMessage: message,
-              unseenMessages: group.unseenMessages + 1,
+              unseenMessages: (group.unseenMessages || 0) + 1,
             };
           }
           return group;
