@@ -28,7 +28,16 @@ function Inbox() {
   // Function to handle tab selection
   const handleTabSelect = (tab) => {
     setSelectedTab(tab);
+    localStorage.setItem("selectedTab", tab);
   };
+
+  // Retrieve selected tab from local storage
+  useEffect(() => {
+    const storedTab = localStorage.getItem("selectedTab");
+    if (storedTab) {
+      setSelectedTab(storedTab);
+    }
+  }, []);
 
   useEffect(() => {
     // Join the conversation

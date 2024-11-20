@@ -295,7 +295,7 @@ function GroupInbox() {
         {groupConvos.map((group) => (
           <div
             key={group.id}
-            className="flex items-center gap-4 p-4 border rounded cursor-pointer"
+            className="flex items-center gap-4 p-4  hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer"
             onClick={() => handleGroupClick(group.id)}
           >
             <div className="relative">
@@ -317,9 +317,17 @@ function GroupInbox() {
             <div className="flex-1">
               <h3 className="font-bold">{group.name}</h3>
               {group.lastMessage ? (
-                <p className="text-sm text-gray-600">
+                <p
+                  className={`text-md ${
+                    group.unseenMessages > 0
+                      ? "font-bold text-white"
+                      : "text-gray-600 dark:text-gray-400"
+                  }`}
+                >
                   {group.unseenMessages > 0
-                    ? `${group.unseenMessages} new messages`
+                    ? `${group.unseenMessages} new message${
+                        group.unseenMessages > 1 ? "s" : ""
+                      }`
                     : group.lastMessage.content}
                 </p>
               ) : (

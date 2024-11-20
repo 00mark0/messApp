@@ -5,6 +5,8 @@ import socket from "../../api/socket";
 import AuthContext from "../../context/AuthContext";
 import axios from "../../api/axios";
 import ReactScrollableFeed from "react-scrollable-feed";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
 
 function GroupChat() {
   const { user, token } = useContext(AuthContext);
@@ -18,6 +20,7 @@ function GroupChat() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [groupName, setGroupName] = useState({});
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Map through groups object from groupConvoRes.data.groups to find the group name that matches the conversationId
   const getGroupName = (conversationId) => {
@@ -70,12 +73,6 @@ function GroupChat() {
     };
 
     fetchData();
-
-    const intervalId = setInterval(fetchData, 30000); // Poll every 30 seconds
-
-    return () => {
-      clearInterval(intervalId);
-    };
   }, [conversationId, token, user.id]);
 
   // Handle incoming messages via socket
@@ -192,6 +189,16 @@ function GroupChat() {
     navigate("/");
   };
 
+  // Toggle dropdown menu
+  const toggleDropdown = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  // Check if the current user is an admin of the group
+  const isAdmin = participants.some(
+    (participant) => participant.isAdmin && participant.user.id === user.id
+  );
+
   if (loading) {
     return (
       <div className="container mx-auto p-4 dark:text-white">Loading...</div>
@@ -205,23 +212,79 @@ function GroupChat() {
   return (
     <div className="w-full min-h-screen dark:bg-gray-800">
       <div className="container mx-auto p-4 flex flex-col h-screen dark:bg-gray-800">
-        {/* Back Button */}
-        <button
-          onClick={handleBack}
-          className="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600 focus:outline-none w-32"
-        >
-          Back
-        </button>
+        <div className="flex justify-between items-center mb-4">
+          {/* Back Button */}
+          <button
+            onClick={handleBack}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none w-32"
+          >
+            Back
+          </button>
+          {/* Dropdown Menu Icon */}
+          <div className="relative">
+            <button
+              onClick={toggleDropdown}
+              className="text-white focus:outline-none"
+            >
+              <FontAwesomeIcon icon={faBars} className="text-2xl" />
+            </button>
 
-        {/* Group Chat Title */}
-        <h1 className="text-2xl font-bold mb-4 dark:text-white">
-          {getGroupName(conversationId)}
-        </h1>
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-10">
+                <ul className="py-1">
+                  {isAdmin && (
+                    <>
+                      <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                        Add Participant
+                      </li>
+                      <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                        Remove Participant
+                      </li>
+                      <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                        Give Admin Rights
+                      </li>
+                    </>
+                  )}
+                  <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                    Leave Group
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* Group Chat Members */}
-        <h1 className="text-2xl font-bold mb-4 dark:text-white">
-          Group Members: {participants.map((p) => p.user.username).join(", ")}
-        </h1>
+        <div className="flex justify-between">
+          {/* Group Chat Title */}
+          <h1 className="text-2xl font-bold mb-4 dark:text-white">
+            {getGroupName(conversationId)}
+          </h1>
+
+          <div className="flex flex-col items-start justify-center">
+            {/* Group Chat Members */}
+            <h1 className="text-lg font-semibold dark:text-white">
+              Group Members:
+            </h1>
+            <div className="max-h-16 w-64 mb-4 overflow-y-auto border rounded bg-white dark:bg-gray-700">
+              {participants.map((p) => (
+                <div
+                  key={p.user.id}
+                  className="flex items-center justify-between p-2 border-b dark:border-gray-600"
+                >
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {p.user.username}
+                  </span>
+                  {p.isAdmin && (
+                    <span className="text-xs text-white bg-blue-500 rounded-full px-2 py-1 ml-2">
+                      Admin
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Messages Section */}
         <ReactScrollableFeed className="flex-1 overflow-y-auto mb-4">
@@ -277,29 +340,35 @@ function GroupChat() {
                       {isLastMessageByUser &&
                         isCurrentUserSender &&
                         Array.isArray(msg.seenBy) &&
-                        msg.seenBy.length > 0 && (
-                          <p className="text-xs text-green-500">
-                            Seen by{" "}
-                            {msg.seenBy.length <= 2
-                              ? msg.seenBy
-                                  .map((userId) => {
-                                    const userObj = participants.find(
-                                      (p) => p.user.id === userId
-                                    )?.user;
-                                    return userObj
-                                      ? userObj.username
-                                      : "Unknown";
-                                  })
-                                  .join(" and ")
-                              : `${
-                                  participants
-                                    .filter((p) =>
-                                      msg.seenBy.includes(p.user.id)
-                                    )
-                                    .map((p) => p.user.username)[0]
-                                } + ${msg.seenBy.length - 1} others`}
-                          </p>
-                        )}
+                        msg.seenBy.length > 0 &&
+                        (() => {
+                          const seenByOthers = msg.seenBy.filter(
+                            (userId) => userId !== user.id
+                          );
+                          return seenByOthers.length > 0 ? (
+                            <p className="text-xs text-green-500">
+                              Seen by{" "}
+                              {seenByOthers.length <= 2
+                                ? seenByOthers
+                                    .map((userId) => {
+                                      const userObj = participants.find(
+                                        (p) => p.user.id === userId
+                                      )?.user;
+                                      return userObj
+                                        ? userObj.username
+                                        : "Unknown";
+                                    })
+                                    .join(" and ")
+                                : `${
+                                    participants
+                                      .filter((p) =>
+                                        seenByOthers.includes(p.user.id)
+                                      )
+                                      .map((p) => p.user.username)[0]
+                                  } + ${seenByOthers.length - 1} others`}
+                            </p>
+                          ) : null;
+                        })()}
                     </div>
                   </div>
                 </div>

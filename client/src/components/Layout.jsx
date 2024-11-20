@@ -3,7 +3,7 @@ import Navbar from "./Navbar";
 
 function Layout() {
   const location = useLocation();
-  const hideNavbarPaths = ["/chat"];
+  const hideNavbarPaths = ["/chat", "/group"]; // Add "/group" to the array
 
   const shouldHideNavbar = hideNavbarPaths.some((path) =>
     location.pathname.startsWith(path)
