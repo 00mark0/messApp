@@ -136,7 +136,9 @@ function Profile() {
               <img
                 src={
                   user.profilePicture
-                    ? `http://localhost:3000${user.profilePicture}`
+                    ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                        user.profilePicture
+                      }`
                     : "/default-avatar.png"
                 }
                 alt="Profile"

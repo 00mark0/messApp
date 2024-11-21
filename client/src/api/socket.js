@@ -1,7 +1,7 @@
 // socket.js
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3000", {
+const socket = io(import.meta.env.VITE_REACT_APP_API_URL, {
   autoConnect: false,
 });
 

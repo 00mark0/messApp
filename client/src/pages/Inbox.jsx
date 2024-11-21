@@ -373,7 +373,9 @@ function Inbox() {
                     <img
                       src={
                         contact.profilePicture
-                          ? `http://localhost:3000${contact.profilePicture}`
+                          ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                              contact.profilePicture
+                            }`
                           : "/default-avatar.png"
                       }
                       alt={contact.username}
@@ -432,7 +434,9 @@ function Inbox() {
                       <img
                         src={
                           contact?.profilePicture
-                            ? `http://localhost:3000${contact.profilePicture}`
+                            ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                                contact.profilePicture
+                              }`
                             : "/default-avatar.png"
                         }
                         className="w-10 h-10 rounded-full mr-2"

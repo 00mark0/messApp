@@ -481,3 +481,17 @@
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-20T21:50:45.543Z"}
 {"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-20T23:36:20.148Z"}
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T00:06:53.639Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T14:39:21.395Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T14:40:06.569Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T15:22:30.413Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T15:22:35.149Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T15:26:01.237Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T15:26:07.223Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T15:30:40.473Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T15:32:31.574Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T16:05:00.568Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-21T16:13:07.091Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T16:30:06.768Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T17:05:44.830Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-21T17:21:27.685Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T17:39:12.001Z"}

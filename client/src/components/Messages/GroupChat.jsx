@@ -1,5 +1,5 @@
 // GroupChat.jsx
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // Import useParams
 import socket from "../../api/socket";
 import AuthContext from "../../context/AuthContext";
@@ -7,6 +7,9 @@ import axios from "../../api/axios";
 import ReactScrollableFeed from "react-scrollable-feed";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
+import AddParticipantModal from "./AddParticipantModal";
+import RemoveParticipantModal from "./RemoveParticipantModal";
+import GiveAdminRightsModal from "./GiveAdminRightsModal";
 
 function GroupChat() {
   const { user, token } = useContext(AuthContext);
@@ -21,6 +24,11 @@ function GroupChat() {
   const [error, setError] = useState(null);
   const [groupName, setGroupName] = useState({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
+  const [isRemoveParticipantOpen, setIsRemoveParticipantOpen] = useState(false);
+  const [isGiveAdminRightsOpen, setIsGiveAdminRightsOpen] = useState(false);
+  const groupId = conversationId;
+  const [participantEvents, setParticipantEvents] = useState([]);
 
   // Map through groups object from groupConvoRes.data.groups to find the group name that matches the conversationId
   const getGroupName = (conversationId) => {
@@ -30,27 +38,39 @@ function GroupChat() {
     return group ? group.name : "Unknown Group";
   };
 
+  const handleForbiddenError = () => {
+    localStorage.setItem("selectedTab", "groupChat");
+    navigate("/");
+  };
+
+  // Fetch Participants Function
+  const fetchParticipants = useCallback(async () => {
+    try {
+      const response = await axios.get(
+        `/groups/${conversationId}/participants`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setParticipants(response.data.participants);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+      setError("Failed to fetch participants.");
+    }
+  }, [conversationId, token]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [participantsRes, messagesRes, groupConvoRes] = await Promise.all(
-          [
-            axios.get(`/groups/${conversationId}/participants`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get(`/groups/${conversationId}/messages`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-            axios.get("/groups/conversations", {
-              headers: { Authorization: `Bearer ${token}` },
-            }),
-          ]
-        );
+        const [messagesRes, groupConvoRes] = await Promise.all([
+          axios.get(`/groups/${conversationId}/messages`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("/groups/conversations", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-        console.log(participantsRes.data.participants);
-        console.log(messagesRes.data.messages);
-        console.log(groupConvoRes.data);
-        setParticipants(participantsRes.data.participants);
         setMessages(messagesRes.data.messages);
         setGroupName(groupConvoRes.data);
 
@@ -72,8 +92,9 @@ function GroupChat() {
       }
     };
 
+    fetchParticipants();
     fetchData();
-  }, [conversationId, token, user.id]);
+  }, [conversationId, token, user.id, fetchParticipants]);
 
   // Handle incoming messages via socket
   useEffect(() => {
@@ -127,10 +148,47 @@ function GroupChat() {
       );
     };
 
+    const handleParticipantEvent = (event, userId) => {
+      const participant = participants.find((p) => p.user.id === userId);
+      const username = participant
+        ? participant.user.username
+        : `User ${userId}`;
+      setParticipantEvents((prevEvents) => [
+        ...prevEvents,
+        { event, username },
+      ]);
+    };
+
+    // Participant Event Handlers
+    const handleParticipantAdded = (userId) => {
+      handleParticipantEvent("been added", userId);
+      fetchParticipants(); // Update participants state
+    };
+
+    const handleParticipantRemoved = (userId) => {
+      handleParticipantEvent("been removed", userId);
+      fetchParticipants(); // Update participants state
+    };
+
+    const handleAdminRightsGiven = (userId) => {
+      handleParticipantEvent("received admin rights", userId);
+      fetchParticipants(); // Update participants state
+    };
+
+    const handleParticipantLeft = (userId) => {
+      handleParticipantEvent("left", userId);
+      fetchParticipants(); // Update participants state
+    };
+
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
     socket.on("newMessage", handleNewMessage);
     socket.on("groupMessageSeen", handleGroupMessageSeen);
+
+    socket.on("participantAdded", handleParticipantAdded);
+    socket.on("participantRemoved", handleParticipantRemoved);
+    socket.on("adminRightsGiven", handleAdminRightsGiven);
+    socket.on("participantLeft", handleParticipantLeft);
 
     return () => {
       socket.emit("leaveConversation", conversationId);
@@ -138,8 +196,20 @@ function GroupChat() {
       socket.off("stopTyping", handleStopTyping);
       socket.off("newMessage", handleNewMessage);
       socket.off("groupMessageSeen", handleGroupMessageSeen);
+
+      socket.off("participantAdded", handleParticipantAdded);
+      socket.off("participantRemoved", handleParticipantRemoved);
+      socket.off("adminRightsGiven", handleAdminRightsGiven);
+      socket.off("participantLeft", handleParticipantLeft);
     };
-  }, [conversationId, user.id]);
+  }, [
+    conversationId,
+    user.id,
+    participants,
+    token,
+    groupId,
+    fetchParticipants,
+  ]);
 
   // Handle input changes and emit typing events
   const handleInputChange = (e) => {
@@ -202,6 +272,38 @@ function GroupChat() {
     setIsDropdownOpen((prev) => !prev);
   };
 
+  // Handlers for opening modals
+  const openAddParticipantModal = () => {
+    setIsAddParticipantOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  const openRemoveParticipantModal = () => {
+    setIsRemoveParticipantOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  const openGiveAdminRightsModal = () => {
+    setIsGiveAdminRightsOpen(true);
+    setIsDropdownOpen(false);
+  };
+
+  // Handle leaving the group
+  const handleLeaveGroup = async () => {
+    try {
+      await axios.delete(`/groups/${groupId}/leave`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Error leaving group", error);
+    }
+  };
+  // Handlers for closing modals
+  const closeAddParticipantModal = () => setIsAddParticipantOpen(false);
+  const closeRemoveParticipantModal = () => setIsRemoveParticipantOpen(false);
+  const closeGiveAdminRightsModal = () => setIsGiveAdminRightsOpen(false);
+
   // Check if the current user is an admin of the group
   const isAdmin = participants.some(
     (participant) => participant.isAdmin && participant.user.id === user.id
@@ -214,7 +316,8 @@ function GroupChat() {
   }
 
   if (error) {
-    return <div className="container mx-auto p-4 text-red-500">{error}</div>;
+    handleForbiddenError();
+    alert("Failed to load data.");
   }
 
   return (
@@ -232,7 +335,7 @@ function GroupChat() {
           <div className="relative">
             <button
               onClick={toggleDropdown}
-              className="text-white focus:outline-none"
+              className="dark:text-white text-gray-600 focus:outline-none"
             >
               <FontAwesomeIcon icon={faBars} className="text-2xl" />
             </button>
@@ -240,27 +343,56 @@ function GroupChat() {
             {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-10">
-                <ul className="py-1">
+                <ul className="py-1 text-black dark:text-white">
                   {isAdmin && (
                     <>
-                      <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                      <li
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                        onClick={openAddParticipantModal}
+                      >
                         Add Participant
                       </li>
-                      <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                      <li
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                        onClick={openRemoveParticipantModal}
+                      >
                         Remove Participant
                       </li>
-                      <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                      <li
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                        onClick={openGiveAdminRightsModal}
+                      >
                         Give Admin Rights
                       </li>
                     </>
                   )}
-                  <li className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                  <li
+                    className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                    onClick={handleLeaveGroup}
+                  >
                     Leave Group
                   </li>
                 </ul>
               </div>
             )}
           </div>
+
+          {/* Modals */}
+          <AddParticipantModal
+            groupId={groupId}
+            isOpen={isAddParticipantOpen}
+            onClose={closeAddParticipantModal}
+          />
+          <RemoveParticipantModal
+            groupId={groupId}
+            isOpen={isRemoveParticipantOpen}
+            onClose={closeRemoveParticipantModal}
+          />
+          <GiveAdminRightsModal
+            groupId={groupId}
+            isOpen={isGiveAdminRightsOpen}
+            onClose={closeGiveAdminRightsModal}
+          />
         </div>
 
         <div className="flex justify-between">
@@ -324,7 +456,7 @@ function GroupChat() {
                     <div className="relative flex-shrink-0">
                       {!isCurrentUserSender && sender && (
                         <img
-                          src={`http://localhost:3000${
+                          src={`${import.meta.env.VITE_REACT_APP_API_URL}${
                             sender.user.profilePicture || "/default-avatar.png"
                           }`}
                           alt="Sender Profile"
@@ -337,7 +469,7 @@ function GroupChat() {
                     <div className="flex-1">
                       <p className="break-words">
                         <strong>
-                          {sender ? sender.user.username : "Unknown"}:
+                          {sender ? sender.user.username : "removed"}:
                         </strong>{" "}
                         {msg.content}
                       </p>
@@ -364,7 +496,7 @@ function GroupChat() {
                                       )?.user;
                                       return userObj
                                         ? userObj.username
-                                        : "Unknown";
+                                        : "removed";
                                     })
                                     .join(" and ")
                                 : `${
@@ -387,6 +519,15 @@ function GroupChat() {
               No messages yet. Start the conversation!
             </p>
           )}
+          {/* Render participant events */}
+          {participantEvents.map((event, index) => (
+            <p
+              key={index}
+              className="text-center text-gray-500 dark:text-gray-400 mt-4"
+            >
+              {event.username} has {event.event}.
+            </p>
+          ))}
         </ReactScrollableFeed>
 
         {/* Typing Indicators */}

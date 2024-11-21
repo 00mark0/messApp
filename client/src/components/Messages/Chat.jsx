@@ -255,7 +255,7 @@ function Chat() {
                     <div className="relative flex-shrink-0">
                       {!isCurrentUserSender && recipient && (
                         <img
-                          src={`http://localhost:3000${
+                          src={`${import.meta.env.VITE_REACT_APP_API_URL}${
                             recipient.profilePicture || "/default-avatar.png"
                           }`}
                           alt="Recipient Profile"

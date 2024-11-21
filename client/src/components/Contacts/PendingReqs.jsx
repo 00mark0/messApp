@@ -98,7 +98,9 @@ function PendingReqs() {
               <img
                 src={
                   req.profilePicture
-                    ? `http://localhost:3000${req.profilePicture}`
+                    ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                        req.profilePicture
+                      }`
                     : "/default-avatar.png"
                 }
                 alt="avatar"

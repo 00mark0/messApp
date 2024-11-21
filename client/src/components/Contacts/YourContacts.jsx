@@ -124,7 +124,9 @@ function YourContacts() {
                 <img
                   src={
                     contact.profilePicture
-                      ? `http://localhost:3000${contact.profilePicture}`
+                      ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                          contact.profilePicture
+                        }`
                       : "/default-avatar.png"
                   }
                   alt="avatar"

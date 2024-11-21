@@ -77,6 +77,9 @@ export const addParticipant = async (req, res) => {
       },
     });
 
+    // Emit 'participantAdded' event to the participant via socket.io
+    io.to(userId.toString()).emit("participantAdded", groupId);
+
     res.status(200).json({ message: "Participant added successfully" });
   } catch (error) {
     console.error("Error in addParticipant:", error);
@@ -119,6 +122,9 @@ export const removeParticipant = async (req, res) => {
         },
       },
     });
+
+    // Emit 'participantRemoved' event to the participant via socket.io
+    io.to(userId.toString()).emit("participantRemoved", groupId);
 
     res.status(200).json({ message: "Participant removed successfully" });
   } catch (error) {
@@ -435,6 +441,9 @@ export const leaveGroup = async (req, res) => {
       },
     });
 
+    // Emit 'participantLeft' event to the group via socket.io
+    io.to(groupId.toString()).emit("participantLeft", userId);
+
     res.status(200).json({ message: "Left group successfully" });
   } catch (error) {
     console.error("Error in leaveGroup:", error);
@@ -476,6 +485,9 @@ export const giveAdminRights = async (req, res) => {
         isAdmin: true,
       },
     });
+
+    // Emit 'adminRightsGiven' event to the participant via socket.io
+    io.to(userId.toString()).emit("adminRightsGiven", groupId);
 
     res.status(200).json({ message: "Admin rights given successfully" });
   } catch (error) {

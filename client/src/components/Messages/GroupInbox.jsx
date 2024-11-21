@@ -218,7 +218,9 @@ function GroupInbox() {
                     <img
                       src={
                         contact.profilePicture
-                          ? `http://localhost:3000${contact.profilePicture}`
+                          ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                              contact.profilePicture
+                            }`
                           : "/default-avatar.png"
                       }
                       alt="profile picture"
@@ -260,7 +262,9 @@ function GroupInbox() {
                       <img
                         src={
                           participant?.profilePicture
-                            ? `http://localhost:3000${participant.profilePicture}`
+                            ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                                participant.profilePicture
+                              }`
                             : "/default-avatar.png"
                         }
                         alt="profile picture"
@@ -304,7 +308,9 @@ function GroupInbox() {
                   key={participant.id}
                   src={
                     participant.profilePicture
-                      ? `http://localhost:3000${participant.profilePicture}`
+                      ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                          participant.profilePicture
+                        }`
                       : "/default-avatar.png"
                   }
                   alt="profile picture"
@@ -320,7 +326,7 @@ function GroupInbox() {
                 <p
                   className={`text-md ${
                     group.unseenMessages > 0
-                      ? "font-bold text-white"
+                      ? "font-bold dark:text-white text-black"
                       : "text-gray-600 dark:text-gray-400"
                   }`}
                 >
