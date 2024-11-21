@@ -32,8 +32,25 @@ const io = new Server(server, {
   },
 });
 
+/*
+allow specific origin
+const io = new Server(server, {
+  cors: {
+    origin: "https://your-netlify-domain.netlify.app", // Replace with your actual Netlify domain
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+*/
+
 app.use(express.json());
 app.use(cors());
+
+/* 
+app.use(cors({
+  origin: "https://your-netlify-domain.netlify.app", // Replace with your actual Netlify domain
+}));
+*/
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -186,7 +203,7 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
