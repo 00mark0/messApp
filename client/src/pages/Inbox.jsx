@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
@@ -39,6 +39,166 @@ function Inbox() {
     }
   }, []);
 
+  // Memoized Event Handlers
+  const handleTyping = useCallback(
+    (data) => {
+      const { conversationId, userId } = data;
+      if (userId !== user.id) {
+        setTypingConversations((prev) => ({
+          ...prev,
+          [conversationId]: true,
+        }));
+      }
+    },
+    [user.id]
+  );
+
+  const handleStopTyping = useCallback(
+    (data) => {
+      const { conversationId, userId } = data;
+      if (userId !== user.id) {
+        setTypingConversations((prev) => {
+          const updated = { ...prev };
+          delete updated[conversationId];
+          return updated;
+        });
+      }
+    },
+    [user.id]
+  );
+
+  const handleReceiveMessage = useCallback((message) => {
+    setConversations((prevConversations) => {
+      const updatedConversations = prevConversations.map((conv) => {
+        if (conv.id === message.conversationId) {
+          // Insert the new message at the beginning
+          const updatedMessages = [message, ...conv.messages];
+          return { ...conv, messages: updatedMessages };
+        }
+        return conv;
+      });
+
+      // Sort conversations by last message timestamp
+      const sortedConversations = updatedConversations.sort((a, b) => {
+        const latestMessageA = a.messages[0];
+        const latestMessageB = b.messages[0];
+
+        return (
+          new Date(latestMessageB.timestamp) -
+          new Date(latestMessageA.timestamp)
+        );
+      });
+
+      setFilteredConversations(sortedConversations);
+      return sortedConversations;
+    });
+  }, []);
+
+  const handleMessagesSeen = useCallback((data) => {
+    const { conversationId, seenBy } = data;
+
+    setConversations((prevConversations) => {
+      const updatedConversations = prevConversations.map((conv) => {
+        if (conv.id.toString() === conversationId.toString()) {
+          // Update the last message's seenBy array
+          if (conv.messages.length > 0) {
+            const latestMessage = conv.messages[0];
+
+            if (!latestMessage.seenBy.includes(parseInt(seenBy))) {
+              const updatedMessages = conv.messages.map((msg, index) => {
+                if (index === 0) {
+                  return {
+                    ...msg,
+                    seenBy: [...msg.seenBy, parseInt(seenBy)],
+                  };
+                }
+                return msg;
+              });
+              return { ...conv, messages: updatedMessages };
+            }
+          }
+        }
+        return conv;
+      });
+
+      // Sort conversations by last message timestamp
+      const sortedConversations = updatedConversations.sort((a, b) => {
+        const latestMessageA = a.messages[0];
+        const latestMessageB = b.messages[0];
+
+        return (
+          new Date(latestMessageB.timestamp) -
+          new Date(latestMessageA.timestamp)
+        );
+      });
+
+      setFilteredConversations(sortedConversations);
+      return sortedConversations;
+    });
+  }, []);
+
+  // Memoized Fetch Functions
+  const fetchConversations = useCallback(async () => {
+    try {
+      const response = await axios.get("/messages/conversations", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Ensure messages are sorted from newest to oldest
+      const conversations = (response.data.conversations || []).map((conv) => {
+        const sortedMessages = conv.messages.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        return { ...conv, messages: sortedMessages };
+      });
+
+      // Sort conversations by last message timestamp
+      const sortedConversations = conversations.sort((a, b) => {
+        const latestMessageA = a.messages[0];
+        const latestMessageB = b.messages[0];
+
+        const timestampA = latestMessageA
+          ? new Date(latestMessageA.timestamp)
+          : 0;
+        const timestampB = latestMessageB
+          ? new Date(latestMessageB.timestamp)
+          : 0;
+
+        return timestampB - timestampA;
+      });
+
+      setConversations(sortedConversations);
+      setFilteredConversations(sortedConversations);
+    } catch (error) {
+      console.error("Failed to fetch conversations:", error);
+      setConversations([]);
+      setFilteredConversations([]);
+    }
+  }, [token]);
+
+  const fetchOnlineUsers = useCallback(async () => {
+    try {
+      const response = await axios.get("/auth/online", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOnlineUsers(response.data.onlineUsers);
+    } catch (error) {
+      console.error("Failed to fetch online users:", error);
+    }
+  }, [token]);
+
+  const fetchContacts = useCallback(async () => {
+    try {
+      const response = await axios.get("/contacts", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setContacts(response.data.contacts);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
+
+  // Socket Event Listeners Setup
   useEffect(() => {
     // Join the conversation
     if (socket && conversations.length > 0) {
@@ -49,101 +209,7 @@ function Inbox() {
       });
     }
 
-    const handleTyping = (data) => {
-      const { conversationId, userId } = data;
-      if (userId !== user.id) {
-        setTypingConversations((prev) => ({
-          ...prev,
-          [conversationId]: true,
-        }));
-      }
-    };
-
-    const handleStopTyping = (data) => {
-      const { conversationId, userId } = data;
-      if (userId !== user.id) {
-        setTypingConversations((prev) => {
-          const updated = { ...prev };
-          delete updated[conversationId];
-          return updated;
-        });
-      }
-    };
-
-    const handleReceiveMessage = (message) => {
-      setConversations((prevConversations) => {
-        const updatedConversations = prevConversations.map((conv) => {
-          if (conv.id === message.conversationId) {
-            // Insert the new message at the beginning
-            const updatedMessage = [message, ...conv.messages];
-            return { ...conv, messages: updatedMessage };
-          }
-          return conv;
-        });
-
-        // Sort conversations by last message timestamp
-        const sortedConversation = updatedConversations.sort((a, b) => {
-          const latestMessageA = a.messages[0];
-          const latestMessageB = b.messages[0];
-
-          return (
-            new Date(latestMessageB.timestamp) -
-            new Date(latestMessageA.timestamp)
-          );
-        });
-
-        // Update both conversations and filteredConversations
-        setConversations(sortedConversation);
-        setFilteredConversations(sortedConversation);
-        return sortedConversation;
-      });
-    };
-
-    const handleMessagesSeen = (data) => {
-      const { conversationId, seenBy } = data;
-
-      setConversations((prevConversations) => {
-        const updatedConversations = prevConversations.map((conv) => {
-          if (conv.id.toString() === conversationId.toString()) {
-            // Update the last message's seenBy array
-            if (conv.messages.length > 0) {
-              const latestMessage = conv.messages[0];
-
-              if (!latestMessage.seenBy.includes(parseInt(seenBy))) {
-                const updatedMessages = conv.messages.map((msg, index) => {
-                  if (index === 0) {
-                    return {
-                      ...msg,
-                      seenBy: [...msg.seenBy, parseInt(seenBy)],
-                    };
-                  }
-                  return msg;
-                });
-                return { ...conv, messages: updatedMessages };
-              }
-            }
-          }
-          return conv;
-        });
-
-        // Sort conversations by last message timestamp
-        const sortedConversations = updatedConversations.sort((a, b) => {
-          const latestMessageA = a.messages[0];
-          const latestMessageB = b.messages[0];
-
-          return (
-            new Date(latestMessageB.timestamp) -
-            new Date(latestMessageA.timestamp)
-          );
-        });
-
-        // Update both conversations and filteredConversations
-        setConversations(sortedConversations);
-        setFilteredConversations(sortedConversations);
-        return sortedConversations;
-      });
-    };
-
+    // Register Event Handlers
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
     socket.on("receiveMessage", handleReceiveMessage);
@@ -156,93 +222,36 @@ function Inbox() {
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("messagesSeen", handleMessagesSeen);
     };
-  }, [user.id, conversations]);
+  }, [
+    conversations,
+    handleTyping,
+    handleStopTyping,
+    handleReceiveMessage,
+    handleMessagesSeen,
+  ]);
 
-  // Fetch conversations on mount
+  // Fetch Conversations on Mount
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const response = await axios.get("/messages/conversations", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // Ensure messages are sorted from newest to oldest
-        const conversations = (response.data.conversations || []).map(
-          (conv) => {
-            const sortedMessages = conv.messages.sort(
-              (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-            );
-
-            console.log(response.data.conversations);
-            return { ...conv, messages: sortedMessages };
-          }
-        );
-
-        // Sort conversations by last message timestamp
-        const sortedConversations = conversations.sort((a, b) => {
-          const latestMessageA = a.messages[0];
-          const latestMessageB = b.messages[0];
-
-          const timestampA = latestMessageA
-            ? new Date(latestMessageA.timestamp)
-            : 0;
-          const timestampB = latestMessageB
-            ? new Date(latestMessageB.timestamp)
-            : 0;
-
-          return timestampB - timestampA;
-        });
-
-        setConversations(sortedConversations);
-        setFilteredConversations(sortedConversations);
-      } catch (error) {
-        console.error("Failed to fetch conversations:", error);
-        setConversations([]);
-        setFilteredConversations([]);
-      }
-    };
-
     fetchConversations();
-  }, [token]);
+  }, [fetchConversations]);
 
-  // Fetch online users
+  // Fetch Online Users with Interval
   useEffect(() => {
-    const fetchOnlineUsers = async () => {
-      try {
-        const response = await axios.get("/auth/online", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setOnlineUsers(response.data.onlineUsers);
-      } catch (error) {
-        console.error("Failed to fetch online users:", error);
-      }
-    };
-
     fetchOnlineUsers(); // Initial fetch
 
     const intervalId = setInterval(fetchOnlineUsers, 10000);
 
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [token]);
+  }, [fetchOnlineUsers]);
 
+  // Fetch Contacts with Interval
   useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const response = await axios.get("/contacts", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setContacts(response.data.contacts);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchContacts();
+    fetchContacts(); // Initial fetch
 
     const intervalId = setInterval(fetchContacts, 10000);
 
-    return () => clearInterval(intervalId);
-  }, [token]);
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [fetchContacts]);
 
   // Handle search form submission
   const handleSearch = async (e) => {
