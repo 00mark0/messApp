@@ -1,5 +1,5 @@
 // GroupInbox.jsx
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
@@ -24,25 +24,25 @@ function GroupInbox() {
   const [groupConvos, setGroupConvos] = useState([]);
 
   // Fetch contacts when the menu is open
+  const fetchContacts = useCallback(async () => {
+    try {
+      const res = await axios.get("/contacts", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setContacts(res.data.contacts);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (isMenuOpen) {
-      const fetchContacts = async () => {
-        try {
-          const res = await axios.get("/contacts", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          setContacts(res.data.contacts);
-        } catch (err) {
-          console.log(err);
-        }
-      };
-
       fetchContacts();
     }
-  }, [isMenuOpen, token]);
+  }, [isMenuOpen, fetchContacts]);
 
   // Toggle the menu
   const toggleMenu = () => {
@@ -93,76 +93,71 @@ function GroupInbox() {
   );
 
   // Fetch group convos
-  useEffect(() => {
-    const fetchGroupConvos = async () => {
-      try {
-        const res = await axios.get("/groups/conversations", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  const fetchGroupConvos = useCallback(async () => {
+    try {
+      const res = await axios.get("/groups/conversations", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        // Sort the groups by last message date
-        const sortedGroups = res.data.groups.sort((a, b) => {
-          if (!a.lastMessage) return 1;
-          if (!b.lastMessage) return -1;
-          return (
-            new Date(b.lastMessage.timestamp) -
-            new Date(a.lastMessage.timestamp)
-          );
-        });
+      // Sort the groups by last message date
+      const sortedGroups = res.data.groups.sort((a, b) => {
+        if (!a.lastMessage) return 1;
+        if (!b.lastMessage) return -1;
+        return (
+          new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp)
+        );
+      });
 
-        console.log(res.data.groups);
-        setGroupConvos(sortedGroups);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchGroupConvos();
+      console.log(res.data.groups);
+      setGroupConvos(sortedGroups);
+    } catch (err) {
+      console.error(err);
+    }
   }, [token]);
 
-  // Join group conversation rooms
   useEffect(() => {
+    fetchGroupConvos();
+  }, [fetchGroupConvos]);
+
+  // Handle incoming new message events
+  const handleNewMessage = useCallback((message) => {
+    setGroupConvos((prevConvos) =>
+      prevConvos.map((group) => {
+        if (group.id === message.conversationId) {
+          return {
+            ...group,
+            lastMessage: message,
+            unseenMessages: (group.unseenMessages || 0) + 1,
+          };
+        }
+        return group;
+      })
+    );
+  }, []);
+
+  useEffect(() => {
+    // Join the conversation rooms
     if (socket && groupConvos.length > 0) {
       groupConvos.forEach((group) => {
         socket.emit("joinConversation", group.id.toString());
       });
     }
 
+    // Register Event Handlers
+    socket.on("newMessage", handleNewMessage);
+
+    // Cleanup on unmount
     return () => {
       if (socket && groupConvos.length > 0) {
         groupConvos.forEach((group) => {
           socket.emit("leaveConversation", group.id.toString());
         });
       }
-    };
-  }, [groupConvos]);
-
-  // Handle incoming new message events
-  useEffect(() => {
-    // Correct the property in handleNewMessage
-    const handleNewMessage = (message) => {
-      setGroupConvos((prevConvos) =>
-        prevConvos.map((group) => {
-          if (group.id === message.conversationId) {
-            return {
-              ...group,
-              lastMessage: message,
-              unseenMessages: (group.unseenMessages || 0) + 1,
-            };
-          }
-          return group;
-        })
-      );
-    };
-
-    socket.on("newMessage", handleNewMessage);
-
-    return () => {
       socket.off("newMessage", handleNewMessage);
     };
-  }, []);
+  }, [groupConvos, handleNewMessage]);
 
   const handleGroupClick = (groupId) => {
     navigate(`/group/${groupId}`);
