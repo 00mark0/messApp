@@ -61,37 +61,75 @@ function GroupChat() {
     }
   }, [conversationId, token]);
 
+  // Fetch Messages Function
+  const fetchMessages = useCallback(async () => {
+    try {
+      const response = await axios.get(`/groups/${conversationId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Messages:", response.data.messages);
+      setMessages(response.data.messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      setError("Failed to fetch messages.");
+    }
+  }, [conversationId, token]);
+
+  // Fetch Group Conversation Function
+  const fetchGroupConvo = useCallback(async () => {
+    try {
+      const response = await axios.get("/groups/conversations", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGroupName(response.data);
+    } catch (error) {
+      console.error("Error fetching group conversation:", error);
+      setError("Failed to fetch group conversation.");
+    }
+  }, [token]);
+
+  // Fetch Online Users Function
+  const fetchOnlineUsers = useCallback(async () => {
+    try {
+      const response = await axios.get("/auth/online", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Online Users:", response.data.onlineUsers);
+      setOnlineUsers(response.data.onlineUsers);
+    } catch (error) {
+      console.error("Error fetching online users:", error);
+      setError("Failed to fetch online users.");
+    }
+  }, [token]);
+
+  // Mark Messages as Seen Function
+  const markMessagesAsSeen = useCallback(
+    (messages) => {
+      messages.forEach((msg) => {
+        if (!msg.seenBy.includes(user.id)) {
+          socket.emit("groupMarkAsSeen", {
+            conversationId,
+            messageId: msg.id,
+            userId: user.id,
+          });
+        }
+      });
+    },
+    [conversationId, user.id]
+  );
+
+  // Fetch Data on Mount
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const [messagesRes, groupConvoRes, onlineUsersRes] = await Promise.all([
-          axios.get(`/groups/${conversationId}/messages`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("/groups/conversations", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("/auth/online", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        await Promise.all([
+          fetchMessages(),
+          fetchGroupConvo(),
+          fetchOnlineUsers(),
+          fetchParticipants(),
         ]);
-
-        console.log("Messages:", messagesRes.data.messages);
-        setMessages(messagesRes.data.messages);
-        setGroupName(groupConvoRes.data);
-        console.log("Online Users:", onlineUsersRes.data.onlineUsers);
-        setOnlineUsers(onlineUsersRes.data.onlineUsers);
-
-        // Emit 'messageSeen' for all messages not yet seen by the current user
-        messagesRes.data.messages.forEach((msg) => {
-          if (!msg.seenBy.includes(user.id)) {
-            socket.emit("groupMarkAsSeen", {
-              conversationId,
-              messageId: msg.id,
-              userId: user.id,
-            });
-          }
-        });
       } catch (err) {
         console.error("Failed to fetch data:", err);
         setError("Failed to load data.");
@@ -100,17 +138,18 @@ function GroupChat() {
       }
     };
 
-    fetchParticipants();
     fetchData();
-  }, [conversationId, token, user.id, fetchParticipants]);
+  }, [fetchParticipants, fetchMessages, fetchGroupConvo, fetchOnlineUsers]);
 
-  // Handle incoming messages via socket
+  // Mark Messages as Seen when Messages Change
   useEffect(() => {
-    if (socket && conversationId) {
-      socket.emit("joinConversation", conversationId);
+    if (messages.length > 0) {
+      markMessagesAsSeen(messages);
     }
+  }, [messages, markMessagesAsSeen]);
 
-    const handleTyping = (data) => {
+  const handleTyping = useCallback(
+    (data) => {
       const { userId } = data;
       if (userId !== user.id) {
         setTypingUsers((prev) => {
@@ -120,14 +159,17 @@ function GroupChat() {
           return prev;
         });
       }
-    };
+    },
+    [user.id]
+  );
 
-    const handleStopTyping = (data) => {
-      const { userId } = data;
-      setTypingUsers((prev) => prev.filter((id) => id !== userId));
-    };
+  const handleStopTyping = useCallback((data) => {
+    const { userId } = data;
+    setTypingUsers((prev) => prev.filter((id) => id !== userId));
+  }, []);
 
-    const handleNewMessage = (message) => {
+  const handleNewMessage = useCallback(
+    (message) => {
       if (
         parseInt(message.conversationId, 10) === parseInt(conversationId, 10)
       ) {
@@ -146,17 +188,20 @@ function GroupChat() {
           userId: user.id,
         });
       }
-    };
+    },
+    [conversationId, user.id]
+  );
 
-    const handleGroupMessageSeen = (updatedMessage) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === updatedMessage.id ? updatedMessage : msg
-        )
-      );
-    };
+  const handleGroupMessageSeen = useCallback((updatedMessage) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === updatedMessage.id ? updatedMessage : msg
+      )
+    );
+  }, []);
 
-    const handleParticipantEvent = (event, userId) => {
+  const handleParticipantEvent = useCallback(
+    (event, userId) => {
       const participant = participants.find((p) => p.user.id === userId);
       const username = participant
         ? participant.user.username
@@ -165,29 +210,49 @@ function GroupChat() {
         ...prevEvents,
         { event, username },
       ]);
-    };
+    },
+    [participants]
+  );
 
-    // Participant Event Handlers
-    const handleParticipantAdded = (userId) => {
+  const handleParticipantAdded = useCallback(
+    (userId) => {
       handleParticipantEvent("been added", userId);
       fetchParticipants(); // Update participants state
-    };
+    },
+    [handleParticipantEvent, fetchParticipants]
+  );
 
-    const handleParticipantRemoved = (userId) => {
+  const handleParticipantRemoved = useCallback(
+    (userId) => {
       handleParticipantEvent("been removed", userId);
       fetchParticipants(); // Update participants state
-    };
+    },
+    [handleParticipantEvent, fetchParticipants]
+  );
 
-    const handleAdminRightsGiven = (userId) => {
+  const handleAdminRightsGiven = useCallback(
+    (userId) => {
       handleParticipantEvent("received admin rights", userId);
       fetchParticipants(); // Update participants state
-    };
+    },
+    [handleParticipantEvent, fetchParticipants]
+  );
 
-    const handleParticipantLeft = (userId) => {
+  const handleParticipantLeft = useCallback(
+    (userId) => {
       handleParticipantEvent("left", userId);
       fetchParticipants(); // Update participants state
-    };
+    },
+    [handleParticipantEvent, fetchParticipants]
+  );
 
+  // Refactored useEffect for Socket Event Listeners
+  useEffect(() => {
+    if (socket && conversationId) {
+      socket.emit("joinConversation", conversationId);
+    }
+
+    // Register Event Handlers
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
     socket.on("newMessage", handleNewMessage);
@@ -198,8 +263,11 @@ function GroupChat() {
     socket.on("adminRightsGiven", handleAdminRightsGiven);
     socket.on("participantLeft", handleParticipantLeft);
 
+    // Cleanup on Unmount
     return () => {
-      socket.emit("leaveConversation", conversationId);
+      if (socket && conversationId) {
+        socket.emit("leaveConversation", conversationId);
+      }
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
       socket.off("newMessage", handleNewMessage);
@@ -212,11 +280,14 @@ function GroupChat() {
     };
   }, [
     conversationId,
-    user.id,
-    participants,
-    token,
-    groupId,
-    fetchParticipants,
+    handleTyping,
+    handleStopTyping,
+    handleNewMessage,
+    handleGroupMessageSeen,
+    handleParticipantAdded,
+    handleParticipantRemoved,
+    handleAdminRightsGiven,
+    handleParticipantLeft,
   ]);
 
   // Handle input changes and emit typing events

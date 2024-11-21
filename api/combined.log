@@ -508,3 +508,7 @@
 {"level":"info","message":"User logged out successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T21:10:40.854Z"}
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T21:24:11.578Z"}
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T21:24:17.424Z"}
+{"level":"info","message":"User logged out successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T21:41:11.691Z"}
+{"level":"info","message":"User logged out successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T21:41:13.989Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-21T22:46:02.089Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-21T22:46:19.156Z"}
