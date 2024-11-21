@@ -51,6 +51,11 @@ const AddParticipantModal = ({ groupId, isOpen, onClose }) => {
     setSelectedUserId(userId);
   };
 
+  const handleClose = () => {
+    setSelectedUserId(null);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -70,6 +75,7 @@ const AddParticipantModal = ({ groupId, isOpen, onClose }) => {
           <button
             onClick={fetchUsers}
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-r"
+            onKeyDown={(e) => e.key === "Enter" && fetchUsers()}
           >
             Search
           </button>
@@ -95,7 +101,7 @@ const AddParticipantModal = ({ groupId, isOpen, onClose }) => {
         <div className="flex justify-end">
           <button
             className="px-4 py-2 mr-2 text-gray-700 dark:text-gray-300 hover:underline"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancel
           </button>

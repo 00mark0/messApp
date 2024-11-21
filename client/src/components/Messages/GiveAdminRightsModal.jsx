@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import PropTypes from "prop-types";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
@@ -8,23 +8,28 @@ const GiveAdminRightsModal = ({ groupId, isOpen, onClose }) => {
   const [participants, setParticipants] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      try {
-        const response = await axios.get(`/groups/${groupId}/participants`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  // Memoized Fetch Participants Function
+  const fetchParticipants = useCallback(async () => {
+    try {
+      const response = await axios.get(`/groups/${groupId}/participants`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        console.log(response.data.participants);
-        setParticipants(response.data.participants);
-      } catch (error) {
-        console.error("Error fetching participants", error);
-      }
-    };
-    fetchParticipants();
+      console.log(response.data.participants);
+      setParticipants(response.data.participants);
+    } catch (error) {
+      console.error("Error fetching participants", error);
+    }
   }, [groupId, token]);
+
+  // useEffect to Call Memoized Fetch Participants Function
+  useEffect(() => {
+    if (isOpen) {
+      fetchParticipants();
+    }
+  }, [isOpen, fetchParticipants]);
 
   const handleGiveAdminRights = async () => {
     try {
@@ -42,6 +47,11 @@ const GiveAdminRightsModal = ({ groupId, isOpen, onClose }) => {
     } catch (error) {
       console.error("Error giving admin rights", error);
     }
+  };
+
+  const handleClose = () => {
+    setSelectedUserId(null);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -75,7 +85,7 @@ const GiveAdminRightsModal = ({ groupId, isOpen, onClose }) => {
         <div className="flex justify-end">
           <button
             className="px-4 py-2 mr-2 text-gray-700 dark:text-gray-300 hover:underline"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Cancel
           </button>
