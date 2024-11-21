@@ -10,6 +10,7 @@ import { faBars, faCircle } from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
 import GiveAdminRightsModal from "./GiveAdminRightsModal";
+import InputEmoji from "react-input-emoji";
 
 function GroupChat() {
   const { user, token, onlineStatusToggle } = useContext(AuthContext);
@@ -218,23 +219,26 @@ function GroupChat() {
   ]);
 
   // Handle input changes and emit typing events
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
+  const handleInputChange = useCallback(
+    (value) => {
+      setInput(value);
 
-    if (e.target.value && !isTyping) {
-      setIsTyping(true);
-      socket.emit("typing", {
-        conversationId,
-        userId: user.id,
-      });
-    } else if (!e.target.value && isTyping) {
-      setIsTyping(false);
-      socket.emit("stopTyping", {
-        conversationId,
-        userId: user.id,
-      });
-    }
-  };
+      if (value && !isTyping) {
+        setIsTyping(true);
+        socket.emit("typing", {
+          conversationId,
+          userId: user.id,
+        });
+      } else if (!value && isTyping) {
+        setIsTyping(false);
+        socket.emit("stopTyping", {
+          conversationId,
+          userId: user.id,
+        });
+      }
+    },
+    [conversationId, isTyping, user.id]
+  );
 
   // Send message function
   const sendMessage = async () => {
@@ -564,15 +568,12 @@ function GroupChat() {
 
         {/* Input Field */}
         <div className="flex">
-          <input
-            type="text"
-            placeholder="Type a message..."
+          <InputEmoji
             value={input}
             onChange={handleInputChange}
-            className="border p-2 rounded-l w-full focus:outline-none dark:bg-gray-700 dark:text-white"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
-            }}
+            cleanOnEnter
+            onEnter={sendMessage}
+            placeholder="Type a message..."
           />
           <button
             onClick={sendMessage}
