@@ -6,13 +6,13 @@ import AuthContext from "../../context/AuthContext";
 import axios from "../../api/axios";
 import ReactScrollableFeed from "react-scrollable-feed";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faCircle } from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
 import GiveAdminRightsModal from "./GiveAdminRightsModal";
 
 function GroupChat() {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, onlineStatusToggle } = useContext(AuthContext);
   const navigate = useNavigate();
   const { conversationId } = useParams(); // Extract conversationId from URL
   const [input, setInput] = useState("");
@@ -29,6 +29,7 @@ function GroupChat() {
   const [isGiveAdminRightsOpen, setIsGiveAdminRightsOpen] = useState(false);
   const groupId = conversationId;
   const [participantEvents, setParticipantEvents] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   // Map through groups object from groupConvoRes.data.groups to find the group name that matches the conversationId
   const getGroupName = (conversationId) => {
@@ -62,17 +63,22 @@ function GroupChat() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [messagesRes, groupConvoRes] = await Promise.all([
+        const [messagesRes, groupConvoRes, onlineUsersRes] = await Promise.all([
           axios.get(`/groups/${conversationId}/messages`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           axios.get("/groups/conversations", {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          axios.get("/auth/online", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         setMessages(messagesRes.data.messages);
         setGroupName(groupConvoRes.data);
+        console.log("Online Users:", onlineUsersRes.data.onlineUsers);
+        setOnlineUsers(onlineUsersRes.data.onlineUsers);
 
         // Emit 'messageSeen' for all messages not yet seen by the current user
         messagesRes.data.messages.forEach((msg) => {
@@ -452,7 +458,7 @@ function GroupChat() {
                   } max-w-md`}
                 >
                   <div className="flex gap-2 items-start">
-                    {/* Sender's Profile Picture */}
+                    {/* Sender's Profile Picture with Online Status */}
                     <div className="relative flex-shrink-0">
                       {!isCurrentUserSender && sender && (
                         <img
@@ -463,6 +469,19 @@ function GroupChat() {
                           className="w-8 h-8 rounded-full"
                         />
                       )}
+                      {onlineStatusToggle &&
+                        !isCurrentUserSender &&
+                        sender &&
+                        onlineUsers.some(
+                          (user) => user.id === sender.user.id
+                        ) && (
+                          <span className="absolute top-3 right-0">
+                            <FontAwesomeIcon
+                              icon={faCircle}
+                              className="text-green-500 text-xs"
+                            />
+                          </span>
+                        )}
                     </div>
 
                     {/* Message Content */}
