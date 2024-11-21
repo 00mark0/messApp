@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import axios from "../../api/axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -16,21 +16,37 @@ function YourContacts() {
   const { token, onlineStatusToggle } = useContext(AuthContext);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        const response = await axios.get("/contacts", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setContacts(response.data.contacts);
-        setFilteredContacts(response.data.contacts);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchContacts();
+  // Memoized Fetch Contacts Function
+  const fetchContacts = useCallback(async () => {
+    try {
+      const response = await axios.get("/contacts", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setContacts(response.data.contacts);
+      setFilteredContacts(response.data.contacts);
+    } catch (err) {
+      console.error(err);
+    }
   }, [token]);
 
+  // Memoized Fetch Online Users Function
+  const fetchOnlineUsers = useCallback(async () => {
+    try {
+      const response = await axios.get("/auth/online", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOnlineUsers(response.data.onlineUsers);
+    } catch (error) {
+      console.error("Failed to fetch online users:", error);
+    }
+  }, [token]);
+
+  // useEffect to Fetch Contacts on Mount
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
+
+  // useEffect to Set Up Socket Event Listener
   useEffect(() => {
     if (!socket) {
       console.log("Socket not available yet");
@@ -39,37 +55,27 @@ function YourContacts() {
 
     console.log("Setting up socket event listener for contact-accepted");
 
-    socket.on("contact-accepted", (newContact) => {
+    const handleContactAccepted = (newContact) => {
       console.log("Received contact-accepted event:", newContact);
       setContacts((prevContacts) => [...prevContacts, newContact]);
       setFilteredContacts((prevContacts) => [...prevContacts, newContact]);
-    });
+    };
+
+    socket.on("contact-accepted", handleContactAccepted);
 
     return () => {
-      socket.off("contact-accepted");
+      socket.off("contact-accepted", handleContactAccepted);
     };
   });
 
-  // Fetch online users
+  // useEffect to Fetch Online Users with Interval
   useEffect(() => {
-    const fetchOnlineUsers = async () => {
-      try {
-        const response = await axios.get("/auth/online", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setOnlineUsers(response.data.onlineUsers);
-      } catch (error) {
-        console.error("Failed to fetch online users:", error);
-      }
-    };
-
     fetchOnlineUsers(); // Initial fetch
 
     const intervalId = setInterval(fetchOnlineUsers, 10000);
 
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [token]);
+  }, [fetchOnlineUsers]);
 
   const removeContact = async (contactId) => {
     try {

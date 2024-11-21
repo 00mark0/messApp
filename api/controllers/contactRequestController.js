@@ -219,7 +219,12 @@ export const getSentContactRequests = async (req, res) => {
       },
       include: {
         receiver: {
-          select: { id: true, username: true, email: true },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            profilePicture: true,
+          },
         },
       },
     });

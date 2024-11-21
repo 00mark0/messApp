@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import AuthContext from "../../context/AuthContext";
 import axios from "../../api/axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,23 +14,26 @@ function PendingReqs() {
   const [filteredReqs, setFilteredReqs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    const fetchPendingReqs = async () => {
-      try {
-        const response = await axios.get("/contact-requests/pending", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const sortedRequests = response.data.contactRequests.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        setPendingReqs(sortedRequests);
-        setFilteredReqs(sortedRequests);
-      } catch (err) {
-        console.error("Failed to fetch pending requests", err);
-      }
-    };
-    fetchPendingReqs();
+  // Memoized Fetch Function
+  const fetchPendingReqs = useCallback(async () => {
+    try {
+      const response = await axios.get("/contact-requests/pending", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const sortedRequests = response.data.contactRequests.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      setPendingReqs(sortedRequests);
+      setFilteredReqs(sortedRequests);
+    } catch (err) {
+      console.error("Failed to fetch pending requests", err);
+    }
   }, [token]);
+
+  // useEffect to Call Memoized Fetch Function
+  useEffect(() => {
+    fetchPendingReqs();
+  }, [fetchPendingReqs]);
 
   const respondToReq = async (requestId, action) => {
     try {
