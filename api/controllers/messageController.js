@@ -163,6 +163,7 @@ export const getConversations = async (req, res) => {
 export const getConversationMessages = async (req, res) => {
   const userId = req.user.userId;
   const { conversationId } = req.params;
+  const { page = 1, limit = 50 } = req.query; // Default to page 1 and limit 50
 
   try {
     // Check if the user is a participant in the conversation (regardless of deletedAt)
@@ -192,7 +193,11 @@ export const getConversationMessages = async (req, res) => {
       });
     }
 
-    // Fetch messages in the conversation
+    // Calculate pagination values
+    const take = parseInt(limit);
+    const skip = (parseInt(page) - 1) * take;
+
+    // Fetch messages in the conversation with pagination
     const messages = await prisma.message.findMany({
       where: {
         conversationId: parseInt(conversationId),
@@ -203,8 +208,10 @@ export const getConversationMessages = async (req, res) => {
         },
       },
       orderBy: {
-        timestamp: "asc",
+        timestamp: "asc", // Oldest messages first
       },
+      skip: skip,
+      take: take,
     });
 
     res.json({ messages });

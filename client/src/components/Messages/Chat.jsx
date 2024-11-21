@@ -6,6 +6,7 @@ import ReactScrollableFeed from "react-scrollable-feed";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
+import InputEmoji from "react-input-emoji";
 
 function Chat() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -137,23 +138,26 @@ function Chat() {
     }
   }, [messages, conversationId, user.id]);
 
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
+  const handleInputChange = useCallback(
+    (value) => {
+      setInput(value);
 
-    if (e.target.value && !isTyping) {
-      setIsTyping(true);
-      socket.emit("typing", {
-        conversationId,
-        userId: user.id,
-      });
-    } else if (!e.target.value && isTyping) {
-      setIsTyping(false);
-      socket.emit("stopTyping", {
-        conversationId,
-        userId: user.id,
-      });
-    }
-  };
+      if (value && !isTyping) {
+        setIsTyping(true);
+        socket.emit("typing", {
+          conversationId,
+          userId: user.id,
+        });
+      } else if (!value && isTyping) {
+        setIsTyping(false);
+        socket.emit("stopTyping", {
+          conversationId,
+          userId: user.id,
+        });
+      }
+    },
+    [conversationId, isTyping, user.id]
+  );
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -307,15 +311,12 @@ function Chat() {
         </ReactScrollableFeed>
 
         <div className="flex">
-          <input
-            type="text"
-            placeholder="Type a message..."
+          <InputEmoji
             value={input}
             onChange={handleInputChange}
-            className="border p-2 rounded-l w-full"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
-            }}
+            cleanOnEnter
+            onEnter={sendMessage}
+            placeholder="Type a message..."
           />
           <button
             onClick={sendMessage}
