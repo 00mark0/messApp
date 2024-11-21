@@ -160,6 +160,19 @@ function Navbar() {
     };
   }, []);
 
+  const handleNotificationClick = (notif) => {
+    if (notif.content.includes("group")) {
+      localStorage.setItem("selectedTab", "groupChat");
+      navigate("/");
+    } else if (notif.content.includes("message")) {
+      localStorage.setItem("selectedTab", "chat");
+      navigate("/");
+    } else if (notif.content.includes("contact request")) {
+      navigate("/contacts");
+    }
+    setShowNotifications(false);
+  };
+
   const handleLogout = async () => {
     try {
       await axios.post(
@@ -210,21 +223,17 @@ function Navbar() {
                       <li
                         key={notif.id}
                         className={`px-4 py-2 border-b dark:border-gray-600 ${
-                          notif.read ? "bg-gray-100" : "bg-white"
+                          notif.isRead ? "bg-gray-100" : "bg-white"
                         }`}
                       >
                         <Link
                           to={
-                            notif.content.includes("message")
-                              ? "/"
-                              : notif.content.includes("contact request")
+                            notif.content.includes("contact request")
                               ? "/contacts"
-                              : "#"
+                              : "/"
                           }
                           className="block"
-                          onClick={() => {
-                            setShowNotifications(false);
-                          }}
+                          onClick={() => handleNotificationClick(notif)}
                         >
                           <p className="text-sm text-gray-800">
                             {notif.content}

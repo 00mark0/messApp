@@ -191,7 +191,7 @@ export const sendMessageToGroup = async (req, res) => {
     // Prepare notifications data
     const notificationsData = participantsRes.map((participant) => ({
       userId: participant.userId,
-      content: `${senderUsername} sent a new message in ${groupName}`,
+      content: `${senderUsername} sent a new message in group "${groupName}"`,
       createdAt: new Date(),
     }));
 
