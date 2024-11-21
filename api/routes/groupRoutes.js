@@ -11,6 +11,7 @@ import {
   leaveGroup,
   giveAdminRights,
   getGroupParticipants,
+  getLatest20GroupMessages,
 } from "../controllers/groupController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -65,7 +66,7 @@ router.get(
   "/:groupId/messages",
   authMiddleware,
   [param("groupId").isInt().withMessage("Group ID must be an integer")],
-  getGroupMessages
+  getLatest20GroupMessages
 );
 
 // Get conversations for a user

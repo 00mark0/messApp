@@ -6,6 +6,7 @@ import {
   getConversationMessages,
   markMessagesAsSeen,
   deleteConversation,
+  getLatest20Messages,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -34,7 +35,7 @@ router.get(
       .isInt()
       .withMessage("Conversation ID must be an integer"),
   ],
-  getConversationMessages
+  getLatest20Messages
 );
 
 // Mark messages as seen in a conversation

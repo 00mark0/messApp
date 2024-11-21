@@ -76,6 +76,7 @@ function GroupChat() {
           }),
         ]);
 
+        console.log("Messages:", messagesRes.data.messages);
         setMessages(messagesRes.data.messages);
         setGroupName(groupConvoRes.data);
         console.log("Online Users:", onlineUsersRes.data.onlineUsers);

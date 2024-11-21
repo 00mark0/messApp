@@ -221,6 +221,64 @@ export const getConversationMessages = async (req, res) => {
   }
 };
 
+export const getLatest20Messages = async (req, res) => {
+  const userId = req.user.userId;
+  const { conversationId } = req.params;
+
+  try {
+    // Check if the user is a participant in the conversation (regardless of deletedAt)
+    const isParticipant = await prisma.conversationParticipant.findFirst({
+      where: {
+        conversationId: parseInt(conversationId),
+        userId: userId,
+      },
+    });
+
+    if (!isParticipant) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Reset deletedAt for this user (since they are accessing the conversation)
+    if (isParticipant.deletedAt) {
+      await prisma.conversationParticipant.update({
+        where: {
+          conversationId_userId: {
+            conversationId: parseInt(conversationId),
+            userId: userId,
+          },
+        },
+        data: {
+          deletedAt: null,
+        },
+      });
+    }
+
+    // Fetch the latest 20 messages in descending order
+    const messages = await prisma.message.findMany({
+      where: {
+        conversationId: parseInt(conversationId),
+      },
+      include: {
+        sender: {
+          select: { id: true, username: true },
+        },
+      },
+      orderBy: {
+        timestamp: "desc", // Newest messages first
+      },
+      take: 20,
+    });
+
+    // Reverse to send messages in ascending order
+    const orderedMessages = messages.reverse();
+
+    res.json({ messages: orderedMessages });
+  } catch (error) {
+    console.error("Error in getLatest20Messages:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 /**
  * Marks messages as seen in a conversation and notifies senders via Socket.IO.
  * @param {string} conversationId - The ID of the conversation.

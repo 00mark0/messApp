@@ -21,47 +21,68 @@ function Chat() {
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Fetch Recipient Data
-        const userResponse = await axios.get(`/user/${recipientId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setRecipient(userResponse.data.user);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch Recipient Data
+      const userResponse = await axios.get(`/user/${recipientId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRecipient(userResponse.data.user);
 
-        // Fetch Messages if Existing Conversation
-        if (conversationId !== "new") {
-          const messagesResponse = await axios.get(
-            `/messages/conversations/${conversationId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          setMessages(messagesResponse.data.messages || []);
-
-          // Mark Messages as Seen
-          await axios.post(
-            `/messages/conversations/${conversationId}/seen`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        } else {
-          setMessages([]);
-        }
-      } catch (err) {
-        console.error(
-          "Error fetching data:",
-          err.response ? err.response.data : err.message
+      // Fetch Messages if Existing Conversation
+      if (conversationId !== "new") {
+        const messagesResponse = await axios.get(
+          `/messages/conversations/${conversationId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        setError("Failed to load chat data.");
-      } finally {
-        setLoading(false);
-      }
-    };
+        setMessages(messagesResponse.data.messages || []);
 
-    fetchData();
+        // Mark Messages as Seen
+        await axios.post(
+          `/messages/conversations/${conversationId}/seen`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error(
+        "Error fetching data:",
+        err.response ? err.response.data : err.message
+      );
+      setError("Failed to load chat data.");
+    } finally {
+      setLoading(false);
+    }
   }, [conversationId, recipientId, token]);
+
+  const fetchOnlineUsers = useCallback(async () => {
+    try {
+      const response = await axios.get("/auth/online", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOnlineUsers(response.data.onlineUsers);
+    } catch (error) {
+      console.error("Failed to fetch online users:", error);
+    }
+  }, [token]);
+
+  // Fetch initial data
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Set up interval for fetching online users
+  useEffect(() => {
+    fetchOnlineUsers(); // Initial fetch
+
+    const interval = setInterval(fetchOnlineUsers, 10000);
+
+    return () => clearInterval(interval);
+  }, [fetchOnlineUsers]);
 
   const handleReceiveMessage = useCallback(
     (message) => {
@@ -69,8 +90,7 @@ function Chat() {
         setMessages((prevMessages) => {
           // Check if the message already exists
           if (!prevMessages.find((msg) => msg.id === message.id)) {
-            const updatedMessages = [...prevMessages, message];
-            return updatedMessages;
+            return [...prevMessages, message];
           }
           return prevMessages;
         });
@@ -79,15 +99,8 @@ function Chat() {
     [conversationId]
   );
 
-  useEffect(() => {
-    // Join conversation room
-    socket.emit("joinConversation", conversationId);
-
-    // Listen for incoming messages
-    socket.on("receiveMessage", handleReceiveMessage);
-
-    // Listen for messages seen
-    const handleMessagesSeen = (data) => {
+  const handleMessagesSeen = useCallback(
+    (data) => {
       const { conversationId: convId, seenBy } = data;
       if (parseInt(convId) === parseInt(conversationId)) {
         const seenByNumber = Number(seenBy); // Ensure it's a number
@@ -100,42 +113,70 @@ function Chat() {
           })
         );
       }
-    };
+    },
+    [conversationId]
+  );
 
-    socket.on("messagesSeen", handleMessagesSeen);
-
-    // Listen for typing events
-    const handleTyping = (data) => {
+  const handleTyping = useCallback(
+    (data) => {
       if (data.userId !== user.id) {
         setOtherUserTyping(true);
       }
-    };
+    },
+    [user.id]
+  );
 
-    const handleStopTyping = (data) => {
+  const handleStopTyping = useCallback(
+    (data) => {
       if (data.userId !== user.id) {
         setOtherUserTyping(false);
       }
-    };
+    },
+    [user.id]
+  );
 
+  useEffect(() => {
+    // Join conversation room
+    socket.emit("joinConversation", conversationId);
+
+    // Listen for incoming messages
+    socket.on("receiveMessage", handleReceiveMessage);
+
+    // Listen for messages seen
+    socket.on("messagesSeen", handleMessagesSeen);
+
+    // Listen for typing events
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
 
-    // Cleanup on unmount
+    // Cleanup on unmount or when dependencies change
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("messagesSeen", handleMessagesSeen);
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
+      // Optionally leave the conversation room
+      socket.emit("leaveConversation", conversationId);
     };
-  }, [conversationId, user.id, handleReceiveMessage]);
+  }, [
+    conversationId,
+    handleReceiveMessage,
+    handleMessagesSeen,
+    handleTyping,
+    handleStopTyping,
+  ]);
 
   useEffect(() => {
-    if (socket && messages.length > 0) {
-      socket.emit("markAsSeen", {
-        conversationId,
-        userId: user.id,
-      });
-    }
+    const debounceMarkAsSeen = setTimeout(() => {
+      if (socket && messages.length > 0) {
+        socket.emit("markAsSeen", {
+          conversationId,
+          userId: user.id,
+        });
+      }
+    }, 300); // Adjust the debounce delay as needed
+
+    return () => clearTimeout(debounceMarkAsSeen);
   }, [messages, conversationId, user.id]);
 
   const handleInputChange = useCallback(
@@ -189,27 +230,6 @@ function Chat() {
       }
     }
   };
-
-  // Fetch online users
-  useEffect(() => {
-    const fetchOnlineUsers = async () => {
-      try {
-        const response = await axios.get("/auth/online", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setOnlineUsers(response.data.onlineUsers);
-      } catch (error) {
-        console.error("Failed to fetch online users:", error);
-      }
-    };
-
-    fetchOnlineUsers(); // Initial fetch
-
-    const intervalId = setInterval(fetchOnlineUsers, 10000);
-
-    return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [token]);
 
   if (loading) {
     return <div className="container mx-auto p-4">Loading...</div>;

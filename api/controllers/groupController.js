@@ -266,6 +266,51 @@ export const getGroupMessages = async (req, res) => {
   }
 };
 
+export const getLatest20GroupMessages = async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    // Check if the user is a participant of the group
+    const isParticipant = await prisma.conversationParticipant.findFirst({
+      where: {
+        conversationId: parseInt(groupId),
+        userId,
+      },
+    });
+
+    if (!isParticipant) {
+      return res
+        .status(403)
+        .json({ message: "You are not a participant of this group" });
+    }
+
+    // Fetch the latest 20 messages in the group in descending order
+    const messages = await prisma.message.findMany({
+      where: {
+        conversationId: parseInt(groupId),
+      },
+      include: {
+        sender: {
+          select: { id: true, username: true },
+        },
+      },
+      orderBy: {
+        timestamp: "desc", // Newest messages first
+      },
+      take: 20,
+    });
+
+    // Reverse to send messages in ascending order
+    const orderedMessages = messages.reverse();
+
+    res.json({ messages: orderedMessages });
+  } catch (error) {
+    console.error("Error in getLatest20GroupMessages:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get group conversations for the current user
 export const getGroupConversations = async (req, res) => {
   const userId = req.user.userId;
