@@ -534,3 +534,4 @@
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-22T21:40:48.620Z"}
 {"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-22T22:41:37.621Z"}
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-22T22:41:46.099Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-22T23:21:29.316Z"}

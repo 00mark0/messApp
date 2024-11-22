@@ -262,6 +262,13 @@ export const getLatest50Messages = async (req, res) => {
         sender: {
           select: { id: true, username: true },
         },
+        reactions: {
+          include: {
+            user: {
+              select: { id: true, username: true },
+            },
+          },
+        },
       },
       orderBy: {
         timestamp: "desc", // Newest messages first

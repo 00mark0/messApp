@@ -3,7 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircle } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCircle,
+  faSmile,
+  faTimes,
+  faHeart,
+} from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
 import InputEmoji from "react-input-emoji";
 import AllMessagesModal from "./AllMessagesModal";
@@ -442,17 +447,40 @@ function Chat() {
                       <p className="text-xs text-gray-600 text-end">
                         {new Date(msg.timestamp).toLocaleString()}
                       </p>
-                      {/* Reactions display */}
+                      {/* Reactions display on the left side with counts */}
                       {msg.reactions && msg.reactions.length > 0 && (
-                        <div className="flex space-x-1 mt-1">
-                          {msg.reactions.map((reaction) => (
-                            <span key={reaction.userId}>
-                              {reaction.emoji} x1
-                              {/* You can enhance this to show counts */}
-                            </span>
+                        <div className="flex items-start space-x-1 mt-1">
+                          {Object.values(
+                            msg.reactions.reduce((acc, reaction) => {
+                              if (acc[reaction.emoji]) {
+                                acc[reaction.emoji].count += 1;
+                                acc[reaction.emoji].users.push(
+                                  reaction.user.username
+                                );
+                              } else {
+                                acc[reaction.emoji] = {
+                                  emoji: reaction.emoji,
+                                  count: 1,
+                                  users: [reaction.user.username],
+                                  userIds: [reaction.userId],
+                                };
+                              }
+                              return acc;
+                            }, {})
+                          ).map((group, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center space-x-1 bg-gray-300 p-1 rounded text-sm cursor-pointer"
+                              onClick={() => setSelectedMessageId(msg.id)}
+                            >
+                              <span>
+                                {group.emoji} x{group.count}
+                              </span>
+                            </div>
                           ))}
                         </div>
                       )}
+
                       {/* Show 'Seen' indicator if applicable */}
                       {isLastMessageByUser &&
                         isCurrentUserSender &&
@@ -464,34 +492,40 @@ function Chat() {
                   </div>
 
                   {/* Reaction button */}
-                  <button
-                    onClick={() => {
-                      setSelectedMessageId(msg.id);
-                      setShowEmojiPicker(!showEmojiPicker);
-                    }}
-                    className="absolute bottom-1 left-1 text-xs text-gray-500"
-                  >
-                    {userReaction ? "Remove Reaction" : "React"}
-                  </button>
+                  {!userReaction && (
+                    <button
+                      onClick={() => {
+                        setSelectedMessageId(msg.id);
+                        setShowEmojiPicker((prev) =>
+                          prev !== msg.id ? msg.id : null
+                        );
+                      }}
+                      className="absolute bottom-1 left-1 text-xs text-gray-500"
+                    >
+                      <FontAwesomeIcon icon={faSmile} />
+                    </button>
+                  )}
 
                   {/* Emoji Picker */}
-                  {showEmojiPicker && selectedMessageId === msg.id && (
-                    <div className="absolute bottom-6 right-0">
-                      <Picker
-                        onEmojiClick={(emojiObject, event) => {
-                          // Swap parameters
-                          console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
-                          if (emojiObject && emojiObject.emoji) {
-                            handleAddReaction(msg.id, emojiObject.emoji);
-                          } else {
-                            console.error(
-                              "Emoji object is undefined or missing emoji property"
-                            );
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
+                  {showEmojiPicker === msg.id &&
+                    selectedMessageId === msg.id && (
+                      <div className="absolute bottom-6 left-1">
+                        <Picker
+                          onEmojiClick={(emojiObject, event) => {
+                            console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
+                            if (emojiObject && emojiObject.emoji) {
+                              handleAddReaction(msg.id, emojiObject.emoji);
+                            } else {
+                              console.error(
+                                "Emoji object is undefined or missing emoji property"
+                              );
+                            }
+                          }}
+                          disableAutoFocus={true}
+                          native={true}
+                        />
+                      </div>
+                    )}
                 </div>
               );
             })
