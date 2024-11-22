@@ -7,6 +7,8 @@ import {
   markMessagesAsSeen,
   deleteConversation,
   getLatest50Messages,
+  addReaction,
+  removeReaction,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -70,6 +72,25 @@ router.get(
       .withMessage("Limit must be a positive integer"),
   ],
   getConversationMessages
+);
+
+// Add Reaction
+router.post(
+  "/:messageId/reactions",
+  authMiddleware,
+  [
+    param("messageId").isInt().withMessage("Message ID must be an integer"),
+    body("emoji").isString().notEmpty().withMessage("Emoji is required"),
+  ],
+  addReaction
+);
+
+// Remove Reaction
+router.delete(
+  "/:messageId/reactions",
+  authMiddleware,
+  [param("messageId").isInt().withMessage("Message ID must be an integer")],
+  removeReaction
 );
 
 export default router;

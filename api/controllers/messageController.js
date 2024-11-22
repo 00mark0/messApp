@@ -377,3 +377,90 @@ export const deleteConversation = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Add Reaction to a Message
+export const addReaction = async (req, res) => {
+  const { messageId } = req.params;
+  const { emoji } = req.body;
+  const userId = req.user.userId;
+
+  try {
+    // Check if message exists
+    const message = await prisma.message.findUnique({
+      where: { id: parseInt(messageId) },
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Create or update the reaction
+    const reaction = await prisma.messageReaction.upsert({
+      where: {
+        messageId_userId: {
+          messageId: parseInt(messageId),
+          userId,
+        },
+      },
+      update: { emoji },
+      create: {
+        messageId: parseInt(messageId),
+        userId,
+        emoji,
+      },
+      include: {
+        user: { select: { id: true, username: true } },
+      },
+    });
+
+    // Emit real-time event via Socket.IO
+    io.to(message.conversationId.toString()).emit("reactionAdded", reaction);
+
+    // Create a notification for the message sender (if not the same user)
+    if (message.senderId !== userId) {
+      const notification = await prisma.notification.create({
+        data: {
+          userId: message.senderId,
+          content: `${reaction.user.username} reacted to your message: "${reaction.emoji}"`,
+        },
+      });
+
+      // Emit notification to the recipient
+      io.to(message.senderId.toString()).emit("reaction", notification);
+    }
+
+    res.status(200).json({ reaction });
+  } catch (error) {
+    console.error("Error in addReaction:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Remove Reaction from a Message
+export const removeReaction = async (req, res) => {
+  const { messageId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    // Delete the reaction
+    const reaction = await prisma.messageReaction.delete({
+      where: {
+        messageId_userId: {
+          messageId: parseInt(messageId),
+          userId,
+        },
+      },
+    });
+
+    // Emit real-time event via Socket.IO
+    io.to(reaction.messageId.toString()).emit("reactionRemoved", {
+      messageId: reaction.messageId,
+      userId: reaction.userId,
+    });
+
+    res.status(200).json({ message: "Reaction removed" });
+  } catch (error) {
+    console.error("Error in removeReaction:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

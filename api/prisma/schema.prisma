@@ -8,35 +8,49 @@ generator client {
 }
 
 model User {
-  id                       Int                       @id @default(autoincrement())
-  username                 String                    @unique
-  email                    String                    @unique
-  password                 String
-  isAdmin                  Boolean                   @default(false)
-  profilePicture           String?                   // Add this line
-  messagesSent             Message[]                 @relation("messagesSent")
-  messagesReceived         Message[]                 @relation("messagesReceived")
-  contacts                 Contact[]                 @relation("userContacts")
-  contactsOf               Contact[]                 @relation("contactUsers")
-  notifications            Notification[]
-  conversations            ConversationParticipant[]
-  contactRequestsSent      ContactRequest[]          @relation("ContactRequestSender")
-  contactRequestsReceived  ContactRequest[]          @relation("ContactRequestReceiver")
-  isOnline                 Boolean                   @default(false)
-  isVisible                Boolean                   @default(true)
+  id                      Int                       @id @default(autoincrement())
+  username                String                    @unique
+  email                   String                    @unique
+  password                String
+  isAdmin                 Boolean                   @default(false)
+  profilePicture          String?
+  messagesSent            Message[]                 @relation("messagesSent")
+  messagesReceived        Message[]                 @relation("messagesReceived")
+  contacts                Contact[]                 @relation("userContacts")
+  contactsOf              Contact[]                 @relation("contactUsers")
+  notifications           Notification[]
+  conversations           ConversationParticipant[]
+  contactRequestsSent     ContactRequest[]          @relation("ContactRequestSender")
+  contactRequestsReceived ContactRequest[]          @relation("ContactRequestReceiver")
+  isOnline                Boolean                   @default(false)
+  isVisible               Boolean                   @default(true)
+  messageReactions        MessageReaction[] // Added back-relation
 }
 
 model Message {
-  id             Int           @id @default(autoincrement())
-  sender         User          @relation("messagesSent", fields: [senderId], references: [id])
+  id             Int               @id @default(autoincrement())
+  sender         User              @relation("messagesSent", fields: [senderId], references: [id])
   senderId       Int
-  recipient      User?         @relation("messagesReceived", fields: [recipientId], references: [id])
+  recipient      User?             @relation("messagesReceived", fields: [recipientId], references: [id])
   recipientId    Int?
   content        String
-  timestamp      DateTime      @default(now())
-  seenBy         Int[]         @default([])
-  conversation   Conversation  @relation(fields: [conversationId], references: [id])
+  timestamp      DateTime          @default(now())
+  seenBy         Int[]             @default([])
+  conversation   Conversation      @relation(fields: [conversationId], references: [id])
   conversationId Int
+  reactions      MessageReaction[] // Added back-relation
+}
+
+model MessageReaction {
+  id        Int      @id @default(autoincrement())
+  message   Message  @relation(fields: [messageId], references: [id])
+  messageId Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId]) // A user can react once per message
 }
 
 model Conversation {
@@ -77,14 +91,14 @@ model Notification {
 }
 
 model ContactRequest {
-  id           Int      @id @default(autoincrement())
-  sender       User     @relation("ContactRequestSender", fields: [senderId], references: [id])
-  senderId     Int
-  receiver     User     @relation("ContactRequestReceiver", fields: [receiverId], references: [id])
-  receiverId   Int
-  status       String   @default("pending") // "pending", "accepted", "rejected"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  sender     User     @relation("ContactRequestSender", fields: [senderId], references: [id])
+  senderId   Int
+  receiver   User     @relation("ContactRequestReceiver", fields: [receiverId], references: [id])
+  receiverId Int
+  status     String   @default("pending") // "pending", "accepted", "rejected"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([senderId, receiverId])
 }

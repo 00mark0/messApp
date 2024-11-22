@@ -42,6 +42,8 @@
                 |-- migration.sql
             |-- 20241120230531_restore_back_to_the_latest_git_log
                 |-- migration.sql
+            |-- 20241122221436_add_message_reactions
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes

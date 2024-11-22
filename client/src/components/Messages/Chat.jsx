@@ -7,6 +7,7 @@ import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
 import InputEmoji from "react-input-emoji";
 import AllMessagesModal from "./AllMessagesModal";
+import Picker from "emoji-picker-react";
 
 function Chat() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -23,6 +24,8 @@ function Chat() {
   const [distanceFromBottom, setDistanceFromBottom] = useState(0);
   const scrollableRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // pixels from the bottom
   const SCROLL_THRESHOLD = 100;
@@ -178,6 +181,40 @@ function Chat() {
     [user.id]
   );
 
+  const markAsSeen = useCallback(() => {
+    socket.emit("markAsSeen", {
+      conversationId,
+      userId: user.id,
+    });
+  }, [conversationId, user.id]);
+
+  // Function to handle adding a reaction
+  const handleAddReaction = async (messageId, emoji) => {
+    console.log("Adding reaction:", emoji);
+    try {
+      await axios.post(
+        `/messages/${messageId}/reactions`,
+        { emoji },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setShowEmojiPicker(false);
+      setSelectedMessageId(null);
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+    }
+  };
+
+  // Function to handle removing a reaction
+  const handleRemoveReaction = async (messageId) => {
+    try {
+      await axios.delete(`/messages/${messageId}/reactions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.error("Error removing reaction:", error);
+    }
+  };
+
   useEffect(() => {
     // Join conversation room
     socket.emit("joinConversation", conversationId);
@@ -209,13 +246,6 @@ function Chat() {
     handleStopTyping,
   ]);
 
-  const markAsSeen = useCallback(() => {
-    socket.emit("markAsSeen", {
-      conversationId,
-      userId: user.id,
-    });
-  }, [conversationId, user.id]);
-
   useEffect(() => {
     if (messages.length > 0 && distanceFromBottom < SCROLL_THRESHOLD) {
       const debounceMarkAsSeen = setTimeout(() => {
@@ -226,6 +256,40 @@ function Chat() {
       return () => clearTimeout(debounceMarkAsSeen);
     }
   }, [markAsSeen, messages, distanceFromBottom]);
+
+  // Receive real-time reaction updates
+  useEffect(() => {
+    socket.on("reactionAdded", (reaction) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === reaction.messageId
+            ? {
+                ...msg,
+                reactions: [...(msg.reactions || []), reaction],
+              }
+            : msg
+        )
+      );
+    });
+
+    socket.on("reactionRemoved", ({ messageId, userId }) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                reactions: msg.reactions.filter((r) => r.userId !== userId),
+              }
+            : msg
+        )
+      );
+    });
+
+    return () => {
+      socket.off("reactionAdded");
+      socket.off("reactionRemoved");
+    };
+  }, []);
 
   const handleInputChange = useCallback(
     (value) => {
@@ -334,6 +398,11 @@ function Chat() {
                 isCurrentUserSender &&
                 (!nextMessage || nextMessage.senderId !== user.id);
 
+              // Get user's reaction to this message
+              const userReaction = msg.reactions?.find(
+                (reaction) => reaction.userId === user.id
+              );
+
               return (
                 <div
                   key={msg.id}
@@ -341,7 +410,7 @@ function Chat() {
                     isCurrentUserSender
                       ? "bg-blue-200 ml-auto text-right"
                       : "bg-gray-200"
-                  } max-w-md`}
+                  } max-w-md relative`}
                 >
                   <div className="flex gap-2 items-start">
                     <div className="relative flex-shrink-0">
@@ -373,6 +442,17 @@ function Chat() {
                       <p className="text-xs text-gray-600 text-end">
                         {new Date(msg.timestamp).toLocaleString()}
                       </p>
+                      {/* Reactions display */}
+                      {msg.reactions && msg.reactions.length > 0 && (
+                        <div className="flex space-x-1 mt-1">
+                          {msg.reactions.map((reaction) => (
+                            <span key={reaction.userId}>
+                              {reaction.emoji} x1
+                              {/* You can enhance this to show counts */}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {/* Show 'Seen' indicator if applicable */}
                       {isLastMessageByUser &&
                         isCurrentUserSender &&
@@ -382,6 +462,36 @@ function Chat() {
                         )}
                     </div>
                   </div>
+
+                  {/* Reaction button */}
+                  <button
+                    onClick={() => {
+                      setSelectedMessageId(msg.id);
+                      setShowEmojiPicker(!showEmojiPicker);
+                    }}
+                    className="absolute bottom-1 left-1 text-xs text-gray-500"
+                  >
+                    {userReaction ? "Remove Reaction" : "React"}
+                  </button>
+
+                  {/* Emoji Picker */}
+                  {showEmojiPicker && selectedMessageId === msg.id && (
+                    <div className="absolute bottom-6 right-0">
+                      <Picker
+                        onEmojiClick={(emojiObject, event) => {
+                          // Swap parameters
+                          console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
+                          if (emojiObject && emojiObject.emoji) {
+                            handleAddReaction(msg.id, emojiObject.emoji);
+                          } else {
+                            console.error(
+                              "Emoji object is undefined or missing emoji property"
+                            );
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })
