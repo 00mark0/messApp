@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import AuthContext from "../../context/AuthContext";
 
-function AllMessagesModal({ isOpen, onClose, conversationId, token }) {
+function AllGroupMessagesModal({ isOpen, onClose, groupId, token }) {
   const { user } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -28,13 +28,10 @@ function AllMessagesModal({ isOpen, onClose, conversationId, token }) {
 
     setLoading(true);
     try {
-      const response = await axios.get(
-        `/messages/conversations/${conversationId}/all`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { page: pageNumber, limit: 50 },
-        }
-      );
+      const response = await axios.get(`/groups/${groupId}/messages/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { page: pageNumber, limit: 50 },
+      });
 
       // Reverse the order of messages to display most recent first
       const fetchedMessages = response.data.messages.reverse();
@@ -125,4 +122,4 @@ function AllMessagesModal({ isOpen, onClose, conversationId, token }) {
   );
 }
 
-export default AllMessagesModal;
+export default AllGroupMessagesModal;

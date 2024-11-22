@@ -86,6 +86,7 @@
             |-- Layout.jsx
             |-- Messages
                 |-- AddParticipantModal.jsx
+                |-- AllGroupMessagesModal.jsx
                 |-- AllMessagesModal.jsx
                 |-- Chat.jsx
                 |-- GiveAdminRightsModal.jsx

@@ -321,8 +321,8 @@ function GroupInbox() {
                 <p
                   className={`text-md ${
                     group.unseenMessages > 0
-                      ? "font-bold dark:text-white text-black"
-                      : "text-gray-600 dark:text-gray-400"
+                      ? "font-bold dark:text-white text-black w-64 truncate"
+                      : "text-gray-600 dark:text-gray-400 w-64 truncate"
                   }`}
                 >
                   {group.unseenMessages > 0

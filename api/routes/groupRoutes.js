@@ -1,5 +1,5 @@
 import express from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import {
   createGroup,
   addParticipant,
@@ -11,7 +11,7 @@ import {
   leaveGroup,
   giveAdminRights,
   getGroupParticipants,
-  getLatest20GroupMessages,
+  getLatest50GroupMessages,
 } from "../controllers/groupController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -61,12 +61,12 @@ router.post(
   sendMessageToGroup
 );
 
-// Get 20 messages in a group
+// Get 50 messages in a group
 router.get(
   "/:groupId/messages",
   authMiddleware,
   [param("groupId").isInt().withMessage("Group ID must be an integer")],
-  getLatest20GroupMessages
+  getLatest50GroupMessages
 );
 
 // Get conversations for a user
@@ -107,4 +107,21 @@ router.get(
   getGroupParticipants
 );
 
+// Get all messages in a group with pagination
+router.get(
+  "/:groupId/messages/all",
+  authMiddleware,
+  [
+    param("groupId").isInt().withMessage("Group ID must be an integer"),
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Limit must be a positive integer"),
+  ],
+  getGroupMessages
+);
 export default router;

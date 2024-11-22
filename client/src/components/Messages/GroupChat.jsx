@@ -10,6 +10,7 @@ import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
 import GiveAdminRightsModal from "./GiveAdminRightsModal";
 import InputEmoji from "react-input-emoji";
+import AllGroupMessagesModal from "./AllGroupMessagesModal";
 
 function GroupChat() {
   const { user, token, onlineStatusToggle } = useContext(AuthContext);
@@ -32,10 +33,10 @@ function GroupChat() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isScrolledToTop, setIsScrolledToTop] = useState(false);
   const scrollableRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleScroll = () => {
     if (scrollableRef.current) {
-      console.log("scrollTop:", scrollableRef.current.scrollTop);
       if (scrollableRef.current.scrollTop === 0) {
         setIsScrolledToTop(true);
       } else {
@@ -404,6 +405,10 @@ function GroupChat() {
   const closeRemoveParticipantModal = () => setIsRemoveParticipantOpen(false);
   const closeGiveAdminRightsModal = () => setIsGiveAdminRightsOpen(false);
 
+  // Open AllGroupMessagesModal
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
   // Check if the current user is an admin of the group
   const isAdmin = participants.some(
     (participant) => participant.isAdmin && participant.user.id === user.id
@@ -529,7 +534,7 @@ function GroupChat() {
         {isScrolledToTop && (
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded mb-4 shadow-md w-32 mx-auto"
-            onClick={() => console.log("View All clicked")}
+            onClick={openModal}
           >
             View All
           </button>
@@ -687,6 +692,13 @@ function GroupChat() {
           </button>
         </div>
       </div>
+
+      <AllGroupMessagesModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        groupId={conversationId}
+        token={token}
+      />
     </div>
   );
 }

@@ -208,7 +208,7 @@ export const getConversationMessages = async (req, res) => {
         },
       },
       orderBy: {
-        timestamp: "desc", // Oldest messages first
+        timestamp: "desc", // Newest messages first
       },
       skip: skip,
       take: take,
@@ -274,7 +274,7 @@ export const getLatest50Messages = async (req, res) => {
 
     res.json({ messages: orderedMessages });
   } catch (error) {
-    console.error("Error in getLatest20Messages:", error);
+    console.error("Error in getLatest50Messages:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
