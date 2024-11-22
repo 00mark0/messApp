@@ -1,8 +1,7 @@
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import AuthContext from "../../context/AuthContext";
-import ReactScrollableFeed from "react-scrollable-feed";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
@@ -20,6 +19,23 @@ function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [isScrolledToTop, setIsScrolledToTop] = useState(0);
+  const scrollableRef = useRef(null);
+
+  const handleScroll = () => {
+    if (scrollableRef.current) {
+      const { scrollTop } = scrollableRef.current;
+
+      // Update isScrolledToTop with the scrollTop value
+      console.log(scrollTop);
+      setIsScrolledToTop(scrollTop);
+    }
+  };
+  useEffect(() => {
+    if (scrollableRef.current) {
+      scrollableRef.current.scrollTop = scrollableRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -166,18 +182,23 @@ function Chat() {
     handleStopTyping,
   ]);
 
-  useEffect(() => {
-    const debounceMarkAsSeen = setTimeout(() => {
-      if (socket && messages.length > 0) {
-        socket.emit("markAsSeen", {
-          conversationId,
-          userId: user.id,
-        });
-      }
-    }, 300); // Adjust the debounce delay as needed
+  const markAsSeen = useCallback(() => {
+    socket.emit("markAsSeen", {
+      conversationId,
+      userId: user.id,
+    });
+  }, [conversationId, user.id]);
 
-    return () => clearTimeout(debounceMarkAsSeen);
-  }, [messages, conversationId, user.id]);
+  useEffect(() => {
+    if (messages.length > 0 && isScrolledToTop === 0) {
+      const debounceMarkAsSeen = setTimeout(() => {
+        markAsSeen();
+        console.log("Marking messages as seen...");
+      }, 1000); // Adjust the debounce delay as needed
+
+      return () => clearTimeout(debounceMarkAsSeen);
+    }
+  }, [markAsSeen, messages, isScrolledToTop]);
 
   const handleInputChange = useCallback(
     (value) => {
@@ -255,7 +276,20 @@ function Chat() {
           Chat with {recipient ? recipient.username : "User"}
         </h1>
 
-        <ReactScrollableFeed className="flex-1 overflow-y-auto mb-4">
+        {isScrolledToTop && (
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded mb-4 shadow-md w-32 mx-auto"
+            onClick={() => console.log("View All clicked")}
+          >
+            View All
+          </button>
+        )}
+
+        <div
+          ref={scrollableRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto mb-4"
+        >
           {messages.length > 0 ? (
             messages.map((msg, index) => {
               const isCurrentUserSender = msg.senderId === user.id;
@@ -328,7 +362,7 @@ function Chat() {
             </p>
           )}
           {otherUserTyping && <p className="text-gray-500 italic">Typing...</p>}
-        </ReactScrollableFeed>
+        </div>
 
         <div className="flex">
           <InputEmoji

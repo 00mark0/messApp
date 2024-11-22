@@ -1,10 +1,9 @@
 // GroupChat.jsx
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // Import useParams
 import socket from "../../api/socket";
 import AuthContext from "../../context/AuthContext";
 import axios from "../../api/axios";
-import ReactScrollableFeed from "react-scrollable-feed";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faCircle } from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
@@ -31,6 +30,25 @@ function GroupChat() {
   const groupId = conversationId;
   const [participantEvents, setParticipantEvents] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [isScrolledToTop, setIsScrolledToTop] = useState(false);
+  const scrollableRef = useRef(null);
+
+  const handleScroll = () => {
+    if (scrollableRef.current) {
+      console.log("scrollTop:", scrollableRef.current.scrollTop);
+      if (scrollableRef.current.scrollTop === 0) {
+        setIsScrolledToTop(true);
+      } else {
+        setIsScrolledToTop(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (scrollableRef.current) {
+      scrollableRef.current.scrollTop = scrollableRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   // Map through groups object from groupConvoRes.data.groups to find the group name that matches the conversationId
   const getGroupName = (conversationId) => {
@@ -508,8 +526,21 @@ function GroupChat() {
           </div>
         </div>
 
+        {isScrolledToTop && (
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded mb-4 shadow-md w-32 mx-auto"
+            onClick={() => console.log("View All clicked")}
+          >
+            View All
+          </button>
+        )}
+
         {/* Messages Section */}
-        <ReactScrollableFeed className="flex-1 overflow-y-auto mb-4">
+        <div
+          ref={scrollableRef}
+          className="flex-1 overflow-y-auto mb-4"
+          onScroll={handleScroll}
+        >
           {messages.length > 0 ? (
             messages.map((msg, index) => {
               const isCurrentUserSender = msg.senderId === user.id;
@@ -623,7 +654,7 @@ function GroupChat() {
               {event.username} has {event.event}.
             </p>
           ))}
-        </ReactScrollableFeed>
+        </div>
 
         {/* Typing Indicators */}
         {typingUsers.length > 0 && (
