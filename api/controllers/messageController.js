@@ -208,7 +208,7 @@ export const getConversationMessages = async (req, res) => {
         },
       },
       orderBy: {
-        timestamp: "asc", // Oldest messages first
+        timestamp: "desc", // Oldest messages first
       },
       skip: skip,
       take: take,
@@ -221,7 +221,7 @@ export const getConversationMessages = async (req, res) => {
   }
 };
 
-export const getLatest20Messages = async (req, res) => {
+export const getLatest50Messages = async (req, res) => {
   const userId = req.user.userId;
   const { conversationId } = req.params;
 
@@ -253,7 +253,7 @@ export const getLatest20Messages = async (req, res) => {
       });
     }
 
-    // Fetch the latest 20 messages in descending order
+    // Fetch the latest 50 messages in descending order
     const messages = await prisma.message.findMany({
       where: {
         conversationId: parseInt(conversationId),
@@ -266,7 +266,7 @@ export const getLatest20Messages = async (req, res) => {
       orderBy: {
         timestamp: "desc", // Newest messages first
       },
-      take: 20,
+      take: 50,
     });
 
     // Reverse to send messages in ascending order

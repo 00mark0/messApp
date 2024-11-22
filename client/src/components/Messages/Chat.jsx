@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
 import InputEmoji from "react-input-emoji";
+import AllMessagesModal from "./AllMessagesModal";
 
 function Chat() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -21,6 +22,7 @@ function Chat() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [distanceFromBottom, setDistanceFromBottom] = useState(0);
   const scrollableRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // pixels from the bottom
   const SCROLL_THRESHOLD = 100;
@@ -277,6 +279,9 @@ function Chat() {
     }
   };
 
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
   const handleBack = () => {
     navigate("/");
   };
@@ -308,7 +313,7 @@ function Chat() {
         {distanceFromBottom > SCROLL_THRESHOLD && (
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded mb-4 shadow-md w-32 mx-auto"
-            onClick={() => console.log("Clicked View All")}
+            onClick={openModal}
           >
             View All
           </button>
@@ -410,6 +415,12 @@ function Chat() {
           </button>
         </div>
       </div>
+      <AllMessagesModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        conversationId={conversationId}
+        token={token}
+      />
     </div>
   );
 }

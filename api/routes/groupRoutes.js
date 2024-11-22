@@ -61,7 +61,7 @@ router.post(
   sendMessageToGroup
 );
 
-// Get messages in a group
+// Get 20 messages in a group
 router.get(
   "/:groupId/messages",
   authMiddleware,

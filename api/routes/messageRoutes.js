@@ -1,12 +1,12 @@
 import express from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import {
   sendMessage,
   getConversations,
   getConversationMessages,
   markMessagesAsSeen,
   deleteConversation,
-  getLatest20Messages,
+  getLatest50Messages,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -26,7 +26,7 @@ router.post(
 // Get all conversations for the user
 router.get("/conversations", authMiddleware, getConversations);
 
-// Get messages in a specific conversation
+// Get 50 messages in a conversation
 router.get(
   "/conversations/:conversationId",
   authMiddleware,
@@ -35,7 +35,7 @@ router.get(
       .isInt()
       .withMessage("Conversation ID must be an integer"),
   ],
-  getLatest20Messages
+  getLatest50Messages
 );
 
 // Mark messages as seen in a conversation
@@ -50,6 +50,26 @@ router.delete(
   "/conversations/:conversationId",
   authMiddleware,
   deleteConversation
+);
+
+// Get all messages in a conversation
+router.get(
+  "/conversations/:conversationId/all",
+  authMiddleware,
+  [
+    param("conversationId")
+      .isInt()
+      .withMessage("Conversation ID must be an integer"),
+    query("page")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Page must be a positive integer"),
+    query("limit")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Limit must be a positive integer"),
+  ],
+  getConversationMessages
 );
 
 export default router;
