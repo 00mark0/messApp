@@ -31,6 +31,8 @@ function Chat() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedReactionGroup, setSelectedReactionGroup] = useState(null);
+  const [showReactionPopup, setShowReactionPopup] = useState(false);
 
   // pixels from the bottom
   const SCROLL_THRESHOLD = 100;
@@ -418,7 +420,7 @@ function Chat() {
                   } max-w-md relative`}
                 >
                   <div className="flex gap-2 items-start">
-                    <div className="relative flex-shrink-0">
+                    <div className="relative flex-shrink-0 ml-2">
                       {!isCurrentUserSender && recipient && (
                         <img
                           src={`${import.meta.env.VITE_REACT_APP_API_URL}${
@@ -471,13 +473,48 @@ function Chat() {
                             <div
                               key={index}
                               className="flex items-center space-x-1 bg-gray-300 p-1 rounded text-sm cursor-pointer"
-                              onClick={() => setSelectedMessageId(msg.id)}
+                              onClick={() => {
+                                setSelectedReactionGroup(group);
+                                setShowReactionPopup(true);
+                              }}
                             >
                               <span>
                                 {group.emoji} x{group.count}
                               </span>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Reaction details popup */}
+                      {showReactionPopup && selectedReactionGroup && (
+                        <div className="absolute bottom-6 left-1 bg-white p-2 rounded shadow-lg z-50">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-bold">Reactions</h3>
+                            <FontAwesomeIcon
+                              icon={faTimes}
+                              className="text-gray-500 cursor-pointer"
+                              onClick={() => setShowReactionPopup(false)}
+                            />
+                          </div>
+                          {selectedReactionGroup.users.map(
+                            (username, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between mb-1"
+                              >
+                                <span>{username}</span>
+                                {selectedReactionGroup.userIds[index] ===
+                                  user.id && (
+                                  <FontAwesomeIcon
+                                    icon={faTimes}
+                                    className="text-red-500 cursor-pointer"
+                                    onClick={() => handleRemoveReaction(msg.id)}
+                                  />
+                                )}
+                              </div>
+                            )
+                          )}
                         </div>
                       )}
 
@@ -500,7 +537,7 @@ function Chat() {
                           prev !== msg.id ? msg.id : null
                         );
                       }}
-                      className="absolute bottom-1 left-1 text-xs text-gray-500"
+                      className="absolute bottom-1 left-1 text-md text-gray-500"
                     >
                       <FontAwesomeIcon icon={faSmile} />
                     </button>
