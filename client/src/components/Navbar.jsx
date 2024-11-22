@@ -47,34 +47,36 @@ function Navbar() {
     }
   }, [token, fetchUserProfile]);
 
+  // Memoized Event Handler Functions
+  const handleConnect = useCallback(() => {
+    console.log("Connected to WebSocket");
+  }, []);
+
+  const handleNotification = useCallback((data) => {
+    setNotifications((prev) => [data, ...prev]);
+    setUnreadCount((prev) => prev + 1);
+  }, []);
+
+  const handleContactRequest = useCallback((data) => {
+    setNotifications((prev) => [
+      {
+        id: data.id,
+        content: `${data.username} has sent you a contact request.`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      },
+      ...prev,
+    ]);
+    setUnreadCount((prev) => prev + 1);
+  }, []);
+
+  const handleGroupMessageNotification = useCallback((data) => {
+    setNotifications((prev) => [data, ...prev]);
+    setUnreadCount((prev) => prev + 1);
+  }, []);
+
+  // useEffect to Set Up Socket Event Listeners
   useEffect(() => {
-    const handleConnect = () => {
-      console.log("Connected to WebSocket");
-    };
-
-    const handleNotification = (data) => {
-      setNotifications((prev) => [data, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-    };
-
-    const handleContactRequest = (data) => {
-      setNotifications((prev) => [
-        {
-          id: data.id,
-          content: `${data.username} has sent you a contact request.`,
-          createdAt: new Date().toISOString(),
-          read: false,
-        },
-        ...prev,
-      ]);
-      setUnreadCount((prev) => prev + 1);
-    };
-
-    const handleGroupMessageNotification = (data) => {
-      setNotifications((prev) => [data, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-    };
-
     socket.on("connect", handleConnect);
     socket.on("notification", handleNotification);
     socket.on("contact-request", handleContactRequest);
@@ -87,7 +89,12 @@ function Navbar() {
       socket.off("contact-request", handleContactRequest);
       socket.off("groupMessageNotification", handleGroupMessageNotification);
     };
-  }, [user]);
+  }, [
+    handleConnect,
+    handleNotification,
+    handleContactRequest,
+    handleGroupMessageNotification,
+  ]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -140,25 +147,27 @@ function Navbar() {
     }
   };
 
+  // Memoized handleClickOutside Function
+  const handleClickOutside = useCallback((event) => {
+    if (
+      notificationsRef.current &&
+      !notificationsRef.current.contains(event.target)
+    ) {
+      setShowNotifications(false);
+    }
+
+    if (menuRef.current && !menuRef.current.contains(event.target)) {
+      setIsMenuOpen(false);
+    }
+  }, []);
+
+  // useEffect to Add and Remove Event Listener for Click Outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        notificationsRef.current &&
-        !notificationsRef.current.contains(event.target)
-      ) {
-        setShowNotifications(false);
-      }
-
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsMenuOpen(false);
-      }
-    };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [handleClickOutside]);
 
   const handleNotificationClick = (notif) => {
     if (notif.content.includes("group")) {
