@@ -27,6 +27,7 @@
     "react-input-emoji": "^5.9.0",
     "react-router-dom": "^6.27.0",
     "react-scrollable-feed": "^2.0.2",
+    "react-virtualized": "^9.22.5",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {

@@ -19,20 +19,45 @@ function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [isScrolledToTop, setIsScrolledToTop] = useState(0);
+  const [distanceFromBottom, setDistanceFromBottom] = useState(0);
   const scrollableRef = useRef(null);
+
+  // pixels from the bottom
+  const SCROLL_THRESHOLD = 100;
+
+  const isUserNearBottom = () => {
+    if (!scrollableRef.current) return false;
+    const { scrollTop, scrollHeight, clientHeight } = scrollableRef.current;
+    return scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD;
+  };
+
+  const scrollToBottom = () => {
+    if (scrollableRef.current) {
+      scrollableRef.current.scrollTop = scrollableRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, []);
+
+  useEffect(() => {
+    if (distanceFromBottom < SCROLL_THRESHOLD) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   const handleScroll = () => {
     if (scrollableRef.current) {
-      const { scrollTop } = scrollableRef.current;
-
-      // Update isScrolledToTop with the scrollTop value
-      console.log(scrollTop);
-      setIsScrolledToTop(scrollTop);
+      const { scrollTop, scrollHeight, clientHeight } = scrollableRef.current;
+      const distance = scrollHeight - scrollTop - clientHeight;
+      setDistanceFromBottom(distance);
     }
   };
+
+  // scroll chat down on new message
   useEffect(() => {
-    if (scrollableRef.current) {
+    if (scrollableRef.current && isUserNearBottom()) {
       scrollableRef.current.scrollTop = scrollableRef.current.scrollHeight;
     }
   }, [messages]);
@@ -190,15 +215,15 @@ function Chat() {
   }, [conversationId, user.id]);
 
   useEffect(() => {
-    if (messages.length > 0 && isScrolledToTop === 0) {
+    if (messages.length > 0 && distanceFromBottom < SCROLL_THRESHOLD) {
       const debounceMarkAsSeen = setTimeout(() => {
-        markAsSeen();
         console.log("Marking messages as seen...");
-      }, 1000); // Adjust the debounce delay as needed
+        markAsSeen();
+      }, 500);
 
       return () => clearTimeout(debounceMarkAsSeen);
     }
-  }, [markAsSeen, messages, isScrolledToTop]);
+  }, [markAsSeen, messages, distanceFromBottom]);
 
   const handleInputChange = useCallback(
     (value) => {
@@ -252,6 +277,10 @@ function Chat() {
     }
   };
 
+  const handleBack = () => {
+    navigate("/");
+  };
+
   if (loading) {
     return <div className="container mx-auto p-4">Loading...</div>;
   }
@@ -264,7 +293,7 @@ function Chat() {
     <div className="w-full min-h-screen dark:bg-gray-800">
       <div className="container mx-auto p-4 flex flex-col h-screen dark:bg-gray-800">
         <button
-          onClick={() => navigate("/")}
+          onClick={handleBack}
           className="
             bg-blue-500 text-white px-4 py-2 rounded mb-4
             hover:bg-blue-600 focus:outline-none w-32 
@@ -276,10 +305,10 @@ function Chat() {
           Chat with {recipient ? recipient.username : "User"}
         </h1>
 
-        {isScrolledToTop && (
+        {distanceFromBottom > SCROLL_THRESHOLD && (
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded mb-4 shadow-md w-32 mx-auto"
-            onClick={() => console.log("View All clicked")}
+            onClick={() => console.log("Clicked View All")}
           >
             View All
           </button>
