@@ -71,11 +71,11 @@ const AddParticipantModal = ({ groupId, isOpen, onClose }) => {
             className="w-full px-3 py-2 border rounded-l dark:bg-gray-700 dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchUsers()}
           />
           <button
             onClick={fetchUsers}
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-r"
-            onKeyDown={(e) => e.key === "Enter" && fetchUsers()}
           >
             Search
           </button>

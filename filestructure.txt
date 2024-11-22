@@ -98,6 +98,7 @@
             |-- ToggleSwitch.jsx
         |-- context
             |-- AuthContext.jsx
+            |-- ThemeContext.jsx
         |-- index.css
         |-- main.jsx
         |-- pages

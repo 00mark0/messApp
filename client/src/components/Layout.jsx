@@ -13,6 +13,7 @@ function Layout() {
     <>
       {!shouldHideNavbar && <Navbar />}
       <main>
+        <div className="absolute top-4 right-4"></div>
         <Outlet />
       </main>
     </>
