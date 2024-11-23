@@ -11,6 +11,7 @@ import {
   faSmile,
   faTimes,
   faEllipsis,
+  faReply,
 } from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
@@ -47,6 +48,7 @@ function GroupChat() {
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const [selectedReactionMessageId, setSelectedReactionMessageId] =
     useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   const handleScroll = () => {
     if (scrollableRef.current) {
@@ -200,6 +202,7 @@ function GroupChat() {
 
   const handleNewMessage = useCallback(
     (message) => {
+      console.log("New message received:", message);
       if (
         parseInt(message.conversationId, 10) === parseInt(conversationId, 10)
       ) {
@@ -210,7 +213,6 @@ function GroupChat() {
           return prev;
         });
 
-        console.log("Emitting groupMarkAsSeen for message:", message.id);
         // Emit 'groupMarkAsSeen' immediately after receiving a new message
         socket.emit("groupMarkAsSeen", {
           conversationId,
@@ -408,11 +410,15 @@ function GroupChat() {
     try {
       const res = await axios.post(
         `/groups/${conversationId}/message`,
-        { content: input },
+        {
+          content: input.trim(),
+          replyToMessageId: replyingTo ? replyingTo.id : null,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setInput("");
+      setReplyingTo(null);
 
       if (isTyping) {
         setIsTyping(false);
@@ -483,6 +489,10 @@ function GroupChat() {
   const isAdmin = participants.some(
     (participant) => participant.isAdmin && participant.user.id === user.id
   );
+
+  const handleReply = (message) => {
+    setReplyingTo(message);
+  };
 
   if (loading) {
     return (
@@ -643,6 +653,17 @@ function GroupChat() {
                       : "bg-gray-200"
                   } max-w-md relative`}
                 >
+                  {/* Display replied message */}
+                  {msg.replyToMessage && (
+                    <div className="p-2 mb-2 bg-gray-400 rounded-lg">
+                      <p className="text-sm text-gray-900">
+                        <strong className="text-black">
+                          {msg.replyToMessage.sender.username}:
+                        </strong>{" "}
+                        {msg.replyToMessage.content}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex gap-2 items-start">
                     <div className="relative flex-shrink-0 ml-4">
                       {!isCurrentUserSender && sender && (
@@ -669,12 +690,19 @@ function GroupChat() {
                         )}
                     </div>
                     <div className="flex-1 relative">
-                      <p className="break-words">
+                      <p className="break-words mr-8">
                         <strong>
                           {sender ? sender.user.username : "removed"}:
                         </strong>{" "}
                         {msg.content}
                       </p>
+                      {/* Reply Button */}
+                      <button
+                        onClick={() => handleReply(msg)}
+                        className="text-gray-500 absolute right-0 top-0"
+                      >
+                        <FontAwesomeIcon icon={faReply} />
+                      </button>
                       <p className="text-xs text-gray-600 text-end">
                         {new Date(msg.timestamp).toLocaleString()}
                       </p>
@@ -910,21 +938,39 @@ function GroupChat() {
         )}
 
         {/* Input Field */}
-        <div className="flex">
-          <InputEmoji
-            value={input}
-            onChange={handleInputChange}
-            cleanOnEnter
-            onEnter={sendMessage}
-            placeholder="Type a message..."
-          />
-          <button
-            onClick={sendMessage}
-            className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400 hover:bg-blue-600 focus:outline-none"
-            disabled={!input.trim()}
-          >
-            Send
-          </button>
+        <div className="flex flex-col">
+          {replyingTo && (
+            <div className="flex items-center p-2 bg-gray-100 border-l-4 border-blue-500">
+              <div className="flex-1">
+                <p className="text-sm truncate w-64">
+                  Replying to <strong>{replyingTo.sender.username}</strong>:{" "}
+                  {replyingTo.content}
+                </p>
+              </div>
+              <button
+                onClick={() => setReplyingTo(null)}
+                className="text-gray-500 ml-2"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          )}
+          <div className="flex">
+            <InputEmoji
+              value={input}
+              onChange={handleInputChange}
+              cleanOnEnter
+              onEnter={sendMessage}
+              placeholder="Type a message..."
+            />
+            <button
+              onClick={sendMessage}
+              className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400 hover:bg-blue-600 focus:outline-none"
+              disabled={!input.trim()}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
 

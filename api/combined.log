@@ -621,3 +621,9 @@
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T17:26:17.566Z"}
 {"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T17:39:57.313Z"}
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T17:40:04.680Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T18:28:01.561Z"}
+{"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-23T18:28:07.156Z"}
+{"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-23T18:28:09.525Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T18:28:16.409Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T18:41:07.707Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T18:41:12.155Z"}

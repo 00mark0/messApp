@@ -428,9 +428,11 @@ function Chat() {
                 >
                   {/* Display replied message */}
                   {msg.replyToMessage && (
-                    <div className="p-2 mb-2 bg-gray-300 rounded">
-                      <p className="text-sm text-gray-700">
-                        <strong>{msg.replyToMessage.sender.username}:</strong>{" "}
+                    <div className="p-2 mb-2 bg-gray-400 rounded-lg">
+                      <p className="text-sm text-gray-900">
+                        <strong className="text-black">
+                          {msg.replyToMessage.sender.username}:
+                        </strong>{" "}
                         {msg.replyToMessage.content}
                       </p>
                     </div>

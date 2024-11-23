@@ -145,7 +145,7 @@ export const sendMessageToGroup = async (req, res) => {
   }
 
   const { groupId } = req.params;
-  const { content } = req.body;
+  const { content, replyToMessageId } = req.body;
   const senderId = req.user.userId;
 
   try {
@@ -164,15 +164,48 @@ export const sendMessageToGroup = async (req, res) => {
     }
 
     // Create the message in the group
-    const message = await prisma.message.create({
-      data: {
-        senderId,
-        content,
-        conversationId: parseInt(groupId),
+    const messageData = {
+      senderId,
+      content,
+      conversationId: parseInt(groupId),
+    };
+
+    // Include replyToMessageId if provided
+    if (replyToMessageId) {
+      messageData.replyToMessageId = parseInt(replyToMessageId);
+    }
+
+    // Create the message without includes
+    const createdMessage = await prisma.message.create({
+      data: messageData,
+    });
+
+    // Fetch the full message with all necessary relations
+    const message = await prisma.message.findUnique({
+      where: { id: createdMessage.id },
+      include: {
+        sender: {
+          select: { id: true, username: true },
+        },
+        replyToMessage: {
+          include: {
+            sender: {
+              select: { id: true, username: true },
+            },
+          },
+        },
+        reactions: {
+          include: {
+            user: {
+              select: { id: true, username: true },
+            },
+          },
+        },
       },
     });
 
     // Emit the new message to other participants via socket.io
+    console.log("Emitting newMessage to group:", message);
     io.to(groupId.toString()).emit("newMessage", message);
 
     // Fetch sender's username
@@ -307,6 +340,13 @@ export const getLatest50GroupMessages = async (req, res) => {
         reactions: {
           include: {
             user: {
+              select: { id: true, username: true },
+            },
+          },
+        },
+        replyToMessage: {
+          include: {
+            sender: {
               select: { id: true, username: true },
             },
           },

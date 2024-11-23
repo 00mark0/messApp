@@ -167,7 +167,26 @@ io.on("connection", (socket) => {
               username: true,
             },
           },
-          conversation: true,
+          replyToMessage: {
+            include: {
+              sender: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+          reactions: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
         },
       });
 
