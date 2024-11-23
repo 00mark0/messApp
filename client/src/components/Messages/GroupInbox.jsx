@@ -198,8 +198,8 @@ function GroupInbox() {
       </button>
 
       {isMenuOpen && (
-        <div className="flex gap-8 mt-4">
-          <div className="w-1/2">
+        <div className="sm:flex sm:flex-row flex flex-col gap-8 mt-4">
+          <div className="sm:w-1/2 mb-8">
             <h2 className="text-xl font-bold mb-4">Contacts</h2>
             <input
               type="text"
@@ -222,12 +222,12 @@ function GroupInbox() {
                           : "/default-avatar.png"
                       }
                       alt="profile picture"
-                      className="w-12 h-12 rounded-full"
+                      className="sm:w-12 sm:h-12 w-8 h-8 rounded-full object-cover"
                     />
-                    <p className="flex-1">{contact.username}</p>
+                    <p>{contact.username}</p>
                     <button
                       onClick={() => addParticipant(contact.id)}
-                      className="bg-green-500 text-white px-2 py-1 rounded"
+                      className="bg-green-500 text-white rounded"
                     >
                       <FontAwesomeIcon icon={faUserPlus} />
                     </button>
@@ -236,7 +236,7 @@ function GroupInbox() {
             </ul>
           </div>
 
-          <div className="w-1/2">
+          <div className="sm:w-1/2">
             <h2 className="text-xl font-bold mb-4">Create Group</h2>
             <form onSubmit={createGroup} className="space-y-4">
               <input
@@ -292,67 +292,76 @@ function GroupInbox() {
       )}
 
       {/* Render the convos you are a member of, redirect to group chat of that convo on click*/}
-      <h2 className="text-xl font-bold mt-8">Group Conversations</h2>
+      <h2 className="text-xl font-bold mt-8 mb-8">Group Conversations</h2>
       <div className="space-y-4 rounded">
-        {groupConvos.map((group) => (
-          <div
-            key={group.id}
-            className="flex items-center gap-4 p-4  hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer"
-            onClick={() => handleGroupClick(group.id)}
-          >
-            <div className="relative">
-              {group.participants.slice(0, 2).map((participant, index) => (
-                <img
-                  key={participant.id}
-                  src={
-                    participant.profilePicture
-                      ? `${import.meta.env.VITE_REACT_APP_API_URL}${
-                          participant.profilePicture
-                        }`
-                      : "/default-avatar.png"
-                  }
-                  alt="profile picture"
-                  className={`w-10 h-10 rounded-full border-2 border-white ${
-                    index === 0 ? "z-10" : "z-0 -ml-4 -mt-4"
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold">{group.name}</h3>
-              {group.lastMessage ? (
-                <p
-                  className={`text-md ${
-                    group.unseenMessages > 0
-                      ? "font-bold dark:text-white text-black w-64 truncate"
-                      : "text-gray-600 dark:text-gray-400 w-64 truncate"
-                  }`}
+        {groupConvos.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-gray-400 mt-4">
+            No group conversations yet. Create one!
+          </p>
+        ) : (
+          groupConvos.map((group) => (
+            <div
+              key={group.id}
+              className="flex items-center justify-between hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer"
+              onClick={() => handleGroupClick(group.id)}
+            >
+              <div className="flex gap-4">
+                <div className="relative w-10">
+                  {group.participants.slice(0, 2).map((participant, index) => (
+                    <img
+                      key={participant.id}
+                      src={
+                        participant.profilePicture
+                          ? `${import.meta.env.VITE_REACT_APP_API_URL}${
+                              participant.profilePicture
+                            }`
+                          : "/default-avatar.png"
+                      }
+                      alt="profile picture"
+                      className={`w-10 h-10 rounded-full border-2 border-white ${
+                        index === 0 ? "z-10" : "z-0 -ml-4 -mt-4"
+                      } object-cover`}
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-col truncate w-48">
+                  <h3 className="font-bold">{group.name}</h3>
+                  {group.lastMessage ? (
+                    <p
+                      className={`text-md ${
+                        group.unseenMessages > 0
+                          ? "font-bold dark:text-white text-black w-64 truncate"
+                          : "text-gray-600 dark:text-gray-400 w-64 truncate"
+                      }`}
+                    >
+                      {group.unseenMessages > 0
+                        ? `${group.unseenMessages} new message${
+                            group.unseenMessages > 1 ? "s" : ""
+                          }`
+                        : group.lastMessage.content}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600">No messages yet</p>
+                  )}
+                </div>
+              </div>
+              {group.participants.some(
+                (participant) =>
+                  participant.isAdmin && participant.id === user.id
+              ) && (
+                <button
+                  className="text-red-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGroupDelete(group.id);
+                  }}
                 >
-                  {group.unseenMessages > 0
-                    ? `${group.unseenMessages} new message${
-                        group.unseenMessages > 1 ? "s" : ""
-                      }`
-                    : group.lastMessage.content}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-600">No messages yet</p>
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
               )}
             </div>
-            {group.participants.some(
-              (participant) => participant.isAdmin && participant.id === user.id
-            ) && (
-              <button
-                className="text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleGroupDelete(group.id);
-                }}
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
-            )}
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

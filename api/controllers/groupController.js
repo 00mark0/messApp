@@ -82,8 +82,17 @@ export const addParticipant = async (req, res) => {
       },
     });
 
-    // Emit 'participantAdded' event to the participant via socket.io
-    io.to(userId.toString()).emit("participantAdded", groupId);
+    // Fetch the added participant's details
+    const addedParticipant = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: { username: true },
+    });
+
+    // Emit 'participantAdded' event to all participants via socket.io
+    io.to(groupId.toString()).emit("participantAdded", {
+      groupId,
+      username: addedParticipant.username,
+    });
 
     res.status(200).json({ message: "Participant added successfully" });
   } catch (error) {
@@ -118,6 +127,12 @@ export const removeParticipant = async (req, res) => {
         .json({ message: "You are not an admin of this group" });
     }
 
+    // Fetch the participant's details before removing them
+    const removedParticipant = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: { username: true },
+    });
+
     // Remove the participant from the group
     await prisma.conversationParticipant.delete({
       where: {
@@ -128,8 +143,11 @@ export const removeParticipant = async (req, res) => {
       },
     });
 
-    // Emit 'participantRemoved' event to the participant via socket.io
-    io.to(userId.toString()).emit("participantRemoved", groupId);
+    // Emit 'participantRemoved' event to all participants via socket.io
+    io.to(groupId.toString()).emit("participantRemoved", {
+      groupId,
+      username: removedParticipant.username,
+    });
 
     res.status(200).json({ message: "Participant removed successfully" });
   } catch (error) {
@@ -530,8 +548,26 @@ export const leaveGroup = async (req, res) => {
             isAdmin: true,
           },
         });
+
+        // Fetch the second participant's details
+        const secondParticipantDetails = await prisma.user.findUnique({
+          where: { id: secondParticipant.userId },
+          select: { username: true },
+        });
+
+        // Emit 'adminRightsGiven' event to all participants via socket.io
+        io.to(groupId.toString()).emit("adminRightsGiven", {
+          groupId,
+          username: secondParticipantDetails.username,
+        });
       }
     }
+
+    // Fetch the user's details before they leave the group
+    const leavingParticipant = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
 
     // Remove the user from the group
     await prisma.conversationParticipant.delete({
@@ -544,7 +580,10 @@ export const leaveGroup = async (req, res) => {
     });
 
     // Emit 'participantLeft' event to the group via socket.io
-    io.to(groupId.toString()).emit("participantLeft", userId);
+    io.to(groupId.toString()).emit("participantLeft", {
+      groupId,
+      username: leavingParticipant.username,
+    });
 
     res.status(200).json({ message: "Left group successfully" });
   } catch (error) {
@@ -588,8 +627,17 @@ export const giveAdminRights = async (req, res) => {
       },
     });
 
-    // Emit 'adminRightsGiven' event to the participant via socket.io
-    io.to(userId.toString()).emit("adminRightsGiven", groupId);
+    // Fetch the participant's details
+    const participant = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: { username: true },
+    });
+
+    // Emit 'adminRightsGiven' event to all participants via socket.io
+    io.to(groupId.toString()).emit("adminRightsGiven", {
+      groupId,
+      username: participant.username,
+    });
 
     res.status(200).json({ message: "Admin rights given successfully" });
   } catch (error) {

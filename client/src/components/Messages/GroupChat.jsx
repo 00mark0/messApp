@@ -232,47 +232,37 @@ function GroupChat() {
     );
   }, []);
 
-  const handleParticipantEvent = useCallback(
-    (event, userId) => {
-      const participant = participants.find((p) => p.user.id === userId);
-      const username = participant
-        ? participant.user.username
-        : `User ${userId}`;
-      setParticipantEvents((prevEvents) => [
-        ...prevEvents,
-        { event, username },
-      ]);
-    },
-    [participants]
-  );
+  const handleParticipantEvent = useCallback((event, username) => {
+    setParticipantEvents((prevEvents) => [...prevEvents, { event, username }]);
+  }, []);
 
   const handleParticipantAdded = useCallback(
-    (userId) => {
-      handleParticipantEvent("been added", userId);
+    ({ groupId, username }) => {
+      handleParticipantEvent("been added", username);
       fetchParticipants(); // Update participants state
     },
     [handleParticipantEvent, fetchParticipants]
   );
 
   const handleParticipantRemoved = useCallback(
-    (userId) => {
-      handleParticipantEvent("been removed", userId);
+    ({ groupId, username }) => {
+      handleParticipantEvent("been removed", username);
       fetchParticipants(); // Update participants state
     },
     [handleParticipantEvent, fetchParticipants]
   );
 
   const handleAdminRightsGiven = useCallback(
-    (userId) => {
-      handleParticipantEvent("received admin rights", userId);
+    ({ groupId, username }) => {
+      handleParticipantEvent("received admin rights", username);
       fetchParticipants(); // Update participants state
     },
     [handleParticipantEvent, fetchParticipants]
   );
 
   const handleParticipantLeft = useCallback(
-    (userId) => {
-      handleParticipantEvent("left", userId);
+    ({ groupId, username }) => {
+      handleParticipantEvent("left", username);
       fetchParticipants(); // Update participants state
     },
     [handleParticipantEvent, fetchParticipants]
@@ -748,7 +738,7 @@ function GroupChat() {
                     {showReactionPopup &&
                       selectedReactionGroup &&
                       selectedReactionMessageId === msg.id && (
-                        <div className="absolute bottom-0 left-1 bg-white p-2 rounded shadow-lg z-50">
+                        <div className="absolute top-0 left-1 bg-white p-2 rounded shadow-lg z-50">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-lg font-bold">Reactions</h3>
                             <FontAwesomeIcon
@@ -864,8 +854,9 @@ function GroupChat() {
                                   setShowReactionPopup(true);
                                 }}
                               >
-                                <span>
-                                  {group.emoji} x{group.count}
+                                <span className="text-md">
+                                  <span className="text-md">{group.emoji}</span>{" "}
+                                  x{group.count}
                                 </span>
                               </div>
                             ))}

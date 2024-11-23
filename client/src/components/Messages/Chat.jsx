@@ -480,7 +480,7 @@ function Chat() {
                     {showReactionPopup &&
                       selectedReactionGroup &&
                       selectedReactionMessageId === msg.id && (
-                        <div className="absolute bottom-0 left-1 bg-white p-2 rounded shadow-lg z-50">
+                        <div className="absolute top-0 left-1 bg-white p-2 rounded shadow-lg z-50">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-lg font-bold">Reactions</h3>
                             <FontAwesomeIcon
