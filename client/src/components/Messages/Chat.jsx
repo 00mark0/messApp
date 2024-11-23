@@ -459,7 +459,7 @@ function Chat() {
                             <h3 className="text-lg font-bold">Reactions</h3>
                             <FontAwesomeIcon
                               icon={faTimes}
-                              className="text-gray-500 cursor-pointer"
+                              className="text-gray-500 cursor-pointer ml-2"
                               onClick={() => {
                                 setShowReactionPopup(false);
                                 setSelectedReactionMessageId(null);
@@ -472,7 +472,10 @@ function Chat() {
                                 key={index}
                                 className="flex items-center justify-between mb-1"
                               >
-                                <span>{username}</span>
+                                <div className="flex gap-1">
+                                  <span>{username}</span>
+                                  <span>{selectedReactionGroup.emoji}</span>
+                                </div>
                                 {selectedReactionGroup.userIds[index] ===
                                   user.id && (
                                   <FontAwesomeIcon

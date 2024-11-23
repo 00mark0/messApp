@@ -10,6 +10,7 @@ import {
   faCircle,
   faSmile,
   faTimes,
+  faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
@@ -294,7 +295,7 @@ function GroupChat() {
   };
 
   // Function to handle removing a reaction in GroupChat.jsx
-  const handleRemoveGroupReaction = async (messageId, reactionId) => {
+  const handleRemoveGroupReaction = async (messageId) => {
     try {
       await axios.delete(`/groups/${messageId}/reactions`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -733,26 +734,58 @@ function GroupChat() {
                               }}
                             />
                           </div>
-                          {selectedReactionGroup.users.map(
-                            (username, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between mb-1"
-                              >
-                                <span>{username}</span>
-                                {selectedReactionGroup.userIds[index] ===
-                                  user.id && (
-                                  <FontAwesomeIcon
-                                    icon={faTimes}
-                                    className="text-red-500 cursor-pointer"
-                                    onClick={() =>
-                                      handleRemoveGroupReaction(msg.id)
-                                    }
-                                  />
-                                )}
+                          {Object.values(
+                            selectedReactionGroup.reduce((acc, reaction) => {
+                              if (acc[reaction.emoji]) {
+                                acc[reaction.emoji].count += 1;
+                                acc[reaction.emoji].users.push({
+                                  username: reaction.user.username,
+                                  userId: reaction.userId,
+                                });
+                              } else {
+                                acc[reaction.emoji] = {
+                                  emoji: reaction.emoji,
+                                  count: 1,
+                                  users: [
+                                    {
+                                      username: reaction.user.username,
+                                      userId: reaction.userId,
+                                    },
+                                  ],
+                                };
+                              }
+                              return acc;
+                            }, {})
+                          ).map((group, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between mb-1"
+                            >
+                              <div className="w-32 text-start">
+                                <span className="text-xs text-gray-600">
+                                  {group.users
+                                    .map((user) => user.username)
+                                    .join(", ")}
+                                </span>
+                                <span>
+                                  {group.emoji} x{group.count}
+                                </span>
                               </div>
-                            )
-                          )}
+                              {group.users.some(
+                                (u) => u.userId === user.id
+                              ) && (
+                                <FontAwesomeIcon
+                                  icon={faTimes}
+                                  className="text-red-500 cursor-pointer text-end"
+                                  onClick={() =>
+                                    handleRemoveGroupReaction(
+                                      selectedReactionMessageId
+                                    )
+                                  }
+                                />
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                     <div className="relative">
@@ -776,7 +809,6 @@ function GroupChat() {
                           {Object.values(
                             msg.reactions.reduce((acc, reaction) => {
                               if (acc[reaction.emoji]) {
-                                console.log(reaction);
                                 acc[reaction.emoji].count += 1;
                                 acc[reaction.emoji].users.push(
                                   reaction.user.username
@@ -794,21 +826,35 @@ function GroupChat() {
                               }
                               return acc;
                             }, {})
-                          ).map((group, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center space-x-1 bg-gray-300 rounded text-sm cursor-pointer"
+                          )
+                            .slice(0, 3) // Limit to 3 reactions
+                            .map((group, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center space-x-1 bg-gray-300 rounded text-sm cursor-pointer"
+                                onClick={() => {
+                                  setSelectedReactionGroup(msg.reactions);
+                                  setSelectedReactionMessageId(msg.id);
+                                  setShowReactionPopup(true);
+                                }}
+                              >
+                                <span>
+                                  {group.emoji} x{group.count}
+                                </span>
+                              </div>
+                            ))}
+                          {Object.keys(msg.reactions).length > 3 && (
+                            <button
+                              className="text-blue-500 text-2xl"
                               onClick={() => {
-                                setSelectedReactionGroup(group);
+                                setSelectedReactionGroup(msg.reactions);
                                 setSelectedReactionMessageId(msg.id);
                                 setShowReactionPopup(true);
                               }}
                             >
-                              <span>
-                                {group.emoji} x{group.count}
-                              </span>
-                            </div>
-                          ))}
+                              <FontAwesomeIcon icon={faEllipsis} />
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

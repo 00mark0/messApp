@@ -52,7 +52,7 @@ function Register() {
             value={credentials.username}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-md dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
 
@@ -66,7 +66,7 @@ function Register() {
             value={credentials.email}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-md dark:text-gra-200 dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
 
@@ -80,7 +80,7 @@ function Register() {
             value={credentials.password}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-md dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
 
