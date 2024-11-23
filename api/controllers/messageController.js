@@ -433,7 +433,7 @@ export const addReaction = async (req, res) => {
       });
 
       // Emit notification to the recipient
-      io.to(message.senderId.toString()).emit("reaction", notification);
+      io.to(message.senderId.toString()).emit("notification", notification);
     }
 
     res.status(200).json({ reaction });
@@ -449,6 +449,18 @@ export const removeReaction = async (req, res) => {
   const userId = req.user.userId;
 
   try {
+    // Fetch the message to get the conversationId
+    const message = await prisma.message.findUnique({
+      where: { id: parseInt(messageId) },
+      select: { conversationId: true },
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found." });
+    }
+
+    const { conversationId } = message;
+
     // Delete the reaction
     const reaction = await prisma.messageReaction.delete({
       where: {
@@ -459,15 +471,15 @@ export const removeReaction = async (req, res) => {
       },
     });
 
-    // Emit real-time event via Socket.IO
-    io.to(reaction.messageId.toString()).emit("reactionRemoved", {
+    // Emit real-time event via Socket.IO to the conversation room
+    io.to(conversationId.toString()).emit("reactionRemoved", {
       messageId: reaction.messageId,
       userId: reaction.userId,
     });
 
-    res.status(200).json({ message: "Reaction removed" });
+    res.status(200).json({ message: "Reaction removed." });
   } catch (error) {
     console.error("Error in removeReaction:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error." });
   }
 };

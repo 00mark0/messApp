@@ -33,6 +33,8 @@ function Chat() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedReactionGroup, setSelectedReactionGroup] = useState(null);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
+  const [selectedReactionMessageId, setSelectedReactionMessageId] =
+    useState(null);
 
   // pixels from the bottom
   const SCROLL_THRESHOLD = 100;
@@ -217,6 +219,8 @@ function Chat() {
       await axios.delete(`/messages/${messageId}/reactions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      setShowReactionPopup(false);
     } catch (error) {
       console.error("Error removing reaction:", error);
     }
@@ -236,36 +240,7 @@ function Chat() {
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
 
-    // Cleanup on unmount or when dependencies change
-    return () => {
-      socket.off("receiveMessage", handleReceiveMessage);
-      socket.off("messagesSeen", handleMessagesSeen);
-      socket.off("typing", handleTyping);
-      socket.off("stopTyping", handleStopTyping);
-      // Optionally leave the conversation room
-      socket.emit("leaveConversation", conversationId);
-    };
-  }, [
-    conversationId,
-    handleReceiveMessage,
-    handleMessagesSeen,
-    handleTyping,
-    handleStopTyping,
-  ]);
-
-  useEffect(() => {
-    if (messages.length > 0 && distanceFromBottom < SCROLL_THRESHOLD) {
-      const debounceMarkAsSeen = setTimeout(() => {
-        console.log("Marking messages as seen...");
-        markAsSeen();
-      }, 500);
-
-      return () => clearTimeout(debounceMarkAsSeen);
-    }
-  }, [markAsSeen, messages, distanceFromBottom]);
-
-  // Receive real-time reaction updates
-  useEffect(() => {
+    // Listen for reaction events
     socket.on("reactionAdded", (reaction) => {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
@@ -292,11 +267,35 @@ function Chat() {
       );
     });
 
+    // Cleanup on unmount or when dependencies change
     return () => {
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("messagesSeen", handleMessagesSeen);
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
       socket.off("reactionAdded");
       socket.off("reactionRemoved");
+      // Optionally leave the conversation room
+      socket.emit("leaveConversation", conversationId);
     };
-  }, []);
+  }, [
+    conversationId,
+    handleReceiveMessage,
+    handleMessagesSeen,
+    handleTyping,
+    handleStopTyping,
+  ]);
+
+  useEffect(() => {
+    if (messages.length > 0 && distanceFromBottom < SCROLL_THRESHOLD) {
+      const debounceMarkAsSeen = setTimeout(() => {
+        console.log("Marking messages as seen...");
+        markAsSeen();
+      }, 500);
+
+      return () => clearTimeout(debounceMarkAsSeen);
+    }
+  }, [markAsSeen, messages, distanceFromBottom]);
 
   const handleInputChange = useCallback(
     (value) => {
@@ -444,57 +443,27 @@ function Chat() {
                           </span>
                         )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       <p className="break-words">{msg.content}</p>
-                      <p className="text-xs text-gray-600 text-end">
-                        {new Date(msg.timestamp).toLocaleString()}
-                      </p>
-                      {/* Reactions display on the left side with counts */}
-                      {msg.reactions && msg.reactions.length > 0 && (
-                        <div className="flex items-start space-x-1 mt-1">
-                          {Object.values(
-                            msg.reactions.reduce((acc, reaction) => {
-                              if (acc[reaction.emoji]) {
-                                acc[reaction.emoji].count += 1;
-                                acc[reaction.emoji].users.push(
-                                  reaction.user.username
-                                );
-                              } else {
-                                acc[reaction.emoji] = {
-                                  emoji: reaction.emoji,
-                                  count: 1,
-                                  users: [reaction.user.username],
-                                  userIds: [reaction.userId],
-                                };
-                              }
-                              return acc;
-                            }, {})
-                          ).map((group, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center space-x-1 bg-gray-300 p-1 rounded text-sm cursor-pointer"
-                              onClick={() => {
-                                setSelectedReactionGroup(group);
-                                setShowReactionPopup(true);
-                              }}
-                            >
-                              <span>
-                                {group.emoji} x{group.count}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    </div>
+                  </div>
 
-                      {/* Reaction details popup */}
-                      {showReactionPopup && selectedReactionGroup && (
-                        <div className="absolute bottom-6 left-1 bg-white p-2 rounded shadow-lg z-50">
+                  {/* Reactions */}
+                  <div className="relative">
+                    {/* Reaction details popup */}
+                    {showReactionPopup &&
+                      selectedReactionGroup &&
+                      selectedReactionMessageId === msg.id && (
+                        <div className="absolute bottom-0 left-1 bg-white p-2 rounded shadow-lg z-50">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-lg font-bold">Reactions</h3>
                             <FontAwesomeIcon
                               icon={faTimes}
                               className="text-gray-500 cursor-pointer"
-                              onClick={() => setShowReactionPopup(false)}
+                              onClick={() => {
+                                setShowReactionPopup(false);
+                                setSelectedReactionMessageId(null);
+                              }}
                             />
                           </div>
                           {selectedReactionGroup.users.map(
@@ -517,31 +486,58 @@ function Chat() {
                           )}
                         </div>
                       )}
-
-                      {/* Show 'Seen' indicator if applicable */}
-                      {isLastMessageByUser &&
-                        isCurrentUserSender &&
-                        recipient &&
-                        msg.seenBy.includes(recipient.id) && (
-                          <p className="text-xs text-green-500">Seen</p>
-                        )}
-                    </div>
+                    {/* Reaction button */}
+                    {!userReaction && (
+                      <button
+                        onClick={() => {
+                          setSelectedMessageId(msg.id);
+                          setShowEmojiPicker((prev) =>
+                            prev !== msg.id ? msg.id : null
+                          );
+                        }}
+                        className="absolute top-0 left-0 text-md text-gray-500"
+                      >
+                        <FontAwesomeIcon icon={faSmile} />
+                      </button>
+                    )}
+                    {/* Reactions display on the left side with counts */}
+                    {msg.reactions && msg.reactions.length > 0 && (
+                      <div className="flex flex-wrap absolute top-0 left-2 items-center space-x-1 mt-1 ml-4">
+                        {Object.values(
+                          msg.reactions.reduce((acc, reaction) => {
+                            if (acc[reaction.emoji]) {
+                              acc[reaction.emoji].count += 1;
+                              acc[reaction.emoji].users.push(
+                                reaction.user.username
+                              );
+                            } else {
+                              acc[reaction.emoji] = {
+                                emoji: reaction.emoji,
+                                count: 1,
+                                users: [reaction.user.username],
+                                userIds: [reaction.userId],
+                              };
+                            }
+                            return acc;
+                          }, {})
+                        ).map((group, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-1 bg-gray-300 rounded text-sm cursor-pointer"
+                            onClick={() => {
+                              setSelectedReactionGroup(group);
+                              setSelectedReactionMessageId(msg.id);
+                              setShowReactionPopup(true);
+                            }}
+                          >
+                            <span>
+                              {group.emoji} x{group.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-
-                  {/* Reaction button */}
-                  {!userReaction && (
-                    <button
-                      onClick={() => {
-                        setSelectedMessageId(msg.id);
-                        setShowEmojiPicker((prev) =>
-                          prev !== msg.id ? msg.id : null
-                        );
-                      }}
-                      className="absolute bottom-1 left-1 text-md text-gray-500"
-                    >
-                      <FontAwesomeIcon icon={faSmile} />
-                    </button>
-                  )}
 
                   {/* Emoji Picker */}
                   {showEmojiPicker === msg.id &&
@@ -562,6 +558,16 @@ function Chat() {
                           native={true}
                         />
                       </div>
+                    )}
+                  <p className="text-xs text-gray-600 text-end items-end">
+                    {new Date(msg.timestamp).toLocaleString()}
+                  </p>
+                  {/* Show 'Seen' indicator if applicable */}
+                  {isLastMessageByUser &&
+                    isCurrentUserSender &&
+                    recipient &&
+                    msg.seenBy.includes(recipient.id) && (
+                      <p className="text-xs text-green-500">Seen</p>
                     )}
                 </div>
               );
