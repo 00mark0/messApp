@@ -571,3 +571,46 @@
 {"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T12:57:16.400Z"}
 {"level":"info","message":"User logged out successfully: user4@example.com","service":"user-service","timestamp":"2024-11-23T13:35:47.986Z"}
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T13:35:52.890Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T14:01:06.390Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:01:15.569Z"}
+{"level":"info","message":"User logged out successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:04:35.440Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:04:41.442Z"}
+{"level":"info","message":"User registered successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:10:34.544Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:10:39.664Z"}
+{"level":"info","message":"User registered successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:23:22.383Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:23:49.302Z"}
+{"level":"info","message":"User registered successfully: user5@example.com","service":"user-service","timestamp":"2024-11-23T14:30:39.579Z"}
+{"level":"info","message":"User logged in successfully: user5@example.com","service":"user-service","timestamp":"2024-11-23T14:30:46.484Z"}
+{"level":"info","message":"User registered successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T14:34:16.166Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T14:34:19.626Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T14:34:27.456Z"}
+{"level":"info","message":"User registered successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T14:34:37.138Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T14:34:40.981Z"}
+{"level":"info","message":"User registered successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:34:53.921Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:34:57.866Z"}
+{"level":"info","message":"User registered successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T14:36:05.049Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T14:36:11.722Z"}
+{"level":"info","message":"User logged out successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T14:38:02.810Z"}
+{"level":"info","message":"User registered successfully: user4@example.com","service":"user-service","timestamp":"2024-11-23T14:38:15.958Z"}
+{"level":"info","message":"User logged in successfully: user4@example.com","service":"user-service","timestamp":"2024-11-23T14:38:22.699Z"}
+{"level":"error","message":"Server error: PrismaClientKnownRequestError: \nInvalid `prisma.user.update()` invocation:\n\n\nAn operation failed because it depends on one or more records that were required but not found. Record to update not found.\n    at Mn.handleRequestError (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:121:7753)\n    at Mn.handleAndLogRequestError (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:121:7061)\n    at Mn.request (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:121:6745)\n    at async l (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at async logout (file:///home/lucifer/projects/messApp/api/controllers/authController.js:156:18) {\n  [stack]: 'PrismaClientKnownRequestError: \\n' +\n    'Invalid `prisma.user.update()` invocation:\\n' +\n    '\\n' +\n    '\\n' +\n    'An operation failed because it depends on one or more records that were required but not found. Record to update not found.\\n' +\n    '    at Mn.handleRequestError (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:121:7753)\\n' +\n    '    at Mn.handleAndLogRequestError (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:121:7061)\\n' +\n    '    at Mn.request (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:121:6745)\\n' +\n    '    at async l (/home/lucifer/projects/messApp/api/node_modules/@prisma/client/runtime/library.js:130:9633)\\n' +\n    '    at async logout (file:///home/lucifer/projects/messApp/api/controllers/authController.js:156:18)',\n  [message]: '\\n' +\n    'Invalid `prisma.user.update()` invocation:\\n' +\n    '\\n' +\n    '\\n' +\n    'An operation failed because it depends on one or more records that were required but not found. Record to update not found.',\n  name: 'PrismaClientKnownRequestError',\n  code: 'P2025',\n  clientVersion: '5.21.1',\n  meta: { modelName: 'User', cause: 'Record to update not found.' },\n  [batchRequestIdx]: undefined,\n  [Symbol(Symbol.toStringTag)]: [Getter]\n}","service":"user-service","timestamp":"2024-11-23T15:00:04.578Z"}
+{"level":"info","message":"User registered successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T15:01:24.261Z"}
+{"level":"info","message":"User registered successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:01:24.805Z"}
+{"level":"info","message":"User registered successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T15:01:25.507Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T15:01:37.734Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:01:38.369Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T15:01:39.281Z"}
+{"level":"info","message":"User registered successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:10:37.603Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:10:42.317Z"}
+{"level":"info","message":"User registered successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:26:39.588Z"}
+{"level":"info","message":"User registered successfully: user4@example.com","service":"user-service","timestamp":"2024-11-23T15:27:19.869Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:27:35.396Z"}
+{"level":"info","message":"User logged out successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:33:59.462Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T15:34:03.830Z"}
+{"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-23T16:10:16.058Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T16:11:14.494Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T16:38:40.295Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T16:38:44.517Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T16:38:50.690Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T16:39:03.611Z"}
+{"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T16:39:19.041Z"}

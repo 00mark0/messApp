@@ -33,6 +33,11 @@ export const createGroup = async (req, res) => {
       },
     });
 
+    // Emit 'groupCreated' event to all participants via socket.io
+    participants.forEach((participantId) => {
+      io.to(participantId.toString()).emit("groupCreated", conversation);
+    });
+
     res
       .status(201)
       .json({ message: "Group created successfully", conversation });

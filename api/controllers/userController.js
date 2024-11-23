@@ -235,9 +235,22 @@ export const deleteAccount = async (req, res) => {
       }
     }
 
-    // Delete the user account
-    await prisma.user.delete({
+    // Soft delete the user account by setting deletedAt
+    await prisma.user.update({
       where: { id: userId },
+      data: { deletedAt: new Date(), isVisible: false },
+    });
+
+    // Anonymize user data
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        username: `deleted-${userId}`,
+        email: `deleted-${userId}@example.com`,
+        // ... other personal fields
+        deletedAt: new Date(),
+        isVisible: false,
+      },
     });
 
     res.json({ message: "Account deleted successfully" });
@@ -260,6 +273,7 @@ export const searchUsers = [
     try {
       const users = await prisma.user.findMany({
         where: {
+          AND: { deletedAt: null },
           OR: [
             { username: { contains: q, mode: "insensitive" } },
             { email: { contains: q, mode: "insensitive" } },

@@ -50,6 +50,8 @@ function Navbar() {
   // Memoized Event Handler Functions
   const handleConnect = useCallback(() => {
     console.log("Connected to WebSocket");
+
+    socket.emit("join", user.id);
   }, []);
 
   const handleNotification = useCallback((data) => {

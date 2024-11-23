@@ -44,6 +44,8 @@
                 |-- migration.sql
             |-- 20241122221436_add_message_reactions
                 |-- migration.sql
+            |-- 20241123150311_add_deleted_at
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
@@ -57,7 +59,9 @@
     |-- server.js
     |-- uploads
         |-- 1-1731517650378.png
+        |-- 1-1732375817511.png
         |-- 2-1731518826519.png
+        |-- 5-1732375706526.png
     |-- utils
         |-- logger.js
 |-- client

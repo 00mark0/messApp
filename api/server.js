@@ -88,6 +88,11 @@ io.on("connection", (socket) => {
     console.log("User ID not provided in query");
   }
 
+  socket.on("join", (userId) => {
+    console.log(`User ${userId} joined room ${userId}`);
+    socket.join(userId.toString());
+  });
+
   // Handle joinConversation
   socket.on("joinConversation", (conversationId) => {
     socket.join(conversationId.toString());

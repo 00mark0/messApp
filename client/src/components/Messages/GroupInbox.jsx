@@ -148,6 +148,8 @@ function GroupInbox() {
     // Register Event Handlers
     socket.on("newMessage", handleNewMessage);
 
+    socket.on("groupCreated", fetchGroupConvos);
+
     // Cleanup on unmount
     return () => {
       if (socket && groupConvos.length > 0) {
@@ -156,6 +158,7 @@ function GroupInbox() {
         });
       }
       socket.off("newMessage", handleNewMessage);
+      socket.off("groupCreated", fetchGroupConvos);
     };
   }, [groupConvos, handleNewMessage]);
 

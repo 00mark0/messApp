@@ -24,6 +24,8 @@ model User {
   contactRequestsReceived ContactRequest[]          @relation("ContactRequestReceiver")
   isOnline                Boolean                   @default(false)
   isVisible               Boolean                   @default(true)
+  deletedAt               DateTime?                 // Soft deletion timestamp
+
   messageReactions        MessageReaction[] // Added back-relation
 }
 

@@ -99,7 +99,6 @@ function GroupChat() {
       const response = await axios.get(`/groups/${conversationId}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Messages:", response.data.messages);
       setMessages(response.data.messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -126,7 +125,6 @@ function GroupChat() {
       const response = await axios.get("/auth/online", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Online Users:", response.data.onlineUsers);
       setOnlineUsers(response.data.onlineUsers);
     } catch (error) {
       console.error("Error fetching online users:", error);
@@ -866,7 +864,6 @@ function GroupChat() {
                       <div className="absolute bottom-8 left-1">
                         <Picker
                           onEmojiClick={(emojiObject, event) => {
-                            console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
                             if (emojiObject && emojiObject.emoji) {
                               handleAddGroupReaction(msg.id, emojiObject.emoji);
                             } else {

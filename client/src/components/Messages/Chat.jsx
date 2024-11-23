@@ -289,7 +289,6 @@ function Chat() {
   useEffect(() => {
     if (messages.length > 0 && distanceFromBottom < SCROLL_THRESHOLD) {
       const debounceMarkAsSeen = setTimeout(() => {
-        console.log("Marking messages as seen...");
         markAsSeen();
       }, 500);
 
@@ -509,7 +508,6 @@ function Chat() {
                         {Object.values(
                           msg.reactions.reduce((acc, reaction) => {
                             if (acc[reaction.emoji]) {
-                              console.log(reaction);
                               acc[reaction.emoji].count += 1;
                               acc[reaction.emoji].users.push(
                                 reaction.user.username
@@ -550,7 +548,6 @@ function Chat() {
                       <div className="absolute bottom-6 left-1">
                         <Picker
                           onEmojiClick={(emojiObject, event) => {
-                            console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
                             if (emojiObject && emojiObject.emoji) {
                               handleAddReaction(msg.id, emojiObject.emoji);
                             } else {
