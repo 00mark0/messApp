@@ -40,7 +40,11 @@ model Message {
   seenBy         Int[]             @default([])
   conversation   Conversation      @relation(fields: [conversationId], references: [id])
   conversationId Int
-  reactions      MessageReaction[] // Added back-relation
+  reactions      MessageReaction[]
+
+  replyToMessage   Message?   @relation("MessageReplies", fields: [replyToMessageId], references: [id])
+  replyToMessageId Int?
+  replies          Message[]  @relation("MessageReplies")
 }
 
 model MessageReaction {

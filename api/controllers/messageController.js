@@ -13,7 +13,7 @@ export const sendMessage = async (req, res) => {
   }
 
   const recipientId = parseInt(req.params.recipientId, 10);
-  const { content } = req.body;
+  const { content, replyToMessageId } = req.body;
   const senderId = req.user.userId;
 
   try {
@@ -88,17 +88,30 @@ export const sendMessage = async (req, res) => {
       },
     });
 
-    // Create the message
+    const messageData = {
+      senderId,
+      recipientId,
+      content,
+      conversationId: conversation.id,
+    };
+
+    // Include replyToMessageId if provided
+    if (replyToMessageId) {
+      messageData.replyToMessageId = parseInt(replyToMessageId);
+    }
+
     const message = await prisma.message.create({
-      data: {
-        senderId,
-        recipientId,
-        content,
-        conversationId: conversation.id,
-      },
+      data: messageData,
       include: {
         sender: {
           select: { id: true, username: true },
+        },
+        replyToMessage: {
+          include: {
+            sender: {
+              select: { id: true, username: true },
+            },
+          },
         },
       },
     });
@@ -270,6 +283,13 @@ export const getLatest50Messages = async (req, res) => {
         reactions: {
           include: {
             user: {
+              select: { id: true, username: true },
+            },
+          },
+        },
+        replyToMessage: {
+          include: {
+            sender: {
               select: { id: true, username: true },
             },
           },

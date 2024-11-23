@@ -7,7 +7,7 @@ import {
   faCircle,
   faSmile,
   faTimes,
-  faHeart,
+  faReply,
 } from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
 import InputEmoji from "react-input-emoji";
@@ -35,6 +35,7 @@ function Chat() {
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const [selectedReactionMessageId, setSelectedReactionMessageId] =
     useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   // pixels from the bottom
   const SCROLL_THRESHOLD = 100;
@@ -323,7 +324,10 @@ function Chat() {
     try {
       const response = await axios.post(
         `/messages/${recipientId}`,
-        { content: input },
+        {
+          content: input.trim(),
+          replyToMessageId: replyingTo ? replyingTo.id : null,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -333,6 +337,7 @@ function Chat() {
 
       setInput("");
       setIsTyping(false);
+      setReplyingTo(null);
       socket.emit("stopTyping", {
         conversationId,
         userId: user.id,
@@ -350,6 +355,10 @@ function Chat() {
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  const handleReply = (message) => {
+    setReplyingTo(message);
+  };
 
   const handleBack = () => {
     navigate("/");
@@ -417,6 +426,15 @@ function Chat() {
                       : "bg-gray-200"
                   } max-w-md relative`}
                 >
+                  {/* Display replied message */}
+                  {msg.replyToMessage && (
+                    <div className="p-2 mb-2 bg-gray-300 rounded">
+                      <p className="text-sm text-gray-700">
+                        <strong>{msg.replyToMessage.sender.username}:</strong>{" "}
+                        {msg.replyToMessage.content}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex gap-2 items-start">
                     <div className="relative flex-shrink-0 ml-2">
                       {!isCurrentUserSender && recipient && (
@@ -443,7 +461,14 @@ function Chat() {
                         )}
                     </div>
                     <div className="flex-1 relative">
-                      <p className="break-words">{msg.content}</p>
+                      <p className="break-words mr-8">{msg.content}</p>
+                      {/* Reply Button */}
+                      <button
+                        onClick={() => handleReply(msg)}
+                        className="text-gray-500 absolute right-0 top-0"
+                      >
+                        <FontAwesomeIcon icon={faReply} />
+                      </button>
                     </div>
                   </div>
 
@@ -588,21 +613,39 @@ function Chat() {
           {otherUserTyping && <p className="text-gray-500 italic">Typing...</p>}
         </div>
 
-        <div className="flex">
-          <InputEmoji
-            value={input}
-            onChange={handleInputChange}
-            cleanOnEnter
-            onEnter={sendMessage}
-            placeholder="Type a message..."
-          />
-          <button
-            onClick={sendMessage}
-            className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400"
-            disabled={!input.trim()}
-          >
-            Send
-          </button>
+        <div className="flex flex-col">
+          {replyingTo && (
+            <div className="flex items-center p-2 bg-gray-100 border-l-4 border-blue-500">
+              <div className="flex-1">
+                <p className="text-sm truncate w-64">
+                  Replying to <strong>{replyingTo.sender.username}</strong>:{" "}
+                  {replyingTo.content}
+                </p>
+              </div>
+              <button
+                onClick={() => setReplyingTo(null)}
+                className="text-gray-500 ml-2"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          )}
+          <div className="flex">
+            <InputEmoji
+              value={input}
+              onChange={handleInputChange}
+              cleanOnEnter
+              onEnter={sendMessage}
+              placeholder="Type a message..."
+            />
+            <button
+              onClick={sendMessage}
+              className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400"
+              disabled={!input.trim()}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
       <AllMessagesModal
