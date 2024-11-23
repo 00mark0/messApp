@@ -12,6 +12,8 @@ import {
   giveAdminRights,
   getGroupParticipants,
   getLatest50GroupMessages,
+  addGroupReaction,
+  removeGroupReaction,
 } from "../controllers/groupController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -124,4 +126,25 @@ router.get(
   ],
   getGroupMessages
 );
+
+// Add Reaction to a Group Message
+router.post(
+  "/:groupId/messages/:messageId/reactions",
+  authMiddleware,
+  [
+    param("groupId").isInt().withMessage("Group ID must be an integer"),
+    param("messageId").isInt().withMessage("Message ID must be an integer"),
+    body("emoji").isString().notEmpty().withMessage("Emoji is required"),
+  ],
+  addGroupReaction
+);
+
+// Remove Reaction from a Group Message
+router.delete(
+  "/:messageId/reactions",
+  authMiddleware,
+  [param("messageId").isInt().withMessage("Message ID must be an integer")],
+  removeGroupReaction
+);
+
 export default router;

@@ -5,12 +5,18 @@ import socket from "../../api/socket";
 import AuthContext from "../../context/AuthContext";
 import axios from "../../api/axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faCircle } from "@fortawesome/free-solid-svg-icons";
+import {
+  faBars,
+  faCircle,
+  faSmile,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
 import GiveAdminRightsModal from "./GiveAdminRightsModal";
 import InputEmoji from "react-input-emoji";
 import AllGroupMessagesModal from "./AllGroupMessagesModal";
+import Picker from "emoji-picker-react";
 
 function GroupChat() {
   const { user, token, onlineStatusToggle } = useContext(AuthContext);
@@ -34,6 +40,12 @@ function GroupChat() {
   const [isScrolledToTop, setIsScrolledToTop] = useState(false);
   const scrollableRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedReactionGroup, setSelectedReactionGroup] = useState(null);
+  const [showReactionPopup, setShowReactionPopup] = useState(false);
+  const [selectedReactionMessageId, setSelectedReactionMessageId] =
+    useState(null);
 
   const handleScroll = () => {
     if (scrollableRef.current) {
@@ -265,6 +277,35 @@ function GroupChat() {
     [handleParticipantEvent, fetchParticipants]
   );
 
+  // Function to handle adding a reaction in GroupChat.jsx
+  const handleAddGroupReaction = async (messageId, emoji) => {
+    try {
+      await axios.post(
+        `/groups/${conversationId}/messages/${messageId}/reactions`,
+        { emoji },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Update local state or handle response as needed
+      setShowEmojiPicker(false);
+      setSelectedMessageId(null);
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+    }
+  };
+
+  // Function to handle removing a reaction in GroupChat.jsx
+  const handleRemoveGroupReaction = async (messageId, reactionId) => {
+    try {
+      await axios.delete(`/groups/${messageId}/reactions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Update local state or handle response as needed
+      setShowReactionPopup(false);
+    } catch (error) {
+      console.error("Error removing reaction:", error);
+    }
+  };
+
   // Refactored useEffect for Socket Event Listeners
   useEffect(() => {
     if (socket && conversationId) {
@@ -276,6 +317,33 @@ function GroupChat() {
     socket.on("stopTyping", handleStopTyping);
     socket.on("newMessage", handleNewMessage);
     socket.on("groupMessageSeen", handleGroupMessageSeen);
+
+    // Listen for reaction events
+    socket.on("groupReactionAdded", (reaction) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === reaction.messageId
+            ? {
+                ...msg,
+                reactions: [...(msg.reactions || []), reaction],
+              }
+            : msg
+        )
+      );
+    });
+
+    socket.on("groupReactionRemoved", ({ messageId, userId }) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                reactions: msg.reactions.filter((r) => r.userId !== userId),
+              }
+            : msg
+        )
+      );
+    });
 
     socket.on("participantAdded", handleParticipantAdded);
     socket.on("participantRemoved", handleParticipantRemoved);
@@ -291,6 +359,9 @@ function GroupChat() {
       socket.off("stopTyping", handleStopTyping);
       socket.off("newMessage", handleNewMessage);
       socket.off("groupMessageSeen", handleGroupMessageSeen);
+
+      socket.off("groupReactionAdded");
+      socket.off("groupReactionRemoved");
 
       socket.off("participantAdded", handleParticipantAdded);
       socket.off("participantRemoved", handleParticipantRemoved);
@@ -560,6 +631,10 @@ function GroupChat() {
                 (participant) => participant.user.id === msg.senderId
               );
 
+              const userReaction = msg.reactions?.find(
+                (reaction) => reaction.userId === user.id
+              );
+
               return (
                 <div
                   key={msg.id}
@@ -567,11 +642,10 @@ function GroupChat() {
                     isCurrentUserSender
                       ? "bg-blue-200 ml-auto text-right"
                       : "bg-gray-200"
-                  } max-w-md`}
+                  } max-w-md relative`}
                 >
                   <div className="flex gap-2 items-start">
-                    {/* Sender's Profile Picture with Online Status */}
-                    <div className="relative flex-shrink-0">
+                    <div className="relative flex-shrink-0 ml-2">
                       {!isCurrentUserSender && sender && (
                         <img
                           src={`${import.meta.env.VITE_REACT_APP_API_URL}${
@@ -587,17 +661,15 @@ function GroupChat() {
                         onlineUsers.some(
                           (user) => user.id === sender.user.id
                         ) && (
-                          <span className="absolute top-3 right-0">
+                          <span>
                             <FontAwesomeIcon
                               icon={faCircle}
-                              className="text-green-500 text-xs"
+                              className="text-green-500 text-xs absolute bottom-0 right-0"
                             />
                           </span>
                         )}
                     </div>
-
-                    {/* Message Content */}
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       <p className="break-words">
                         <strong>
                           {sender ? sender.user.username : "removed"}:
@@ -642,6 +714,122 @@ function GroupChat() {
                         })()}
                     </div>
                   </div>
+
+                  {/* Reactions */}
+                  <div className="relative">
+                    {/* Reaction details popup */}
+                    {showReactionPopup &&
+                      selectedReactionGroup &&
+                      selectedReactionMessageId === msg.id && (
+                        <div className="absolute bottom-0 left-1 bg-white p-2 rounded shadow-lg z-50">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-bold">Reactions</h3>
+                            <FontAwesomeIcon
+                              icon={faTimes}
+                              className="text-gray-500 cursor-pointer"
+                              onClick={() => {
+                                setShowReactionPopup(false);
+                                setSelectedReactionMessageId(null);
+                              }}
+                            />
+                          </div>
+                          {selectedReactionGroup.users.map(
+                            (username, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between mb-1"
+                              >
+                                <span>{username}</span>
+                                {selectedReactionGroup.userIds[index] ===
+                                  user.id && (
+                                  <FontAwesomeIcon
+                                    icon={faTimes}
+                                    className="text-red-500 cursor-pointer"
+                                    onClick={() =>
+                                      handleRemoveGroupReaction(msg.id)
+                                    }
+                                  />
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
+                    {/* Reaction button */}
+                    {!userReaction && (
+                      <button
+                        onClick={() => {
+                          setSelectedMessageId(msg.id);
+                          setShowEmojiPicker((prev) =>
+                            prev !== msg.id ? msg.id : null
+                          );
+                        }}
+                        className="absolute top-0 left-0 text-md text-gray-500"
+                      >
+                        <FontAwesomeIcon icon={faSmile} />
+                      </button>
+                    )}
+                    {/* Reactions display on the left side with counts */}
+                    {msg.reactions && msg.reactions.length > 0 && (
+                      <div className="flex flex-wrap absolute top-0 left-2 items-center space-x-1 mt-1 ml-4">
+                        {Object.values(
+                          msg.reactions.reduce((acc, reaction) => {
+                            if (acc[reaction.emoji]) {
+                              console.log(reaction);
+                              acc[reaction.emoji].count += 1;
+                              acc[reaction.emoji].users.push(
+                                reaction.user.username
+                              );
+                              acc[reaction.emoji].userIds.push(reaction.userId);
+                            } else {
+                              acc[reaction.emoji] = {
+                                emoji: reaction.emoji,
+                                count: 1,
+                                users: [reaction.user.username],
+                                userIds: [reaction.userId],
+                              };
+                            }
+                            return acc;
+                          }, {})
+                        ).map((group, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-1 bg-gray-300 rounded text-sm cursor-pointer"
+                            onClick={() => {
+                              setSelectedReactionGroup(group);
+                              setSelectedReactionMessageId(msg.id);
+                              setShowReactionPopup(true);
+                            }}
+                          >
+                            <span>
+                              {group.emoji} x{group.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Emoji Picker */}
+                  {showEmojiPicker === msg.id &&
+                    selectedMessageId === msg.id && (
+                      <div className="absolute bottom-6 left-1">
+                        <Picker
+                          onEmojiClick={(emojiObject, event) => {
+                            console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
+                            if (emojiObject && emojiObject.emoji) {
+                              handleAddGroupReaction(msg.id, emojiObject.emoji);
+                            } else {
+                              console.error(
+                                "Emoji object is undefined or missing emoji property"
+                              );
+                            }
+                          }}
+                          disableAutoFocus={true}
+                          native={true}
+                        />
+                      </div>
+                    )}
                 </div>
               );
             })

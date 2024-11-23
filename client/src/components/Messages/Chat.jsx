@@ -506,6 +506,7 @@ function Chat() {
                         {Object.values(
                           msg.reactions.reduce((acc, reaction) => {
                             if (acc[reaction.emoji]) {
+                              console.log(reaction);
                               acc[reaction.emoji].count += 1;
                               acc[reaction.emoji].users.push(
                                 reaction.user.username
