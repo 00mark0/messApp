@@ -67,6 +67,11 @@ export const sendMessage = async (req, res) => {
           },
         },
       });
+
+      // Emit 'newConversation' event to both participants
+      io.to(senderId.toString()).emit("newConversation", conversation);
+      io.to(recipientId.toString()).emit("newConversation", conversation);
+
       console.log("Created new conversation:", conversation.id);
     } else {
       console.log("Found existing conversation:", conversation.id);

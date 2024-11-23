@@ -861,7 +861,7 @@ function GroupChat() {
                   {/* Emoji Picker */}
                   {showEmojiPicker === msg.id &&
                     selectedMessageId === msg.id && (
-                      <div className="absolute bottom-8 left-1">
+                      <div className="absolute top-16 left-1 z-50">
                         <Picker
                           onEmojiClick={(emojiObject, event) => {
                             if (emojiObject && emojiObject.emoji) {

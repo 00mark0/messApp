@@ -213,6 +213,7 @@ function Inbox() {
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
     socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("newConversation", fetchConversations);
     socket.on("messagesSeen", handleMessagesSeen);
 
     // Cleanup on unmount
@@ -220,6 +221,7 @@ function Inbox() {
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
       socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("newConversation", fetchConversations);
       socket.off("messagesSeen", handleMessagesSeen);
     };
   }, [

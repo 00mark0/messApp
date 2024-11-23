@@ -614,3 +614,7 @@
 {"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T16:38:50.690Z"}
 {"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-23T16:39:03.611Z"}
 {"level":"info","message":"User logged in successfully: user2@example.com","service":"user-service","timestamp":"2024-11-23T16:39:19.041Z"}
+{"level":"info","message":"User logged out successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T16:48:21.261Z"}
+{"level":"info","message":"User logged in successfully: user4@example.com","service":"user-service","timestamp":"2024-11-23T16:48:28.754Z"}
+{"level":"info","message":"User logged out successfully: user4@example.com","service":"user-service","timestamp":"2024-11-23T16:49:30.856Z"}
+{"level":"info","message":"User logged in successfully: user3@example.com","service":"user-service","timestamp":"2024-11-23T16:49:35.745Z"}
