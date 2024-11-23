@@ -638,14 +638,14 @@ function GroupChat() {
               return (
                 <div
                   key={msg.id}
-                  className={`p-2 my-2 rounded ${
+                  className={`p-2 my-2 rounded mb-6 ${
                     isCurrentUserSender
                       ? "bg-blue-200 ml-auto text-right"
                       : "bg-gray-200"
                   } max-w-md relative`}
                 >
                   <div className="flex gap-2 items-start">
-                    <div className="relative flex-shrink-0 ml-2">
+                    <div className="relative flex-shrink-0 ml-4">
                       {!isCurrentUserSender && sender && (
                         <img
                           src={`${import.meta.env.VITE_REACT_APP_API_URL}${
@@ -708,7 +708,7 @@ function GroupChat() {
                                         seenByOthers.includes(p.user.id)
                                       )
                                       .map((p) => p.user.username)[0]
-                                  } + ${seenByOthers.length - 1} others`}
+                                  } + ${seenByOthers.length - 2} other`}
                             </p>
                           ) : null;
                         })()}
@@ -755,65 +755,69 @@ function GroupChat() {
                           )}
                         </div>
                       )}
-                    {/* Reaction button */}
-                    {!userReaction && (
-                      <button
-                        onClick={() => {
-                          setSelectedMessageId(msg.id);
-                          setShowEmojiPicker((prev) =>
-                            prev !== msg.id ? msg.id : null
-                          );
-                        }}
-                        className="absolute top-0 left-0 text-md text-gray-500"
-                      >
-                        <FontAwesomeIcon icon={faSmile} />
-                      </button>
-                    )}
-                    {/* Reactions display on the left side with counts */}
-                    {msg.reactions && msg.reactions.length > 0 && (
-                      <div className="flex flex-wrap absolute top-0 left-2 items-center space-x-1 mt-1 ml-4">
-                        {Object.values(
-                          msg.reactions.reduce((acc, reaction) => {
-                            if (acc[reaction.emoji]) {
-                              console.log(reaction);
-                              acc[reaction.emoji].count += 1;
-                              acc[reaction.emoji].users.push(
-                                reaction.user.username
-                              );
-                              acc[reaction.emoji].userIds.push(reaction.userId);
-                            } else {
-                              acc[reaction.emoji] = {
-                                emoji: reaction.emoji,
-                                count: 1,
-                                users: [reaction.user.username],
-                                userIds: [reaction.userId],
-                              };
-                            }
-                            return acc;
-                          }, {})
-                        ).map((group, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center space-x-1 bg-gray-300 rounded text-sm cursor-pointer"
-                            onClick={() => {
-                              setSelectedReactionGroup(group);
-                              setSelectedReactionMessageId(msg.id);
-                              setShowReactionPopup(true);
-                            }}
-                          >
-                            <span>
-                              {group.emoji} x{group.count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="relative">
+                      {/* Reaction button */}
+                      {!userReaction && (
+                        <button
+                          onClick={() => {
+                            setSelectedMessageId(msg.id);
+                            setShowEmojiPicker((prev) =>
+                              prev !== msg.id ? msg.id : null
+                            );
+                          }}
+                          className="absolute bottom-0 left-0 text-md text-gray-500"
+                        >
+                          <FontAwesomeIcon icon={faSmile} />
+                        </button>
+                      )}
+                      {/* Reactions display on the left side with counts */}
+                      {msg.reactions && msg.reactions.length > 0 && (
+                        <div className="flex flex-wrap absolute top-0 left-0 items-center space-x-1 mt-1 ml-4">
+                          {Object.values(
+                            msg.reactions.reduce((acc, reaction) => {
+                              if (acc[reaction.emoji]) {
+                                console.log(reaction);
+                                acc[reaction.emoji].count += 1;
+                                acc[reaction.emoji].users.push(
+                                  reaction.user.username
+                                );
+                                acc[reaction.emoji].userIds.push(
+                                  reaction.userId
+                                );
+                              } else {
+                                acc[reaction.emoji] = {
+                                  emoji: reaction.emoji,
+                                  count: 1,
+                                  users: [reaction.user.username],
+                                  userIds: [reaction.userId],
+                                };
+                              }
+                              return acc;
+                            }, {})
+                          ).map((group, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center space-x-1 bg-gray-300 rounded text-sm cursor-pointer"
+                              onClick={() => {
+                                setSelectedReactionGroup(group);
+                                setSelectedReactionMessageId(msg.id);
+                                setShowReactionPopup(true);
+                              }}
+                            >
+                              <span>
+                                {group.emoji} x{group.count}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Emoji Picker */}
                   {showEmojiPicker === msg.id &&
                     selectedMessageId === msg.id && (
-                      <div className="absolute bottom-6 left-1">
+                      <div className="absolute bottom-8 left-1">
                         <Picker
                           onEmojiClick={(emojiObject, event) => {
                             console.log("Selected emoji object:", emojiObject); // Log the entire emoji object
