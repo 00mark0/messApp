@@ -510,6 +510,7 @@ function Chat() {
                               acc[reaction.emoji].users.push(
                                 reaction.user.username
                               );
+                              acc[reaction.emoji].userIds.push(reaction.userId);
                             } else {
                               acc[reaction.emoji] = {
                                 emoji: reaction.emoji,
