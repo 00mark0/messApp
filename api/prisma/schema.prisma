@@ -36,6 +36,7 @@ model Message {
   recipient      User?             @relation("messagesReceived", fields: [recipientId], references: [id])
   recipientId    Int?
   content        String
+  mediaUrl       String?
   timestamp      DateTime          @default(now())
   seenBy         Int[]             @default([])
   conversation   Conversation      @relation(fields: [conversationId], references: [id])

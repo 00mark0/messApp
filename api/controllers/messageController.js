@@ -1,10 +1,46 @@
 import { PrismaClient } from "@prisma/client";
 import { validationResult } from "express-validator";
 import { io } from "../server.js";
+import multer from "multer";
+import path from "path";
 
 const prisma = new PrismaClient();
 
+const messageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/messages/");
+  },
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      `${req.user.userId}-${Date.now()}${path.extname(file.originalname)}`
+    );
+  },
+});
+
+export const messageUpload = multer({
+  storage: messageStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "video/mp4"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "Invalid file type. Only JPEG, PNG, GIF, and MP4 are allowed."
+        )
+      );
+    }
+  },
+});
+
 export const sendMessage = async (req, res) => {
+  console.log("req.body:", req.body);
+  console.log("req.files:", req.files);
+
   // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -90,14 +126,31 @@ export const sendMessage = async (req, res) => {
 
     const messageData = {
       senderId,
-      recipientId,
       content,
+      recipientId,
       conversationId: conversation.id,
     };
+
+    // Include content if provided
+    if (content) {
+      messageData.content = content;
+    }
 
     // Include replyToMessageId if provided
     if (replyToMessageId) {
       messageData.replyToMessageId = parseInt(replyToMessageId);
+    }
+
+    // Include mediaUrl if a file was uploaded
+    if (req.file) {
+      messageData.mediaUrl = `/uploads/messages/${req.file.filename}`;
+    }
+
+    // Ensure that either content or mediaUrl is provided
+    if (!content && !messageData.mediaUrl) {
+      return res
+        .status(400)
+        .json({ message: "Message content or media is required." });
     }
 
     const message = await prisma.message.create({

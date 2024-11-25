@@ -1,5 +1,5 @@
 import express from "express";
-import { body, param, query } from "express-validator";
+import { body, param, query, check } from "express-validator";
 import {
   sendMessage,
   getConversations,
@@ -9,6 +9,7 @@ import {
   getLatest50Messages,
   addReaction,
   removeReaction,
+  messageUpload,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -18,9 +19,17 @@ const router = express.Router();
 router.post(
   "/:recipientId",
   authMiddleware,
+  messageUpload.single("media"), // Move Multer middleware before validators
   [
+    // Validate recipientId
     param("recipientId").isInt().withMessage("Recipient ID must be an integer"),
-    body("content").notEmpty().withMessage("Content is required"),
+    // Custom validation for content and media
+    body().custom((_, { req }) => {
+      if (!req.body.content && !req.file) {
+        throw new Error("Message content or media is required.");
+      }
+      return true;
+    }),
   ],
   sendMessage
 );

@@ -8,11 +8,14 @@ import {
   faSmile,
   faTimes,
   faReply,
+  faPaperclip,
 } from "@fortawesome/free-solid-svg-icons";
 import socket from "../../api/socket";
 import InputEmoji from "react-input-emoji";
 import AllMessagesModal from "./AllMessagesModal";
 import Picker from "emoji-picker-react";
+import MediaPreview from "./MediaPreview";
+import "../../App.css";
 
 function Chat() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -36,6 +39,10 @@ function Chat() {
   const [selectedReactionMessageId, setSelectedReactionMessageId] =
     useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
+  const [media, setMedia] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
   // pixels from the bottom
   const SCROLL_THRESHOLD = 100;
@@ -319,23 +326,46 @@ function Chat() {
   );
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    console.log("sendMessage function called");
+    if (!input.trim() && !media) {
+      console.log("No input or media; function returns early.");
+      return;
+    }
 
     try {
-      const response = await axios.post(
-        `/messages/${recipientId}`,
-        {
-          content: input.trim(),
-          replyToMessageId: replyingTo ? replyingTo.id : null,
+      const formData = new FormData();
+      formData.append("content", input.trim());
+      if (replyingTo) {
+        formData.append("replyToMessageId", replyingTo.id);
+      }
+      if (media) {
+        console.log("Appending media to formData:", media);
+        formData.append("media", media);
+      } else {
+        console.log("No media to append");
+      }
+
+      // Log FormData entries
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      const response = await axios.post(`/messages/${recipientId}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do not set 'Content-Type', let Axios handle it
         },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      });
+
+      console.log("Message sent successfully:", response.data);
 
       if (conversationId === "new") {
         navigate(`/chat/${response.data.conversationId}/${recipientId}`);
       }
 
       setInput("");
+      setMedia(null);
+      setMediaPreview(null);
       setIsTyping(false);
       setReplyingTo(null);
       socket.emit("stopTyping", {
@@ -343,13 +373,8 @@ function Chat() {
         userId: user.id,
       });
     } catch (err) {
-      if (err.response && err.response.status === 403) {
-        console.error("Error sending message: User not in your contact list.");
-        setError("User not in your contact list.");
-      } else {
-        console.error("Error sending message:", err.response || err.message);
-        setError("Failed to send message.");
-      }
+      console.error("Error sending message:", err);
+      setError("Failed to send message.");
     }
   };
 
@@ -362,6 +387,20 @@ function Chat() {
 
   const handleBack = () => {
     navigate("/");
+  };
+
+  const handleMediaChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMedia(file);
+      setMediaPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImageClick = (imageUrl) => {
+    const fullImageUrl = `${import.meta.env.VITE_REACT_APP_API_URL}${imageUrl}`;
+    setSelectedImageUrl(fullImageUrl);
+    setIsImageModalOpen(true);
   };
 
   if (loading) {
@@ -435,6 +474,27 @@ function Chat() {
                         </strong>{" "}
                         {msg.replyToMessage.content}
                       </p>
+                      {/* Display media if present in the replied message */}
+                      {msg.replyToMessage.mediaUrl && (
+                        <div className="mt-2">
+                          <MediaPreview
+                            mediaUrl={msg.replyToMessage.mediaUrl}
+                            onClick={() =>
+                              handleImageClick(msg.replyToMessage.mediaUrl)
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Display media if present in the current message */}
+                  {msg.mediaUrl && (
+                    <div className="mt-2">
+                      <MediaPreview
+                        mediaUrl={msg.mediaUrl}
+                        onClick={() => handleImageClick(msg.mediaUrl)}
+                      />
                     </div>
                   )}
                   <div className="flex gap-2 items-start">
@@ -463,7 +523,10 @@ function Chat() {
                         )}
                     </div>
                     <div className="flex-1 relative">
-                      <p className="break-words mr-8">{msg.content}</p>
+                      {/* Display message content if present */}
+                      {msg.content && (
+                        <p className="break-words mr-8">{msg.content}</p>
+                      )}
                       {/* Reply Button */}
                       <button
                         onClick={() => handleReply(msg)}
@@ -589,7 +652,7 @@ function Chat() {
                         />
                       </div>
                     )}
-                  <p className="text-xs text-gray-600 text-end items-end">
+                  <p className="text-xs text-gray-600 text-end items-end mr-6">
                     {new Date(msg.timestamp).toLocaleString()}
                   </p>
                   {/* Show 'Seen' indicator if applicable */}
@@ -632,7 +695,41 @@ function Chat() {
               </button>
             </div>
           )}
-          <div className="flex">
+          {mediaPreview && (
+            <div className="mb-4">
+              <div className="relative inline-block">
+                <img
+                  src={mediaPreview}
+                  alt="Selected Media"
+                  className="max-w-xs h-auto"
+                />
+                <button
+                  onClick={() => {
+                    setMedia(null);
+                    setMediaPreview(null);
+                  }}
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center">
+            {/* Media Upload Button */}
+            <label
+              htmlFor="media-upload"
+              className="cursor-pointer text-gray-500 mr-2"
+            >
+              <FontAwesomeIcon icon={faPaperclip} size="lg" />
+            </label>
+            <input
+              type="file"
+              id="media-upload"
+              accept="image/*,video/*"
+              onChange={handleMediaChange}
+              className="hidden"
+            />
             <InputEmoji
               value={input}
               onChange={handleInputChange}
@@ -643,7 +740,7 @@ function Chat() {
             <button
               onClick={sendMessage}
               className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400"
-              disabled={!input.trim()}
+              disabled={!input.trim() && !media}
             >
               Send
             </button>
@@ -656,6 +753,32 @@ function Chat() {
         conversationId={conversationId}
         token={token}
       />
+
+      {isImageModalOpen && selectedImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+          <button
+            onClick={() => setIsImageModalOpen(false)}
+            className="absolute top-3 right-3 text-red-600 text-2xl"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+          <div className="relative flex flex-col items-center justify-center w-full overflow-auto">
+            <img
+              src={selectedImageUrl}
+              alt="Full-size"
+              className="fullImage object-contain"
+            />
+
+            <a
+              href={selectedImageUrl}
+              download
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded inline-block text-center"
+            >
+              Download
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

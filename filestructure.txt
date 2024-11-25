@@ -48,6 +48,8 @@
                 |-- migration.sql
             |-- 20241123171724_add_reply_to_message
                 |-- migration.sql
+            |-- 20241125131229_add_media_to_message
+                |-- migration.sql
             |-- migration_lock.toml
         |-- schema.prisma
     |-- routes
@@ -64,6 +66,15 @@
         |-- 1-1732375817511.png
         |-- 2-1731518826519.png
         |-- 5-1732375706526.png
+        |-- messages
+            |-- 1-1732542700803.jpeg
+            |-- 1-1732543075271.jpeg
+            |-- 1-1732543209543.jpeg
+            |-- 1-1732543764495.png
+            |-- 1-1732543822939.png
+            |-- 1-1732543840651.jpeg
+            |-- 1-1732546024008.jpeg
+            |-- 5-1732542770515.jpeg
     |-- utils
         |-- logger.js
 |-- client
@@ -100,6 +111,7 @@
                 |-- GiveAdminRightsModal.jsx
                 |-- GroupChat.jsx
                 |-- GroupInbox.jsx
+                |-- MediaPreview.jsx
                 |-- RemoveParticipantModal.jsx
             |-- Navbar.jsx
             |-- Profile
