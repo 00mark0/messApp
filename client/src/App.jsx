@@ -1,17 +1,17 @@
-// App.jsx
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import PropTypes from "prop-types";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, lazy, Suspense } from "react";
 import { AuthContext } from "./context/AuthContext";
 import socket from "./api/socket";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
-import Inbox from "./pages/Inbox";
-import Profile from "./pages/Profile";
-import Contacts from "./pages/Contacts";
-import Chat from "./components/Messages/Chat";
-import GroupChat from "./components/Messages/GroupChat"; // Import GroupChat
 import Layout from "./components/Layout";
+
+const Inbox = lazy(() => import("./pages/Inbox"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Contacts = lazy(() => import("./pages/Contacts"));
+const Chat = lazy(() => import("./components/Messages/Chat"));
+const GroupChat = lazy(() => import("./components/Messages/GroupChat"));
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -38,20 +38,24 @@ function App() {
   }, [user]);
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route element={<PrivateRoute />}>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Inbox />} />
-          <Route path="/chat/:conversationId/:recipientId" element={<Chat />} />
-          <Route path="/group/:conversationId" element={<GroupChat />} />{" "}
-          {/* New Route */}
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/contacts" element={<Contacts />} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route element={<PrivateRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Inbox />} />
+            <Route
+              path="/chat/:conversationId/:recipientId"
+              element={<Chat />}
+            />
+            <Route path="/group/:conversationId" element={<GroupChat />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/contacts" element={<Contacts />} />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
 
