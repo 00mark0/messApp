@@ -509,7 +509,9 @@ function Inbox() {
                                 }
                                 `}
                                 >
-                                  {lastMessage.content}
+                                  {lastMessage.content
+                                    ? lastMessage.content
+                                    : "Media File"}
                                 </span>
                                 <span
                                   className=" flex items-center

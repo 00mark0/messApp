@@ -14,6 +14,7 @@ import {
   getLatest50GroupMessages,
   addGroupReaction,
   removeGroupReaction,
+  messageUpload,
 } from "../controllers/groupController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -56,9 +57,15 @@ router.post(
 router.post(
   "/:groupId/message",
   authMiddleware,
+  messageUpload.single("media"),
   [
     param("groupId").isInt().withMessage("Group ID must be an integer"),
-    body("content").notEmpty().withMessage("Content is required"),
+    body().custom((_, { req }) => {
+      if (!req.body.content && !req.file) {
+        throw new Error("Message content or media is required.");
+      }
+      return true;
+    }),
   ],
   sendMessageToGroup
 );

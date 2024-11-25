@@ -326,7 +326,6 @@ function Chat() {
   );
 
   const sendMessage = async () => {
-    console.log("sendMessage function called");
     if (!input.trim() && !media) {
       console.log("No input or media; function returns early.");
       return;
@@ -339,15 +338,9 @@ function Chat() {
         formData.append("replyToMessageId", replyingTo.id);
       }
       if (media) {
-        console.log("Appending media to formData:", media);
         formData.append("media", media);
       } else {
         console.log("No media to append");
-      }
-
-      // Log FormData entries
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
       }
 
       const response = await axios.post(`/messages/${recipientId}`, formData, {
@@ -635,7 +628,13 @@ function Chat() {
                   {/* Emoji Picker */}
                   {showEmojiPicker === msg.id &&
                     selectedMessageId === msg.id && (
-                      <div className="absolute top-16 left-1">
+                      <div className="absolute top-16 left-1 overflow-auto w-72 sm:w-96">
+                        <button
+                          className="text-white px-2 ml-2 bg-red-500 text-lg z-50"
+                          onClick={() => setShowEmojiPicker(false)}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
                         <Picker
                           className="z-50"
                           onEmojiClick={(emojiObject, event) => {

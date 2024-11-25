@@ -338,7 +338,9 @@ function GroupInbox() {
                         ? `${group.unseenMessages} new message${
                             group.unseenMessages > 1 ? "s" : ""
                           }`
-                        : group.lastMessage.content}
+                        : group.lastMessage.content
+                        ? group.lastMessage.content
+                        : "Media File"}
                     </p>
                   ) : (
                     <p className="text-sm text-gray-600">No messages yet</p>

@@ -75,8 +75,15 @@
 
 @media (min-width: 640px) {
   .fullImage {
-    height: 800px;
-    width: 1600px;
+    max-height: 600px;
+    max-width: 1200px;
     margin: 0 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .fullImage {
+    max-height: 800px;
+    max-width: 1600px;
   }
 }

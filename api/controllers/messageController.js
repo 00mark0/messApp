@@ -38,9 +38,6 @@ export const messageUpload = multer({
 });
 
 export const sendMessage = async (req, res) => {
-  console.log("req.body:", req.body);
-  console.log("req.files:", req.files);
-
   // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -170,11 +167,13 @@ export const sendMessage = async (req, res) => {
     });
     console.log("Created message:", message.id);
 
+    const messageContent = content ? content : "Media file";
+
     // Create a notification for the recipient
     const notification = await prisma.notification.create({
       data: {
         userId: recipientId,
-        content: `${message.sender.username} sent you a message: "${content}"`,
+        content: `${message.sender.username} sent you a message: "${messageContent}"`,
       },
     });
     console.log("Created notification:", notification.id);

@@ -12,6 +12,7 @@ import {
   faTimes,
   faEllipsis,
   faReply,
+  faPaperclip,
 } from "@fortawesome/free-solid-svg-icons";
 import AddParticipantModal from "./AddParticipantModal";
 import RemoveParticipantModal from "./RemoveParticipantModal";
@@ -19,6 +20,8 @@ import GiveAdminRightsModal from "./GiveAdminRightsModal";
 import InputEmoji from "react-input-emoji";
 import AllGroupMessagesModal from "./AllGroupMessagesModal";
 import Picker from "emoji-picker-react";
+import "../../App.css";
+import MediaPreview from "./MediaPreview";
 
 function GroupChat() {
   const { user, token, onlineStatusToggle } = useContext(AuthContext);
@@ -49,6 +52,10 @@ function GroupChat() {
   const [selectedReactionMessageId, setSelectedReactionMessageId] =
     useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
+  const [media, setMedia] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
   const handleScroll = () => {
     if (scrollableRef.current) {
@@ -403,20 +410,38 @@ function GroupChat() {
 
   // Send message function
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !media) {
+      return;
+    }
 
     try {
+      const formData = new FormData();
+      formData.append("content", input.trim());
+
+      if (replyingTo) {
+        formData.append("replyToMessageId", replyingTo.id);
+      }
+
+      if (media) {
+        formData.append("media", media);
+      }
+
+      // Log FormData contents
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
       const res = await axios.post(
         `/groups/${conversationId}/message`,
+        formData,
         {
-          content: input.trim(),
-          replyToMessageId: replyingTo ? replyingTo.id : null,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       setInput("");
       setReplyingTo(null);
+      setMediaPreview(null);
 
       if (isTyping) {
         setIsTyping(false);
@@ -490,6 +515,20 @@ function GroupChat() {
 
   const handleReply = (message) => {
     setReplyingTo(message);
+  };
+
+  const handleMediaChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMedia(file);
+      setMediaPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImageClick = (imageUrl) => {
+    const fullImageUrl = `${import.meta.env.VITE_REACT_APP_API_URL}${imageUrl}`;
+    setSelectedImageUrl(fullImageUrl);
+    setIsImageModalOpen(true);
   };
 
   if (loading) {
@@ -660,8 +699,30 @@ function GroupChat() {
                         </strong>{" "}
                         {msg.replyToMessage.content}
                       </p>
+                      {/* Display media if present in the replied message */}
+                      {msg.replyToMessage.mediaUrl && (
+                        <div className="mt-2">
+                          <MediaPreview
+                            mediaUrl={msg.replyToMessage.mediaUrl}
+                            onClick={() =>
+                              handleImageClick(msg.replyToMessage.mediaUrl)
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
+
+                  {/* Display media if present in the current message */}
+                  {msg.mediaUrl && (
+                    <div className="mt-2">
+                      <MediaPreview
+                        mediaUrl={msg.mediaUrl}
+                        onClick={() => handleImageClick(msg.mediaUrl)}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex gap-2 items-start">
                     <div className="relative flex-shrink-0 ml-4">
                       {!isCurrentUserSender && sender && (
@@ -733,7 +794,7 @@ function GroupChat() {
                                         seenByOthers.includes(p.user.id)
                                       )
                                       .map((p) => p.user.username)[0]
-                                  } + ${seenByOthers.length - 2} other`}
+                                  } + ${seenByOthers.length - 1} other`}
                             </p>
                           ) : null;
                         })()}
@@ -829,7 +890,7 @@ function GroupChat() {
                       )}
                       {/* Reactions display on the left side with counts */}
                       {msg.reactions && msg.reactions.length > 0 && (
-                        <div className="flex flex-wrap absolute top-0 left-0 items-center space-x-1 mt-1 ml-4">
+                        <div className="flex flex-wrap absolute -top-2 left-0 items-center space-x-1 mt-1 ml-4">
                           {Object.values(
                             msg.reactions.reduce((acc, reaction) => {
                               if (acc[reaction.emoji]) {
@@ -888,8 +949,15 @@ function GroupChat() {
                   {/* Emoji Picker */}
                   {showEmojiPicker === msg.id &&
                     selectedMessageId === msg.id && (
-                      <div className="absolute top-16 left-1 z-50">
+                      <div className="absolute top-16 left-1 z-50 overflow-auto w-72 sm:w-96">
+                        <button
+                          className="text-white px-2 ml-2 bg-red-500 text-lg z-50"
+                          onClick={() => setShowEmojiPicker(false)}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
                         <Picker
+                          className="z-50"
                           onEmojiClick={(emojiObject, event) => {
                             if (emojiObject && emojiObject.emoji) {
                               handleAddGroupReaction(msg.id, emojiObject.emoji);
@@ -954,7 +1022,41 @@ function GroupChat() {
               </button>
             </div>
           )}
-          <div className="flex">
+          {mediaPreview && (
+            <div className="mb-4">
+              <div className="relative inline-block">
+                <img
+                  src={mediaPreview}
+                  alt="Selected Media"
+                  className="max-w-xs h-auto"
+                />
+                <button
+                  onClick={() => {
+                    setMedia(null);
+                    setMediaPreview(null);
+                  }}
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center">
+            {/* Media Upload Button */}
+            <label
+              htmlFor="media-upload"
+              className="cursor-pointer text-gray-500 mr-2"
+            >
+              <FontAwesomeIcon icon={faPaperclip} size="lg" />
+            </label>
+            <input
+              type="file"
+              id="media-upload"
+              accept="image/*,video/*"
+              onChange={handleMediaChange}
+              className="hidden"
+            />
             <InputEmoji
               value={input}
               onChange={handleInputChange}
@@ -965,7 +1067,7 @@ function GroupChat() {
             <button
               onClick={sendMessage}
               className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400 hover:bg-blue-600 focus:outline-none"
-              disabled={!input.trim()}
+              disabled={!input.trim() && !media}
             >
               Send
             </button>
@@ -979,6 +1081,32 @@ function GroupChat() {
         groupId={conversationId}
         token={token}
       />
+
+      {isImageModalOpen && selectedImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+          <button
+            onClick={() => setIsImageModalOpen(false)}
+            className="absolute top-3 right-3 text-red-600 text-2xl"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+          <div className="relative flex flex-col items-center justify-center w-full overflow-auto">
+            <img
+              src={selectedImageUrl}
+              alt="Full-size"
+              className="fullImage object-contain"
+            />
+
+            <a
+              href={selectedImageUrl}
+              download
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded inline-block text-center"
+            >
+              Download
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
