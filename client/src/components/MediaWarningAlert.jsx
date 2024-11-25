@@ -20,7 +20,7 @@ const MediaWarningAlert = () => {
 
   return (
     <div
-      className={`fixed top-4 right-4 max-w-sm w-full bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded transform transition-transform duration-500 ${
+      className={`fixed z-50 top-4 right-4 max-w-sm w-full bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded transform transition-transform duration-500 ${
         isVisible
           ? "translate-y-0 opacity-100"
           : "-translate-y-full opacity-0 pointer-events-none"

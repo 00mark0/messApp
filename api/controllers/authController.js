@@ -103,52 +103,6 @@ export const login = async (req, res) => {
   }
 };
 
-export const adminLogin = async (req, res) => {
-  // Validate input
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    logger.error("Validation errors: %o", errors.array());
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { email, username, password } = req.body;
-
-  try {
-    // Find user by email or username
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: email || undefined },
-          { username: username || undefined },
-        ],
-      },
-    });
-
-    if (!user || !user.isAdmin) {
-      logger.warn("Invalid credentials: user not found or not an admin");
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      logger.warn("Invalid credentials: password mismatch");
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    logger.info("Admin logged in successfully: %s", user.email);
-    res.json({ token });
-  } catch (error) {
-    logger.error("Server error: %o", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 export const logout = async (req, res) => {
   const userId = req.user.userId;
 

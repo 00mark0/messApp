@@ -16,6 +16,7 @@ export const setupInterceptors = (logout) => {
       if (error.response && error.response.status === 401) {
         logout();
       }
+
       return Promise.reject(error);
     }
   );

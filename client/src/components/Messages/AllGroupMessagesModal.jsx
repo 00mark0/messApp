@@ -107,7 +107,28 @@ function AllGroupMessagesModal({ isOpen, onClose, groupId, token }) {
                   } max-w-md`}
                 >
                   <p>
-                    <strong>{msg.sender.username}:</strong> {msg.content}
+                    <strong>{msg.sender.username}:</strong>{" "}
+                    {msg.content ? (
+                      msg.content
+                    ) : (
+                      <span className="text-red-500 flex items-center">
+                        <svg
+                          className="h-4 w-4 mr-1"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 13h6m2 0a2 2 0 100-4H7a2 2 0 100 4h10z"
+                          />
+                        </svg>
+                        deleted media
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-gray-600">
                     {new Date(msg.timestamp).toLocaleString()}

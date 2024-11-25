@@ -12,6 +12,7 @@ import {
   messageUpload,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/auth.js";
+import { messageRateLimiterMiddleware } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ const router = express.Router();
 router.post(
   "/:recipientId",
   authMiddleware,
+  messageRateLimiterMiddleware,
   messageUpload.single("media"), // Move Multer middleware before validators
   [
     // Validate recipientId

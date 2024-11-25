@@ -5,12 +5,13 @@ import { body } from "express-validator";
 import {
   register,
   login,
-  adminLogin,
   logout,
   getOnlineUsers,
   updateOnlineVisibility,
 } from "../controllers/authController.js";
 import authMiddleware from "../middleware/auth.js";
+import { registerLimiter } from "../middleware/rateLimiter.js";
+import { loginLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ router.post(
       .isBoolean()
       .withMessage("isAdmin must be a boolean"),
   ],
+  registerLimiter,
   register
 );
 
@@ -43,26 +45,12 @@ router.post(
       return true;
     }),
   ],
+  loginLimiter,
   login
 );
 
 // Logout route
 router.post("/logout", authMiddleware, logout);
-
-// Admin login route
-router.post(
-  "/admin/login",
-  [
-    body("password").notEmpty().withMessage("Password is required"),
-    body().custom((req) => {
-      if (!req.email && !req.username) {
-        throw new Error("Email or username is required");
-      }
-      return true;
-    }),
-  ],
-  adminLogin
-);
 
 // Get online users route
 router.get("/online", authMiddleware, getOnlineUsers);
