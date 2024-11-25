@@ -1,4 +1,11 @@
-import { useState, useEffect, useContext, useCallback } from "react";
+import {
+  lazy,
+  useState,
+  Suspense,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
@@ -11,7 +18,7 @@ import {
   faX,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDistanceToNow } from "date-fns";
-import GroupInbox from "../components/Messages/GroupInbox";
+const GroupInbox = lazy(() => import("../components/Messages/GroupInbox"));
 
 function Inbox() {
   const { token, user, onlineStatusToggle } = useContext(AuthContext);
@@ -556,7 +563,9 @@ function Inbox() {
           )}
         </div>
       ) : (
-        <GroupInbox />
+        <Suspense fallback={<p>Loading...</p>}>
+          <GroupInbox />
+        </Suspense>
       )}
     </div>
   );
