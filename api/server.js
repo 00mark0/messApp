@@ -16,6 +16,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js"; // Import group routes
 import { fileURLToPath } from "url";
 import { markMessagesAsSeenLogic } from "./controllers/messageController.js"; // Import the logic
+import { scheduleCleanup } from "./utils/cleanup.js";
 
 dotenv.config();
 
@@ -229,6 +230,7 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
+  scheduleCleanup();
 });
 
 export { io };
