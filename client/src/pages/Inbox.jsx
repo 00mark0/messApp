@@ -450,7 +450,7 @@ function Inbox() {
                               }`
                             : "/default-avatar.png"
                         }
-                        className="w-10 h-10 rounded-full mr-2"
+                        className="w-10 h-10 rounded-full mr-2 object-cover"
                         alt="profile picture"
                       />
                       {onlineUsers.some((user) => user.id === recipientId) &&

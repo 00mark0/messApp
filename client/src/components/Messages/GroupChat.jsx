@@ -171,6 +171,14 @@ function GroupChat() {
     };
 
     fetchData();
+
+    // Set an interval to fetch online users every 10 seconds
+    const intervalId = setInterval(fetchOnlineUsers, 10000);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [fetchParticipants, fetchMessages, fetchGroupConvo, fetchOnlineUsers]);
 
   // Mark Messages as Seen when Messages Change
@@ -572,7 +580,7 @@ function GroupChat() {
 
         <div className="flex justify-between">
           {/* Group Chat Title */}
-          <h1 className="text-2xl font-bold mb-4 dark:text-white">
+          <h1 className="text-xl font-bold mb-4 dark:text-white">
             {getGroupName(conversationId)}
           </h1>
 
@@ -581,7 +589,7 @@ function GroupChat() {
             <h1 className="text-lg font-semibold dark:text-white">
               Group Members:
             </h1>
-            <div className="max-h-16 w-64 mb-4 overflow-y-auto border rounded bg-white dark:bg-gray-700">
+            <div className="max-h-16 sm:w-64 w-48 mb-4 overflow-y-auto border rounded bg-white dark:bg-gray-700">
               {participants.map((p) => (
                 <div
                   key={p.user.id}

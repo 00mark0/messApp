@@ -302,7 +302,7 @@ function GroupInbox() {
           groupConvos.map((group) => (
             <div
               key={group.id}
-              className="flex items-center justify-between hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer"
+              className="flex items-center justify-between p-4 hover:bg-gray-200 dark:hover:bg-gray-600 rounded cursor-pointer"
               onClick={() => handleGroupClick(group.id)}
             >
               <div className="flex gap-4">
