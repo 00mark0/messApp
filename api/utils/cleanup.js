@@ -28,7 +28,7 @@ const deleteFile = async (filePath) => {
 /**
  * Cleans up media files not in the latest 50 messages for each conversation.
  */
-const cleanupOldMedia = async () => {
+export const cleanupOldMedia = async () => {
   console.log("Starting cleanup of old media files.");
 
   try {
