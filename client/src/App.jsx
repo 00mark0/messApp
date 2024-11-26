@@ -16,7 +16,7 @@ const Chat = lazy(() => import("./components/Messages/Chat"));
 const GroupChat = lazy(() => import("./components/Messages/GroupChat"));
 
 function App() {
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   useEffect(() => {
     if (user && user.id) {
@@ -34,13 +34,22 @@ function App() {
       // Request permission and get FCM token
       const requestPermissionAndGetToken = async () => {
         try {
-          const currentToken = await getToken(messaging, { vapidKey: 'BPcq3Bt1hlbscHoW7yxmhSh45EwslZ76a_eK5k7lX2TeGcYto_E6dYgkkiZ1n7QepDfUxLw5urHAKUwYWkWoRlc' });
-          if (currentToken) {
-            console.log('Current token:', currentToken);
-            // Send the token to your server
-            await axios.post('/api/user/fcmToken', { fcmToken: currentToken });
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const currentToken = await getToken(messaging, { vapidKey: 'BPcq3Bt1hlbscHoW7yxmhSh45EwslZ76a_eK5k7lX2TeGcYto_E6dYgkkiZ1n7QepDfUxLw5urHAKUwYWkWoRlc' });
+            if (currentToken) {
+              console.log('Current token:', currentToken);
+              // Send the token to your server
+              await axios.post('/user/fcmToken', { fcmToken: currentToken }, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+            } else {
+              console.log('No registration token available. Request permission to generate one.');
+            }
           } else {
-            console.log('No registration token available. Request permission to generate one.');
+            console.log('Notification permission not granted.');
           }
         } catch (err) {
           console.log('An error occurred while retrieving token.', err);

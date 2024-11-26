@@ -51,38 +51,19 @@ export const sendMessage = async (req, res) => {
   const senderId = req.user.userId;
 
   try {
-    // Check if recipient exists
+    // Check if recipient exists with all necessary fields
     const recipient = await prisma.user.findUnique({
       where: { id: recipientId },
-      select: { fcmToken: true},
+      select: { 
+        id: true,
+        username: true,
+        fcmToken: true 
+      },
     });
 
     if (!recipient) {
       console.log("Recipient not found:", recipientId);
       return res.status(404).json({ message: "Recipient not found" });
-    }
-
-      if (recipient && recipient.fcmToken) {
-      const messageContent = content || 'You have a new message';
-
-      const payload = {
-        notification: {
-          title: `New message from ${message.sender.username}`,
-          body: messageContent,
-        },
-        token: recipient.fcmToken,
-      };
-
-      // Send the push notification
-      admin
-        .messaging()
-        .send(payload)
-        .then((response) => {
-          console.log('Successfully sent push notification:', response);
-        })
-        .catch((error) => {
-          console.error('Error sending push notification:', error);
-        });
     }
 
     // Check if recipient is in sender's contact list
@@ -96,8 +77,7 @@ export const sendMessage = async (req, res) => {
     if (!isContact) {
       console.log("Recipient is not in sender's contacts:", recipientId);
       return res.status(403).json({
-        message:
-          "Recipient is not in your contacts. Please add them as a contact first.",
+        message: "Recipient is not in your contacts. Please add them as a contact first.",
       });
     }
 
@@ -130,10 +110,7 @@ export const sendMessage = async (req, res) => {
       // Emit 'newConversation' event to both participants
       io.to(senderId.toString()).emit("newConversation", conversation);
       io.to(recipientId.toString()).emit("newConversation", conversation);
-
       console.log("Created new conversation:", conversation.id);
-    } else {
-      console.log("Found existing conversation:", conversation.id);
     }
 
     // Reset deletedAt for both participants
@@ -154,28 +131,19 @@ export const sendMessage = async (req, res) => {
       conversationId: conversation.id,
     };
 
-    // Include content if provided
-    if (content) {
-      messageData.content = content;
-    }
-
-    // Include replyToMessageId if provided
     if (replyToMessageId) {
       messageData.replyToMessageId = parseInt(replyToMessageId);
     }
 
-    // Include mediaUrl if a file was uploaded
     if (req.file) {
       messageData.mediaUrl = `/uploads/messages/${req.file.filename}`;
     }
 
-    // Ensure that either content or mediaUrl is provided
     if (!content && !messageData.mediaUrl) {
-      return res
-        .status(400)
-        .json({ message: "Message content or media is required." });
+      return res.status(400).json({ message: "Message content or media is required." });
     }
 
+    // Create message with all necessary relations
     const message = await prisma.message.create({
       data: messageData,
       include: {
@@ -191,32 +159,55 @@ export const sendMessage = async (req, res) => {
         },
       },
     });
+
     console.log("Created message:", message.id);
 
-    const messageContent = content ? content : "Media file";
+    const messageContent = content || "Media file";
 
-    // Create a notification for the recipient
+    // Create notification
     const notification = await prisma.notification.create({
       data: {
         userId: recipientId,
         content: `${message.sender.username} sent you a message: "${messageContent}"`,
       },
     });
-    console.log("Created notification:", notification.id);
 
-    // Emit the message to both participants via Socket.IO
+    // Emit real-time events first
     io.to(recipientId.toString()).emit("receiveMessage", message);
     io.to(senderId.toString()).emit("receiveMessage", message);
-
-    // Emit the notification to the recipient
     io.to(recipientId.toString()).emit("notification", notification);
 
+    /*
+    // Handle push notification asynchronously
+    if (recipient.fcmToken) {
+      setImmediate(async () => {
+        const payload = {
+          notification: {
+            title: `New message from ${message.sender.username}`,
+            body: messageContent,
+          },
+          token: recipient.fcmToken,
+        };
+
+        try {
+          const response = await admin.messaging().send(payload);
+          console.log('Successfully sent push notification:', response);
+        } catch (error) {
+          console.error('Error sending push notification:', error);
+        }
+      });
+    }
+      */
+
+    // Send HTTP response last
     res.status(201).json({ message, conversationId: conversation.id });
+
   } catch (error) {
     console.error("Error in sendMessage:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const getConversations = async (req, res) => {
   const userId = req.user.userId;

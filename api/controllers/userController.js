@@ -325,6 +325,8 @@ export const saveFcmToken = async (req, res) => {
   const userId = req.user.userId;
   const { fcmToken } = req.body;
 
+  console.log("Received FCM token:", fcmToken);
+
   try {
     await prisma.user.update({
       where: { id: userId },
