@@ -690,3 +690,6 @@
 {"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T11:40:15.597Z"}
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T11:48:50.561Z"}
 {"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T11:50:13.851Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T12:43:48.624Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T12:44:07.400Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T12:45:50.016Z"}

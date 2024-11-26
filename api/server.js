@@ -30,15 +30,24 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "https://messapp.netlify.app",
+    origin: ["https://messapp.netlify.app", "https://messapp.duckdns.org"],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
+
 app.use(express.json());
+const allowedOrigins = ["https://messapp.netlify.app", "https://messapp.duckdns.org"];
 app.use(cors({
-  origin: "https://messapp.netlify.app",
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
 // Serve static files from the "uploads" directory
