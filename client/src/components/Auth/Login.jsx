@@ -45,6 +45,9 @@ function Login() {
     }
   };
 
+  console.log(import.meta.env.VITE_REACT_APP_AXIOS_URL);
+
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
       <form
