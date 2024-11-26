@@ -4,9 +4,7 @@ import cors from "cors";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { createServer } from "http";
-import { createServer as createHttpsServer } from "https";
 import { Server } from "socket.io";
-import fs from "fs";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -28,16 +26,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Load SSL certificate and key
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, "selfsigned.key")),
-  cert: fs.readFileSync(path.join(__dirname, "selfsigned.crt")),
-};
-
 const httpServer = createServer(app);
-const httpsServer = createHttpsServer(sslOptions, app);
 
-const io = new Server(httpsServer, {
+const io = new Server(httpServer, {
   cors: {
     origin: "https://messapp.netlify.app",
     methods: ["GET", "POST"],
@@ -225,7 +216,7 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-httpsServer.listen(PORT, "0.0.0.0", () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
   scheduleCleanup();
 });

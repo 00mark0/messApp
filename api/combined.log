@@ -649,3 +649,44 @@
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-25T20:56:03.819Z"}
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-25T21:18:13.805Z"}
 {"level":"info","message":"User logged in successfully: user1@example.com","service":"user-service","timestamp":"2024-11-25T22:43:46.480Z"}
+{"level":"info","message":"User registered successfully: 00marko.r@gmail.com","service":"user-service","timestamp":"2024-11-26T04:41:36.791Z"}
+{"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-26T04:41:59.214Z"}
+{"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-26T04:42:12.683Z"}
+{"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-26T04:43:17.904Z"}
+{"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-11-26T04:43:57.829Z"}
+{"level":"info","message":"User registered successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T04:44:20.277Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T04:44:28.302Z"}
+{"level":"info","message":"User registered successfully: test2@example.com","service":"user-service","timestamp":"2024-11-26T04:46:21.959Z"}
+{"level":"info","message":"User logged in successfully: test2@example.com","service":"user-service","timestamp":"2024-11-26T04:46:35.035Z"}
+{"level":"info","message":"User logged out successfully: test2@example.com","service":"user-service","timestamp":"2024-11-26T04:52:02.415Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T05:07:07.879Z"}
+{"level":"info","message":"User logged in successfully: test2@example.com","service":"user-service","timestamp":"2024-11-26T05:07:18.490Z"}
+{"level":"info","message":"User logged out successfully: test2@example.com","service":"user-service","timestamp":"2024-11-26T05:08:43.723Z"}
+{"level":"info","message":"User registered successfully: 00marko.r@gmail.com","service":"user-service","timestamp":"2024-11-26T05:25:41.125Z"}
+{"level":"info","message":"User logged in successfully: 00marko.r@gmail.com","service":"user-service","timestamp":"2024-11-26T05:25:47.400Z"}
+{"level":"info","message":"User logged out successfully: 00marko.r@gmail.com","service":"user-service","timestamp":"2024-11-26T05:26:20.981Z"}
+{"level":"info","message":"User registered successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T05:27:04.554Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T05:27:17.460Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T05:27:46.635Z"}
+{"level":"info","message":"User logged in successfully: 00marko.r@gmail.com","service":"user-service","timestamp":"2024-11-26T05:29:19.885Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T05:50:32.498Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T05:50:37.631Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T05:54:47.639Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T05:56:47.766Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T06:12:56.655Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:13:04.142Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:15:20.573Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:25:31.704Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:31:10.544Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T06:31:27.954Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T06:32:48.751Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:33:02.638Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:33:02.656Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:35:09.607Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:36:25.226Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T06:37:41.111Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T11:38:18.753Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T11:38:18.755Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T11:40:15.597Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T11:48:50.561Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T11:50:13.851Z"}
