@@ -693,3 +693,26 @@
 {"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T12:43:48.624Z"}
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T12:44:07.400Z"}
 {"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T12:45:50.016Z"}
+{"level":"error","message":"Validation errors: [\n  {\n    type: 'field',\n    value: undefined,\n    msg: 'Valid email is required',\n    path: 'email',\n    location: 'body'\n  },\n  [length]: 1\n]","service":"user-service","timestamp":"2024-11-26T13:59:18.156Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T13:59:32.956Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T14:16:06.927Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T14:16:33.734Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T14:18:49.511Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T14:44:31.905Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T14:45:23.377Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T14:50:28.682Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T14:50:45.072Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T14:50:46.398Z"}
+{"level":"warn","message":"Invalid credentials: user not found","service":"user-service","timestamp":"2024-11-26T14:50:47.042Z"}
+{"level":"info","message":"User registered successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:51:08.266Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:51:33.703Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:51:34.474Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:51:34.477Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:51:34.479Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:51:34.483Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T14:59:50.335Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-11-26T15:00:29.276Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T15:16:07.544Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T15:16:07.805Z"}
+{"level":"info","message":"User logged out successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-26T15:18:03.353Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-26T15:30:27.986Z"}

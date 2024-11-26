@@ -45,7 +45,6 @@ function Login() {
     }
   };
 
-  console.log(import.meta.env.VITE_REACT_APP_AXIOS_URL);
 
 
   return (

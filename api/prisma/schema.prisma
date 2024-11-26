@@ -25,6 +25,7 @@ model User {
   isOnline                Boolean                   @default(false)
   isVisible               Boolean                   @default(true)
   deletedAt               DateTime?                 // Soft deletion timestamp
+  fcmToken               String?  
 
   messageReactions        MessageReaction[] // Added back-relation
 }

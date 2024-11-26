@@ -320,3 +320,19 @@ export const getUserById = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const saveFcmToken = async (req, res) => {
+  const userId = req.user.userId;
+  const { fcmToken } = req.body;
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { fcmToken },
+    });
+    res.status(200).json({ message: 'FCM token saved successfully.' });
+  } catch (error) {
+    console.error('Error saving FCM token:', error);
+    res.status(500).json({ message: 'Failed to save FCM token.' });
+  }
+};

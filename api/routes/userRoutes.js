@@ -10,6 +10,7 @@ import {
   searchUsers,
   getUserById,
 } from "../controllers/userController.js";
+import { saveFcmToken } from '../controllers/userController.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -40,5 +41,6 @@ router.post("/upload-profile-picture", authMiddleware, uploadProfilePicture);
 router.delete("/delete-account", authMiddleware, deleteAccount);
 router.get("/search", authMiddleware, searchUsers);
 router.get("/:id", authMiddleware, getUserById);
+router.post('/fcmToken', authMiddleware, saveFcmToken);
 
 export default router;

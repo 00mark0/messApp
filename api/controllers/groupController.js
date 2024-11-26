@@ -21,7 +21,7 @@ const messageStorage = multer.diskStorage({
 export const messageUpload = multer({
   storage: messageStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 100 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "video/mp4"];

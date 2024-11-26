@@ -6,6 +6,8 @@ import socket from "./api/socket";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import Layout from "./components/Layout";
+import { messaging, getToken, onMessage } from "./firebaseConfig";
+import axios from "./api/axios";
 
 const Inbox = lazy(() => import("./pages/Inbox"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -28,6 +30,31 @@ function App() {
       socket.on("connect_error", (err) => {
         console.error("Socket connection error:", err);
       });
+
+      // Request permission and get FCM token
+      const requestPermissionAndGetToken = async () => {
+        try {
+          const currentToken = await getToken(messaging, { vapidKey: 'BPcq3Bt1hlbscHoW7yxmhSh45EwslZ76a_eK5k7lX2TeGcYto_E6dYgkkiZ1n7QepDfUxLw5urHAKUwYWkWoRlc' });
+          if (currentToken) {
+            console.log('Current token:', currentToken);
+            // Send the token to your server
+            await axios.post('/api/user/fcmToken', { fcmToken: currentToken });
+          } else {
+            console.log('No registration token available. Request permission to generate one.');
+          }
+        } catch (err) {
+          console.log('An error occurred while retrieving token.', err);
+        }
+      };
+
+      requestPermissionAndGetToken();
+
+      // Handle incoming messages
+      onMessage(messaging, (payload) => {
+        console.log('Message received. ', payload);
+        // Customize how you handle the incoming message
+        alert(`New message: ${payload.notification.title} - ${payload.notification.body}`);
+      });
     }
 
     return () => {
@@ -45,10 +72,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Inbox />} />
-            <Route
-              path="/chat/:conversationId/:recipientId"
-              element={<Chat />}
-            />
+            <Route path="/chat/:conversationId/:recipientId" element={<Chat />} />
             <Route path="/group/:conversationId" element={<GroupChat />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/contacts" element={<Contacts />} />

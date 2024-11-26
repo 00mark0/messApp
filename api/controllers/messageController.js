@@ -3,6 +3,7 @@ import { validationResult } from "express-validator";
 import { io } from "../server.js";
 import multer from "multer";
 import path from "path";
+import admin from "../firebase.js";
 
 const prisma = new PrismaClient();
 
@@ -21,7 +22,7 @@ const messageStorage = multer.diskStorage({
 export const messageUpload = multer({
   storage: messageStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 100 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "video/mp4"];
@@ -53,10 +54,35 @@ export const sendMessage = async (req, res) => {
     // Check if recipient exists
     const recipient = await prisma.user.findUnique({
       where: { id: recipientId },
+      select: { fcmToken: true},
     });
+
     if (!recipient) {
       console.log("Recipient not found:", recipientId);
       return res.status(404).json({ message: "Recipient not found" });
+    }
+
+      if (recipient && recipient.fcmToken) {
+      const messageContent = content || 'You have a new message';
+
+      const payload = {
+        notification: {
+          title: `New message from ${message.sender.username}`,
+          body: messageContent,
+        },
+        token: recipient.fcmToken,
+      };
+
+      // Send the push notification
+      admin
+        .messaging()
+        .send(payload)
+        .then((response) => {
+          console.log('Successfully sent push notification:', response);
+        })
+        .catch((error) => {
+          console.error('Error sending push notification:', error);
+        });
     }
 
     // Check if recipient is in sender's contact list

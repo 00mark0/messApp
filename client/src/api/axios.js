@@ -4,6 +4,7 @@ const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_REACT_APP_AXIOS_URL, // Replace with your API base URL
 });
 
+
 // Function to set up interceptors
 export const setupInterceptors = (logout) => {
   axiosInstance.interceptors.response.use(
