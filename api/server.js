@@ -1,11 +1,12 @@
-// server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { createServer } from "http";
+import { createServer as createHttpsServer } from "https";
 import { Server } from "socket.io";
+import fs from "fs";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -26,32 +27,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
 
-/*
-allow specific origin
-const io = new Server(server, {
+// Load SSL certificate and key
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, "selfsigned.key")),
+  cert: fs.readFileSync(path.join(__dirname, "selfsigned.crt")),
+};
+
+const httpServer = createServer(app);
+const httpsServer = createHttpsServer(sslOptions, app);
+
+const io = new Server(httpsServer, {
   cors: {
-    origin: "https://your-netlify-domain.netlify.app", // Replace with your actual Netlify domain
+    origin: "https://messapp.netlify.app",
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
-*/
 
 app.use(express.json());
-app.use(cors());
-
-/* 
 app.use(cors({
-  origin: "https://your-netlify-domain.netlify.app", // Replace with your actual Netlify domain
+  origin: "https://messapp.netlify.app",
 }));
-*/
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -228,7 +225,7 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, "0.0.0.0", () => {
+httpsServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
   scheduleCleanup();
 });
