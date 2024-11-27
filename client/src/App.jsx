@@ -7,7 +7,7 @@ import socket from "./api/socket";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import Layout from "./components/Layout";
-import { messaging, getToken, onMessage } from "./firebaseConfig";
+import { messaging, getToken, deleteToken } from "./firebaseConfig";
 
 const Inbox = lazy(() => import("./pages/Inbox"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -47,9 +47,19 @@ function App() {
         try {
           const permission = await Notification.requestPermission();
           if (permission === "granted") {
+            // Delete existing token to force a new one
+            const existingToken = await getToken(messaging, {
+              vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
+            });
+            if (existingToken) {
+              await deleteToken(messaging);
+            }
+
+            // Get a new token
             const currentToken = await getToken(messaging, {
               vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
             });
+
             if (currentToken) {
               console.log("Current FCM token:", currentToken);
               // Register FCM token via Socket.IO
@@ -65,14 +75,8 @@ function App() {
         }
       };
 
-      // Handle incoming messages
-      const handleIncomingMessage = (payload) => {
-        console.log("Message received.", payload);
-        alert(`New message: ${payload.notification.title} - ${payload.notification.body}`);
-      };
-
-      // Handle token refresh manually
-      const handleTokenRefresh = async () => {
+      // Periodically check for token refresh
+      const tokenRefreshInterval = setInterval(async () => {
         try {
           const refreshedToken = await getToken(messaging, {
             vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
@@ -85,14 +89,9 @@ function App() {
         } catch (err) {
           console.log("Error refreshing token.", err);
         }
-      };
+      }, 60 * 60 * 1000); // Check every hour
 
       requestPermissionAndGetToken();
-
-      onMessage(messaging, handleIncomingMessage);
-
-      // Periodically check for token refresh
-      const tokenRefreshInterval = setInterval(handleTokenRefresh, 60 * 60 * 1000); // Check every hour
 
       return () => clearInterval(tokenRefreshInterval);
     }
