@@ -1,9 +1,7 @@
 // api/controllers/contactController.js
-
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prismaClient.js";
 import { validationResult, body, query } from "express-validator";
 
-const prisma = new PrismaClient();
 
 export const getContacts = async (req, res) => {
   const userId = req.user.userId;

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prismaClient.js";
 import { validationResult, body, query } from "express-validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -8,7 +8,6 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
@@ -321,20 +320,4 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const saveFcmToken = async (req, res) => {
-  const userId = req.user.userId;
-  const { fcmToken } = req.body;
 
-  console.log("Received FCM token:", fcmToken);
-
-  try {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { fcmToken },
-    });
-    res.status(200).json({ message: 'FCM token saved successfully.' });
-  } catch (error) {
-    console.error('Error saving FCM token:', error);
-    res.status(500).json({ message: 'Failed to save FCM token.' });
-  }
-};

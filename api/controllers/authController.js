@@ -2,11 +2,10 @@
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
 import { validationResult } from "express-validator";
 import logger from "../utils/logger.js";
+import prisma from "../utils/prismaClient.js";
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export const register = async (req, res) => {

@@ -1,10 +1,8 @@
 // api/controllers/contactRequestController.js
-
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prismaClient.js";
 import { validationResult } from "express-validator";
 import { io } from "../server.js";
 
-const prisma = new PrismaClient();
 
 export const sendContactRequest = async (req, res) => {
   // Validate input

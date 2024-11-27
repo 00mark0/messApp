@@ -239,7 +239,7 @@ function Chat() {
     socket.emit("joinConversation", conversationId);
 
     // Listen for incoming messages
-    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("newMessage", handleReceiveMessage);
 
     // Listen for messages seen
     socket.on("messagesSeen", handleMessagesSeen);
@@ -277,7 +277,7 @@ function Chat() {
 
     // Cleanup on unmount or when dependencies change
     return () => {
-      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("newMessage", handleReceiveMessage);
       socket.off("messagesSeen", handleMessagesSeen);
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);

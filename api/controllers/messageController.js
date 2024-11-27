@@ -1,11 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prismaClient.js";
 import { validationResult } from "express-validator";
 import { io } from "../server.js";
 import multer from "multer";
 import path from "path";
-import admin from "../firebase.js";
+import sendPushNotification from "../utils/sendPushNotification.js";
 
-const prisma = new PrismaClient();
 
 const messageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -48,7 +47,7 @@ export const sendMessage = async (req, res) => {
 
   const recipientId = parseInt(req.params.recipientId, 10);
   const { content, replyToMessageId } = req.body;
-  const senderId = req.user.userId;
+  const senderId = req.user.userId; // Assuming JWT middleware sets req.user.userId
 
   try {
     // Check if recipient exists with all necessary fields
@@ -173,31 +172,28 @@ export const sendMessage = async (req, res) => {
     });
 
     // Emit real-time events first
-    io.to(recipientId.toString()).emit("receiveMessage", message);
-    io.to(senderId.toString()).emit("receiveMessage", message);
+    io.to(recipientId.toString()).emit("newMessage", message);
+    io.to(senderId.toString()).emit("newMessage", message);
     io.to(recipientId.toString()).emit("notification", notification);
 
-    /*
-    // Handle push notification asynchronously
     if (recipient.fcmToken) {
-      setImmediate(async () => {
-        const payload = {
-          notification: {
-            title: `New message from ${message.sender.username}`,
-            body: messageContent,
-          },
-          token: recipient.fcmToken,
-        };
-
-        try {
-          const response = await admin.messaging().send(payload);
-          console.log('Successfully sent push notification:', response);
-        } catch (error) {
-          console.error('Error sending push notification:', error);
-        }
+      console.log('Recipient has FCM token:', recipient.fcmToken);
+      setImmediate(() => {
+        sendPushNotification(
+          recipientId,
+          `New message from ${message.sender.username}`,
+          messageContent,
+          {
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+            conversationId: conversation.id.toString(),
+            senderId: senderId.toString(),
+            recipientId: recipientId.toString(),
+          }
+        );
       });
+    } else {
+      console.log('Recipient does not have an FCM token.');
     }
-      */
 
     // Send HTTP response last
     res.status(201).json({ message, conversationId: conversation.id });
@@ -207,7 +203,6 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const getConversations = async (req, res) => {
   const userId = req.user.userId;

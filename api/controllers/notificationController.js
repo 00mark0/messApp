@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prismaClient.js";
 import { io } from "../server.js";
 
-const prisma = new PrismaClient();
 
 export const getNotifications = async (req, res) => {
   const userId = req.user.userId;

@@ -1,10 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prismaClient.js";
 import { validationResult } from "express-validator";
 import { io } from "../server.js";
 import multer from "multer";
 import path from "path";
 
-const prisma = new PrismaClient();
 
 const messageStorage = multer.diskStorage({
   destination: (req, file, cb) => {

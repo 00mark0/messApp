@@ -3,14 +3,13 @@
 import fs from "fs";
 import path from "path";
 import cron from "node-cron";
-import { PrismaClient } from "@prisma/client";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import prisma from "./prismaClient.js";
 
 // Define __dirname since it's not available in ES Modules
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const prisma = new PrismaClient();
 
 /**
  * Deletes a file asynchronously.

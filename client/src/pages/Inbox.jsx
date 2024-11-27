@@ -219,7 +219,7 @@ function Inbox() {
     // Register Event Handlers
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
-    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("newMessage", handleReceiveMessage);
     socket.on("newConversation", fetchConversations);
     socket.on("messagesSeen", handleMessagesSeen);
 
@@ -227,7 +227,7 @@ function Inbox() {
     return () => {
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
-      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("newMessage", handleReceiveMessage);
       socket.off("newConversation", fetchConversations);
       socket.off("messagesSeen", handleMessagesSeen);
     };

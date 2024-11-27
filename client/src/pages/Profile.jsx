@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import PasswordReset from "../components/Profile/PasswordReset";
@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import ToggleSwitch from "../components/ToggleSwitch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
+import { messaging, getToken } from "../firebaseConfig"; // Ensure messaging is exported
+import socket from "../api/socket"; // Ensure socket is correctly imported
 
 function Profile() {
   const navigate = useNavigate();
@@ -19,9 +21,9 @@ function Profile() {
   const [email, setEmail] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [uploadMessage, setUploadMessage] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pushNotificationStatus, setPushNotificationStatus] = useState(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -120,6 +122,104 @@ function Profile() {
       console.error("Failed to update online status", err);
     }
   };
+
+  // Handler for manual push notification setup
+  const handleSetupPushNotifications = async () => {
+    try {
+      // Request notification permission
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushNotificationStatus("Permission denied for notifications.");
+        return;
+      }
+
+      // Get FCM token
+      const currentToken = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
+      });
+
+      if (currentToken) {
+        // Emit the token to the server via Socket.IO
+        socket.emit("register_fcm_token", currentToken);
+        setPushNotificationStatus("Push notifications set up successfully.");
+        console.log("Emitted register_fcm_token with token:", currentToken);
+      } else {
+        setPushNotificationStatus(
+          "No registration token available. Please try again."
+        );
+      }
+    } catch (error) {
+      console.error("Error setting up push notifications:", error);
+      setPushNotificationStatus(
+        "Failed to set up push notifications. Please try again."
+      );
+    }
+  };
+
+  // Ensure socket connection is established
+  useEffect(() => {
+    if (user && token && !socket.connected) {
+      socket.auth = { token }; // Use JWT token for authentication
+      socket.connect();
+
+      socket.on("connect", () => {
+        console.log("Socket connected:", socket.id);
+      });
+
+      socket.on("connect_error", (err) => {
+        console.error("Socket connection error:", err.message);
+      });
+
+      // Handle authentication errors from the server
+      socket.on("authentication_error", (msg) => {
+        console.error("Authentication Error:", msg);
+        // Optionally, handle token refresh or redirect to login
+      });
+
+      // Clean up on unmount
+      return () => {
+        socket.off("connect");
+        socket.off("connect_error");
+        socket.off("authentication_error");
+        socket.disconnect();
+      };
+    }
+  }, [user, token]);
+
+  // Initialize Firebase Messaging on component mount
+  useEffect(() => {
+    if (user && token) {
+      const initializeFirebase = async () => {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === "granted") {
+            const currentToken = await getToken(messaging, {
+              vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
+            });
+            if (currentToken) {
+              console.log("Current FCM token:", currentToken);
+              // Register FCM token via Socket.IO
+              socket.emit("register_fcm_token", currentToken);
+              console.log(
+                "Emitted register_fcm_token with token:",
+                currentToken
+              );
+            } else {
+              console.log(
+                "No registration token available. Request permission to generate one."
+              );
+            }
+          } else {
+            console.log("Notification permission not granted.");
+          }
+        } catch (err) {
+          console.log("An error occurred while retrieving token.", err);
+        }
+      };
+
+      initializeFirebase();
+    }
+  }, [user, token]);
 
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (error) return <p className="text-center mt-4 text-red-500">{error}</p>;
@@ -238,6 +338,25 @@ function Profile() {
             </form>
           </div>
           <PasswordReset />
+
+          {/* Manual Push Notification Setup */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+              Push Notifications
+            </h3>
+            <button
+              onClick={handleSetupPushNotifications}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+            >
+              Set Up Push Notifications
+            </button>
+            {pushNotificationStatus && (
+              <p className="mt-2 text-center text-green-500">
+                {pushNotificationStatus}
+              </p>
+            )}
+          </div>
+
           <button
             onClick={() => setShowDeleteModal(true)}
             className="mt-6 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"

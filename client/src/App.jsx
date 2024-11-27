@@ -1,13 +1,13 @@
+// App.jsx
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import PropTypes from "prop-types";
-import { useContext, useEffect, lazy, Suspense } from "react";
+import { useContext, useEffect, lazy, Suspense, useCallback } from "react";
 import { AuthContext } from "./context/AuthContext";
 import socket from "./api/socket";
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import Layout from "./components/Layout";
 import { messaging, getToken, onMessage } from "./firebaseConfig";
-import axios from "./api/axios";
 
 const Inbox = lazy(() => import("./pages/Inbox"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -18,9 +18,10 @@ const GroupChat = lazy(() => import("./components/Messages/GroupChat"));
 function App() {
   const { user, token } = useContext(AuthContext);
 
-  useEffect(() => {
-    if (user && user.id) {
-      socket.auth = { userId: user.id };
+  // Initialize Socket Connections
+  const initializeSocket = useCallback(() => {
+    if (user && token && !socket.connected) {
+      socket.auth = { token }; // Use JWT token for authentication
       socket.connect();
 
       socket.on("connect", () => {
@@ -28,50 +29,104 @@ function App() {
       });
 
       socket.on("connect_error", (err) => {
-        console.error("Socket connection error:", err);
+        console.error("Socket connection error:", err.message);
       });
 
-      // Request permission and get FCM token
+      // Handle authentication errors from the server
+      socket.on("authentication_error", (msg) => {
+        console.error("Authentication Error:", msg);
+        // Optionally, handle token refresh or redirect to login
+      });
+    }
+  }, [user, token]);
+
+  // Initialize Firebase Messaging
+  const initializeFirebase = useCallback(() => {
+    if (user && token) {
       const requestPermissionAndGetToken = async () => {
         try {
           const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            const currentToken = await getToken(messaging, { vapidKey: 'BPcq3Bt1hlbscHoW7yxmhSh45EwslZ76a_eK5k7lX2TeGcYto_E6dYgkkiZ1n7QepDfUxLw5urHAKUwYWkWoRlc' });
+          if (permission === "granted") {
+            const currentToken = await getToken(messaging, {
+              vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
+            });
             if (currentToken) {
-              console.log('Current token:', currentToken);
-              // Send the token to your server
-              await axios.post('/user/fcmToken', { fcmToken: currentToken }, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              });
+              console.log("Current FCM token:", currentToken);
+              // Register FCM token via Socket.IO
+              socket.emit("register_fcm_token", currentToken);
             } else {
-              console.log('No registration token available. Request permission to generate one.');
+              console.log("No registration token available. Request permission to generate one.");
             }
           } else {
-            console.log('Notification permission not granted.');
+            console.log("Notification permission not granted.");
           }
         } catch (err) {
-          console.log('An error occurred while retrieving token.', err);
+          console.log("An error occurred while retrieving token.", err);
+        }
+      };
+
+      // Handle incoming messages
+      const handleIncomingMessage = (payload) => {
+        console.log("Message received.", payload);
+        alert(`New message: ${payload.notification.title} - ${payload.notification.body}`);
+      };
+
+      // Handle token refresh manually
+      const handleTokenRefresh = async () => {
+        try {
+          const refreshedToken = await getToken(messaging, {
+            vapidKey: import.meta.env.VITE_REACT_APP_VAPID_KEY,
+          });
+          if (refreshedToken) {
+            console.log("Refreshed FCM token:", refreshedToken);
+            // Register refreshed FCM token via Socket.IO
+            socket.emit("register_fcm_token", refreshedToken);
+          }
+        } catch (err) {
+          console.log("Error refreshing token.", err);
         }
       };
 
       requestPermissionAndGetToken();
 
-      // Handle incoming messages
-      onMessage(messaging, (payload) => {
-        console.log('Message received. ', payload);
-        // Customize how you handle the incoming message
-        alert(`New message: ${payload.notification.title} - ${payload.notification.body}`);
-      });
+      onMessage(messaging, handleIncomingMessage);
+
+      // Periodically check for token refresh
+      const tokenRefreshInterval = setInterval(handleTokenRefresh, 60 * 60 * 1000); // Check every hour
+
+      return () => clearInterval(tokenRefreshInterval);
     }
+  }, [user, token]);
+
+  // Register Service Worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/firebase-messaging-sw.js', { scope: '/' })
+        .then((registration) => {
+          console.log('Service Worker registered:', registration);
+        })
+        .catch((err) => {
+          console.error('Service Worker registration failed:', err);
+        });
+    }
+  }, []);
+  
+  // Call Initialization Functions within useEffect
+  useEffect(() => {
+    initializeSocket();
+    initializeFirebase();
 
     return () => {
-      socket.off("connect");
-      socket.off("connect_error");
-      socket.disconnect();
+      // Cleanup Socket Connections
+      if (socket.connected) {
+        socket.off("connect");
+        socket.off("connect_error");
+        socket.off("authentication_error"); // Added to cleanup
+        socket.disconnect();
+      }
     };
-  }, [user]);
+  }, [initializeSocket, initializeFirebase]);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
