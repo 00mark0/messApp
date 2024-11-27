@@ -11,7 +11,7 @@ dotenv.config();
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: ["https://messapp.netlify.app", "https://messapp.duckdns.org"],
+      origin: ["https://messapp.netlify.app", "https://messapp.duckdns.org", "https://staging--messapp.netlify.app"],
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -47,13 +47,15 @@ const initializeSocket = (httpServer) => {
       console.log("Invalid userId");
     }
 
-    // Handle FCM token registration
+       // Handle FCM token registration
     socket.on("register_fcm_token", async (fcmToken) => {
       if (!fcmToken) {
         console.log("Received empty FCM token from user:", userId);
         return;
       }
-
+    
+      console.log(`Registering FCM token for user ID: ${userId} - Token: ${fcmToken}`);
+    
       try {
         await prisma.user.update({
           where: { id: userId },
@@ -61,7 +63,7 @@ const initializeSocket = (httpServer) => {
         });
         console.log(`Registered FCM token for user ID: ${userId}`);
       } catch (error) {
-        console.error("Error registering FCM token:", error);
+        console.error(`Error registering FCM token for user ID: ${userId}`, error);
       }
     });
 

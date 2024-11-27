@@ -33,7 +33,12 @@ const io = initializeSocket(httpServer);
 // Middleware
 app.use(express.json());
 
-const allowedOrigins = ["https://messapp.netlify.app", "https://messapp.duckdns.org"];
+const allowedOrigins = [
+  "https://messapp.netlify.app",
+  "https://messapp.duckdns.org",
+  "https://staging--messapp.netlify.app"
+];
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -43,6 +48,8 @@ app.use(cors({
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 // Serve static files from the "uploads" directory

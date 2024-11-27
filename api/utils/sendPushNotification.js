@@ -10,16 +10,25 @@ const sendPushNotification = async (recipientId, title, body, data = {}) => {
     });
 
     if (recipient && recipient.fcmToken) {
-      const payload = {
-        notification: {
-          title,
-          body,
-        },
-        data,
+      // Ensure all data fields are strings
+      const formattedData = {};
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          formattedData[key] = String(data[key]);
+        }
+      }
+
+      const message = {
         token: recipient.fcmToken,
+        data: {
+          title: title,
+          body: body,
+          ...formattedData,
+        },
       };
 
-      const response = await admin.messaging().send(payload);
+      // Use the 'send' method with the message object
+      const response = await admin.messaging().send(message);
       console.log('Successfully sent push notification:', response);
     } else {
       console.log('No FCM token available for user:', recipientId);

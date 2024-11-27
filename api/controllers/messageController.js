@@ -176,20 +176,21 @@ export const sendMessage = async (req, res) => {
     io.to(senderId.toString()).emit("newMessage", message);
     io.to(recipientId.toString()).emit("notification", notification);
 
+    const title = `${message.sender.username}`;
+    const body = `${messageContent}`;
+  
+    // Optional: Define additional data if needed
+    const data = {
+      click_action: "FLUTTER_NOTIFICATION_CLICK",
+      conversationId: conversation.id.toString(),
+      senderId: senderId.toString(),
+      recipientId: recipientId.toString(),
+    };
+  
     if (recipient.fcmToken) {
       console.log('Recipient has FCM token:', recipient.fcmToken);
       setImmediate(() => {
-        sendPushNotification(
-          recipientId,
-          `New message from ${message.sender.username}`,
-          messageContent,
-          {
-            click_action: "FLUTTER_NOTIFICATION_CLICK",
-            conversationId: conversation.id.toString(),
-            senderId: senderId.toString(),
-            recipientId: recipientId.toString(),
-          }
-        );
+        sendPushNotification(recipientId, title, body, data);
       });
     } else {
       console.log('Recipient does not have an FCM token.');
