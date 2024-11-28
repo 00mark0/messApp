@@ -3,6 +3,7 @@ import { validationResult } from "express-validator";
 import { io } from "../server.js";
 import multer from "multer";
 import path from "path";
+import sendPushNotification from "../utils/sendPushNotification.js";
 
 
 const messageStorage = multer.diskStorage({
@@ -314,6 +315,20 @@ export const sendMessageToGroup = async (req, res) => {
         notification
       );
     });
+
+     // Send push notifications to participants
+    await Promise.all(
+      participantsRes.map(async (participant) => {
+        const title = groupName;
+        const body = `${senderUsername}: ${content || 'Media message'}`;
+        const data = {
+          conversationId: groupId.toString(),
+          senderId: senderId.toString(),
+          groupId: groupId.toString(),
+        };
+        await sendPushNotification(participant.userId, title, body, data);
+      })
+    );
 
     res.status(201).json({ message: "Message sent successfully." });
   } catch (error) {
