@@ -47,16 +47,16 @@ export const sendMessage = async (req, res) => {
 
   const recipientId = parseInt(req.params.recipientId, 10);
   const { content, replyToMessageId } = req.body;
-  const senderId = req.user.userId; // Assuming JWT middleware sets req.user.userId
+  const senderId = req.user.userId;
 
   try {
-    // Check if recipient exists with all necessary fields
+    // Check if recipient exists
     const recipient = await prisma.user.findUnique({
       where: { id: recipientId },
-      select: { 
+      select: {
         id: true,
         username: true,
-        fcmToken: true 
+        fcmToken: true,
       },
     });
 
@@ -76,18 +76,21 @@ export const sendMessage = async (req, res) => {
     if (!isContact) {
       console.log("Recipient is not in sender's contacts:", recipientId);
       return res.status(403).json({
-        message: "Recipient is not in your contacts. Please add them as a contact first.",
+        message:
+          "Recipient is not in your contacts. Please add them as a contact first.",
       });
     }
 
     // Check for existing conversation
-    let conversation = await prisma.conversation.findFirst({
+    let conversations = await prisma.conversation.findMany({
       where: {
+        isGroup: false,
         participants: {
-          every: {
-            userId: {
-              in: [senderId, recipientId],
-            },
+          some: { userId: senderId },
+        },
+        AND: {
+          participants: {
+            some: { userId: recipientId },
           },
         },
       },
@@ -96,13 +99,27 @@ export const sendMessage = async (req, res) => {
       },
     });
 
+    // Filter conversations to find one that has exactly two participants: sender and recipient
+    let conversation = conversations.find((conv) => {
+      const participantIds = conv.participants.map((p) => p.userId);
+      return (
+        participantIds.length === 2 &&
+        participantIds.includes(senderId) &&
+        participantIds.includes(recipientId)
+      );
+    });
+
     if (!conversation) {
       // Create new conversation
       conversation = await prisma.conversation.create({
         data: {
+          isGroup: false,
           participants: {
             create: [{ userId: senderId }, { userId: recipientId }],
           },
+        },
+        include: {
+          participants: true,
         },
       });
 
@@ -110,6 +127,8 @@ export const sendMessage = async (req, res) => {
       io.to(senderId.toString()).emit("newConversation", conversation);
       io.to(recipientId.toString()).emit("newConversation", conversation);
       console.log("Created new conversation:", conversation.id);
+    } else {
+      console.log(`Found conversation ID: ${conversation.id}`);
     }
 
     // Reset deletedAt for both participants

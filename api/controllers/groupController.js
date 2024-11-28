@@ -432,18 +432,21 @@ export const getGroupConversations = async (req, res) => {
   const userId = req.user.userId;
 
   try {
-    // Fetch group conversations where the current user is a participant
+    // Fetch active group conversations where the user is a participant
     const groups = await prisma.conversation.findMany({
       where: {
         isGroup: true,
+        deletedAt: null, // Only include groups that are not deleted
         participants: {
           some: {
             userId: userId,
+            deletedAt: null, // Ensure the participant hasn't deleted the group
           },
         },
       },
       include: {
         participants: {
+          where: { deletedAt: null }, // Exclude participants who have deleted the group
           include: {
             user: {
               select: {
@@ -530,20 +533,13 @@ export const removeGroup = async (req, res) => {
         .json({ message: "You are not an admin of this group" });
     }
 
-    // Delete related records in ConversationParticipant table
-    await prisma.conversationParticipant.deleteMany({
-      where: { conversationId: parseInt(groupId) },
-    });
-
-    // Delete related messages in the Message table
-    await prisma.message.deleteMany({
-      where: { conversationId: parseInt(groupId) },
-    });
-
-    // Remove the group conversation
-    await prisma.conversation.delete({
+    await prisma.conversation.update({
       where: { id: parseInt(groupId) },
-    });
+      data: {
+        name: `deleted-${groupId}`,
+        
+      }
+    })
 
     res.status(200).json({ message: "Group removed successfully" });
   } catch (error) {

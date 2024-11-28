@@ -68,6 +68,7 @@ model Conversation {
   isGroup      Boolean                   @default(false)
   participants ConversationParticipant[]
   messages     Message[]
+  deletedAt    DateTime?
 }
 
 model ConversationParticipant {
