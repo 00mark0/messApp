@@ -87,3 +87,8 @@
     max-width: 1600px;
   }
 }
+
+.react-emoji {
+  gap: 0;
+  width: 10px;
+}

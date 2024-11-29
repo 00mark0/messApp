@@ -921,3 +921,10 @@
 {"level":"info","message":"User logged in successfully: sokedraw75@gmail.com","service":"user-service","timestamp":"2024-11-29T02:01:25.900Z"}
 {"level":"info","message":"User logged out successfully: sokedraw75@gmail.com","service":"user-service","timestamp":"2024-11-29T02:02:41.761Z"}
 {"level":"info","message":"User logged out successfully: sokedraw75@gmail.com","service":"user-service","timestamp":"2024-11-29T02:03:00.583Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-29T04:02:05.537Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-29T13:11:34.436Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T13:45:03.081Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T14:33:36.528Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T14:34:40.082Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T15:34:57.744Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T16:35:00.848Z"}

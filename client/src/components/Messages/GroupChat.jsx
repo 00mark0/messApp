@@ -1005,7 +1005,7 @@ function GroupChat() {
         )}
 
         {/* Input Field */}
-        <div className="flex flex-col">
+        <div className="flex flex-col items-center justify-center">
           {replyingTo && (
             <div className="flex items-center p-2 bg-gray-100 border-l-4 border-blue-500">
               <div className="flex-1">
@@ -1042,35 +1042,37 @@ function GroupChat() {
               </div>
             </div>
           )}
-          <div className="flex items-center">
-            {/* Media Upload Button */}
-            <label
-              htmlFor="media-upload"
-              className="cursor-pointer text-gray-500 mr-2"
-            >
-              <FontAwesomeIcon icon={faPaperclip} size="lg" />
-            </label>
-            <input
-              type="file"
-              id="media-upload"
-              accept="image/*,video/*"
-              onChange={handleMediaChange}
-              className="hidden"
-            />
-            <InputEmoji
-              value={input}
-              onChange={handleInputChange}
-              cleanOnEnter
-              onEnter={sendMessage}
-              placeholder="Type a message..."
-            />
+
+          <InputEmoji
+            value={input}
+            onChange={handleInputChange}
+            cleanOnEnter
+            onEnter={sendMessage}
+            placeholder="Type a message..."
+          />
+
+          <div className="w-full flex justify-center items-center">
             <button
               onClick={sendMessage}
-              className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400 hover:bg-blue-600 focus:outline-none"
+              className="bg-blue-500 text-white px-4 py-2 rounded-xl disabled:bg-gray-400 hover:bg-blue-600 focus:outline-none w-full ml-3"
               disabled={!input.trim() && !media}
             >
               Send
             </button>
+            {/* Media Upload Button */}
+            <label
+              htmlFor="media-upload"
+              className="cursor-pointer text-gray-500 ml-3 mr-3"
+            >
+              <FontAwesomeIcon icon={faPaperclip} size="xl" />
+              <input
+                type="file"
+                id="media-upload"
+                accept="image/*,video/*"
+                onChange={handleMediaChange}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
       </div>

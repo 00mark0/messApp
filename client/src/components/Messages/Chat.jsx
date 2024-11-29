@@ -628,7 +628,7 @@ function Chat() {
                   {/* Emoji Picker */}
                   {showEmojiPicker === msg.id &&
                     selectedMessageId === msg.id && (
-                      <div className="absolute top-16 left-1 overflow-auto w-72 sm:w-96">
+                      <div className="absolute top-16 left-1 z-50 overflow-auto w-72 sm:w-96">
                         <button
                           className="text-white px-2 ml-2 bg-red-500 text-lg z-50"
                           onClick={() => setShowEmojiPicker(false)}
@@ -646,8 +646,8 @@ function Chat() {
                               );
                             }
                           }}
-                          disableAutoFocus={true}
                           native={true}
+                          autoFocusSearch={false}
                         />
                       </div>
                     )}
@@ -677,7 +677,7 @@ function Chat() {
           {otherUserTyping && <p className="text-gray-500 italic">Typing...</p>}
         </div>
 
-        <div className="flex flex-col">
+        <div className="flex flex-col items-center justify-center">
           {replyingTo && (
             <div className="flex items-center p-2 bg-gray-100 border-l-4 border-blue-500">
               <div className="flex-1">
@@ -714,35 +714,36 @@ function Chat() {
               </div>
             </div>
           )}
-          <div className="flex items-center">
-            {/* Media Upload Button */}
-            <label
-              htmlFor="media-upload"
-              className="cursor-pointer text-gray-500 mr-2"
-            >
-              <FontAwesomeIcon icon={faPaperclip} size="lg" />
-            </label>
-            <input
-              type="file"
-              id="media-upload"
-              accept="image/*,video/*"
-              onChange={handleMediaChange}
-              className="hidden"
-            />
-            <InputEmoji
-              value={input}
-              onChange={handleInputChange}
-              cleanOnEnter
-              onEnter={sendMessage}
-              placeholder="Type a message..."
-            />
+          <InputEmoji
+            value={input}
+            onChange={handleInputChange}
+            cleanOnEnter
+            onEnter={sendMessage}
+            placeholder="Type a message..."
+          />
+          <div className="w-full flex justify-center items-center">
             <button
               onClick={sendMessage}
-              className="bg-blue-500 text-white px-4 rounded-r disabled:bg-gray-400"
+              className="bg-blue-500 text-white px-4 py-2 rounded-xl disabled:bg-gray-400 w-full ml-3"
               disabled={!input.trim() && !media}
             >
               Send
             </button>
+            {/* Media Upload Button */}
+            <label
+              htmlFor="media-upload"
+              className="cursor-pointer text-gray-500 mr-3 ml-3"
+            >
+              <FontAwesomeIcon icon={faPaperclip} size="xl" />
+              <input
+                type="file"
+                id="media-upload"
+                accept="image/*,video/*"
+                onChange={handleMediaChange}
+                className="hidden"
+                name="media-upload"
+              />
+            </label>
           </div>
         </div>
       </div>
