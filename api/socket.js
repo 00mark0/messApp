@@ -7,11 +7,15 @@ import { markMessagesAsSeenLogic } from "./controllers/messageController.js";
 
 dotenv.config();
 
-
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: ["https://messapp.netlify.app", "https://messapp.duckdns.org", "https://staging--messapp.netlify.app"],
+      origin: [
+        "https://messapp.netlify.app",
+        "https://messapp.duckdns.org",
+        "https://staging--messapp.netlify.app",
+        "http://localhost:5173",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -37,7 +41,7 @@ const initializeSocket = (httpServer) => {
   io.on("connection", async (socket) => {
     console.log("New client connected");
 
-    const userId = socket.userId; 
+    const userId = socket.userId;
     console.log(socket.user);
     if (userId) {
       const userRoom = userId.toString();
@@ -47,15 +51,17 @@ const initializeSocket = (httpServer) => {
       console.log("Invalid userId");
     }
 
-       // Handle FCM token registration
+    // Handle FCM token registration
     socket.on("register_fcm_token", async (fcmToken) => {
       if (!fcmToken) {
         console.log("Received empty FCM token from user:", userId);
         return;
       }
-    
-      console.log(`Registering FCM token for user ID: ${userId} - Token: ${fcmToken}`);
-    
+
+      console.log(
+        `Registering FCM token for user ID: ${userId} - Token: ${fcmToken}`
+      );
+
       try {
         await prisma.user.update({
           where: { id: userId },
@@ -63,7 +69,10 @@ const initializeSocket = (httpServer) => {
         });
         console.log(`Registered FCM token for user ID: ${userId}`);
       } catch (error) {
-        console.error(`Error registering FCM token for user ID: ${userId}`, error);
+        console.error(
+          `Error registering FCM token for user ID: ${userId}`,
+          error
+        );
       }
     });
 
@@ -81,7 +90,9 @@ const initializeSocket = (httpServer) => {
     socket.on("joinConversation", (conversationId) => {
       if (conversationId) {
         socket.join(conversationId.toString());
-        console.log(`User ${userId} joined conversation room: ${conversationId}`);
+        console.log(
+          `User ${userId} joined conversation room: ${conversationId}`
+        );
       } else {
         console.log("Invalid conversationId");
       }
@@ -152,7 +163,10 @@ const initializeSocket = (httpServer) => {
         });
 
         // Emit the updated message to all users in the group conversation
-        io.to(conversationId.toString()).emit("groupMessageSeen", updatedMessage);
+        io.to(conversationId.toString()).emit(
+          "groupMessageSeen",
+          updatedMessage
+        );
       } catch (error) {
         console.error("Error in groupMarkAsSeen via Socket.IO:", error);
         socket.emit("error", {
@@ -162,7 +176,11 @@ const initializeSocket = (httpServer) => {
     });
 
     // groupMarkMessagesAsSeenLogic
-    async function groupMarkMessagesAsSeenLogic(conversationId, messageId, userId) {
+    async function groupMarkMessagesAsSeenLogic(
+      conversationId,
+      messageId,
+      userId
+    ) {
       // Fetch the message from the database
       const message = await prisma.message.findFirst({
         where: {
@@ -191,12 +209,16 @@ const initializeSocket = (httpServer) => {
     // Handle typing indicator
     socket.on("typing", (data) => {
       const { conversationId, userId } = data;
-      socket.to(conversationId.toString()).emit("typing", { conversationId, userId });
+      socket
+        .to(conversationId.toString())
+        .emit("typing", { conversationId, userId });
     });
 
     socket.on("stopTyping", (data) => {
       const { conversationId, userId } = data;
-      socket.to(conversationId.toString()).emit("stopTyping", { conversationId, userId });
+      socket
+        .to(conversationId.toString())
+        .emit("stopTyping", { conversationId, userId });
     });
 
     // Handle newMessage

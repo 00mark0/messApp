@@ -8,6 +8,7 @@ import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import Layout from "./components/Layout";
 import { messaging, getToken, deleteToken } from "./firebaseConfig";
+import ResetPassword from "./components/Auth/ResetPassword";
 
 const Inbox = lazy(() => import("./pages/Inbox"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -65,7 +66,9 @@ function App() {
               // Register FCM token via Socket.IO
               socket.emit("register_fcm_token", currentToken);
             } else {
-              console.log("No registration token available. Request permission to generate one.");
+              console.log(
+                "No registration token available. Request permission to generate one."
+              );
             }
           } else {
             console.log("Notification permission not granted.");
@@ -99,18 +102,18 @@ function App() {
 
   // Register Service Worker
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register('/firebase-messaging-sw.js', { scope: '/' })
+        .register("/firebase-messaging-sw.js", { scope: "/" })
         .then((registration) => {
-          console.log('Service Worker registered:', registration);
+          console.log("Service Worker registered:", registration);
         })
         .catch((err) => {
-          console.error('Service Worker registration failed:', err);
+          console.error("Service Worker registration failed:", err);
         });
     }
   }, []);
-  
+
   // Call Initialization Functions within useEffect
   useEffect(() => {
     initializeSocket();
@@ -132,10 +135,15 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+
         <Route element={<PrivateRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Inbox />} />
-            <Route path="/chat/:conversationId/:recipientId" element={<Chat />} />
+            <Route
+              path="/chat/:conversationId/:recipientId"
+              element={<Chat />}
+            />
             <Route path="/group/:conversationId" element={<GroupChat />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/contacts" element={<Contacts />} />

@@ -19,7 +19,6 @@ import { scheduleCleanup } from "./utils/cleanup.js";
 
 dotenv.config();
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -36,21 +35,24 @@ app.use(express.json());
 const allowedOrigins = [
   "https://messapp.netlify.app",
   "https://messapp.duckdns.org",
-  "https://staging--messapp.netlify.app"
+  "https://staging--messapp.netlify.app",
+  "http://localhost:5173",
 ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -70,9 +72,9 @@ app.use("/api/groups", groupRoutes);
 // Error Handling Middleware
 app.use(errorHandler);
 
-// Handle all other routes with the client build
+// The "catchall" handler: for any request that doesn't match one above, send back index.html
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
 });
 
 // Start the server

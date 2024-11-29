@@ -113,7 +113,7 @@ export const requestPasswordReset = async (req, res) => {
       expiresIn: "1h",
     });
 
-    const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
 
     await transporter.sendMail({
       from: EMAIL_USER,
@@ -319,5 +319,3 @@ export const getUserById = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-

@@ -1,2 +1,2 @@
-/api/* https://messapp.duckdns.org/:splat 301!
-/*        /index.html                               200
+/api/* https://messapp.duckdns.org/api/:splat 200
+/* /index.html 200
