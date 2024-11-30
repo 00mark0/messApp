@@ -225,7 +225,7 @@ function Navbar() {
             {showNotifications && (
               <div
                 ref={notificationsRef}
-                className="absolute right-0 mt-2 w-48 sm:w-80 bg-white rounded-lg shadow-lg overflow-hidden z-20"
+                className="absolute right-0 mt-2 w-48 sm:w-80 bg-white rounded-lg shadow-lg overflow-hidden z-20 notification-container"
               >
                 <ul className="max-h-80 overflow-y-auto">
                   {notifications
