@@ -107,9 +107,9 @@ function PendingReqs() {
                     : "/default-avatar.png"
                 }
                 alt="avatar"
-                className="w-12 h-12 rounded-full"
+                className="w-12 h-12 rounded-full object-cover"
               />
-              <p className="flex-grow">{req.sender.username}</p>
+              <p className="flex-grow truncate">{req.sender.username}</p>
               <p
                 className="
                 text-sm

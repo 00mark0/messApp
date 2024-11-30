@@ -731,7 +731,7 @@ function GroupChat() {
                             sender.user.profilePicture || "/default-avatar.png"
                           }`}
                           alt="Sender Profile"
-                          className="w-8 h-8 rounded-full"
+                          className="w-8 h-8 rounded-full object-cover"
                         />
                       )}
                       {onlineStatusToggle &&

@@ -82,9 +82,9 @@ function AddContacts() {
                     : "/default-avatar.png"
                 }
                 alt={user.username}
-                className="w-12 h-12 rounded-full mr-4"
+                className="w-12 h-12 rounded-full mr-4 object-cover"
               />
-              <span className="flex-grow">{user.username}</span>
+              <span className="flex-grow truncate w-16">{user.username}</span>
               <button
                 onClick={() => sendContactReq(user.id)}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-2 rounded"

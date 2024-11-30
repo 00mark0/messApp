@@ -136,7 +136,7 @@ function YourContacts() {
                       : "/default-avatar.png"
                   }
                   alt="avatar"
-                  className="w-12 h-12 rounded-full"
+                  className="w-12 h-12 rounded-full object-cover"
                 />
                 {onlineUsers.some((user) => user.id === contact.id) &&
                   onlineStatusToggle && (
@@ -146,7 +146,7 @@ function YourContacts() {
                     />
                   )}
               </div>
-              <p>{contact.username}</p>
+              <p className="truncate">{contact.username}</p>
               <button
                 onClick={() => removeContact(contact.id)}
                 className="text-red-500"

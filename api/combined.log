@@ -963,3 +963,5 @@
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:28:23.691Z"}
 {"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:39:24.843Z"}
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:39:38.167Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:54:34.084Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:54:48.959Z"}

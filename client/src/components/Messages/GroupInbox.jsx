@@ -224,7 +224,7 @@ function GroupInbox() {
                       alt="profile picture"
                       className="sm:w-12 sm:h-12 w-8 h-8 rounded-full object-cover"
                     />
-                    <p>{contact.username}</p>
+                    <p className="truncate">{contact.username}</p>
                     <button
                       onClick={() => addParticipant(contact.id)}
                       className="bg-green-500 text-white rounded"
@@ -266,7 +266,7 @@ function GroupInbox() {
                             : "/default-avatar.png"
                         }
                         alt="profile picture"
-                        className="w-8 h-8 rounded-full"
+                        className="w-8 h-8 rounded-full object-cover"
                       />
                       <p>{participant?.username}</p>
                       <button
