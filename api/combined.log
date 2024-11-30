@@ -928,3 +928,38 @@
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T14:34:40.082Z"}
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T15:34:57.744Z"}
 {"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T16:35:00.848Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T16:39:25.551Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T16:39:46.652Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-29T16:40:05.600Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T16:41:20.653Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-11-29T17:42:38.565Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T19:28:05.487Z"}
+{"level":"info","message":"User registered successfully: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:28:07.396Z"}
+{"level":"info","message":"User logged in successfully: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:28:18.348Z"}
+{"level":"info","message":"User logged out successfully: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:29:39.358Z"}
+{"level":"info","message":"User logged in successfully: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:30:07.585Z"}
+{"level":"info","message":"User logged in successfully: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:36:02.537Z"}
+{"level":"info","message":"User registered successfully: aleksandarjockovic226@gmail.com","service":"user-service","timestamp":"2024-11-29T19:41:58.634Z"}
+{"level":"info","message":"User logged in successfully: aleksandarjockovic226@gmail.com","service":"user-service","timestamp":"2024-11-29T19:42:08.603Z"}
+{"level":"info","message":"User logged in successfully: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:44:43.858Z"}
+{"level":"info","message":"User visibility updated: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:52:52.334Z"}
+{"level":"info","message":"User visibility updated: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:52:53.259Z"}
+{"level":"info","message":"User visibility updated: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:52:54.105Z"}
+{"level":"info","message":"User visibility updated: japingodgraovac@gmail.com","service":"user-service","timestamp":"2024-11-29T19:52:54.425Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T20:28:34.107Z"}
+{"level":"info","message":"User visibility updated: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T20:31:02.335Z"}
+{"level":"info","message":"User visibility updated: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T20:31:04.297Z"}
+{"level":"info","message":"User logged in successfully: aleksandarjockovic226@gmail.com","service":"user-service","timestamp":"2024-11-29T20:49:32.225Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T22:11:33.677Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-29T23:21:32.799Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T10:12:10.046Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T10:13:04.817Z"}
+{"level":"info","message":"User logged in successfully: obradovicbljana@gmail.com","service":"user-service","timestamp":"2024-11-30T13:18:34.876Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T13:19:13.164Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T13:19:13.167Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T14:28:23.436Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:25:27.747Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:27:44.868Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:28:23.691Z"}
+{"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:39:24.843Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-11-30T22:39:38.167Z"}

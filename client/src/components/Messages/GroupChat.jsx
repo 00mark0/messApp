@@ -749,7 +749,7 @@ function GroupChat() {
                         )}
                     </div>
                     <div className="flex-1 relative">
-                      <p className="break-words mr-8">
+                      <p className="break-all break-words overflow-hidden mr-8 whitespace-pre-wrap max-w-full">
                         <strong>
                           {sender ? sender.user.username : "removed"}:
                         </strong>{" "}

@@ -456,7 +456,7 @@ function Chat() {
                     isCurrentUserSender
                       ? "bg-blue-200 ml-auto text-right"
                       : "bg-gray-200"
-                  } max-w-md relative`}
+                  } max-w-md relative break-words`}
                 >
                   {/* Display replied message */}
                   {msg.replyToMessage && (
@@ -518,7 +518,9 @@ function Chat() {
                     <div className="flex-1 relative">
                       {/* Display message content if present */}
                       {msg.content && (
-                        <p className="break-words mr-8">{msg.content}</p>
+                        <p className="break-all break-words overflow-hidden mr-8 whitespace-pre-wrap max-w-full">
+                          {msg.content}
+                        </p>
                       )}
                       {/* Reply Button */}
                       <button
