@@ -92,3 +92,7 @@
   gap: 0;
   width: 10px;
 }
+
+.notification-container {
+  background-color: white !important;
+}
