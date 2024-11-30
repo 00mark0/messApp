@@ -246,7 +246,7 @@ function Navbar() {
                           className="block"
                           onClick={() => handleNotificationClick(notif)}
                         >
-                          <p className="text-sm text-gray-800">
+                          <p className="text-sm text-gray-800 truncate">
                             {notif.content}
                           </p>
                           <span className="text-xs text-gray-500">
