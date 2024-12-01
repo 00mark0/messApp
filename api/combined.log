@@ -1008,3 +1008,9 @@
 {"level":"info","message":"User logged out successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-12-01T14:43:46.288Z"}
 {"level":"warn","message":"Invalid credentials: password mismatch","service":"user-service","timestamp":"2024-12-01T14:44:25.011Z"}
 {"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-12-01T14:44:38.246Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-12-01T15:40:39.002Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-12-01T15:44:41.945Z"}
+{"level":"info","message":"User logged out successfully: test@example.com","service":"user-service","timestamp":"2024-12-01T16:18:35.562Z"}
+{"level":"info","message":"User logged in successfully: test@example.com","service":"user-service","timestamp":"2024-12-01T16:18:37.146Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-12-01T16:46:09.218Z"}
+{"level":"info","message":"User logged in successfully: 00markor@gmail.com","service":"user-service","timestamp":"2024-12-01T16:46:11.527Z"}

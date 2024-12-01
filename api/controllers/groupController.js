@@ -5,7 +5,6 @@ import multer from "multer";
 import path from "path";
 import sendPushNotification from "../utils/sendPushNotification.js";
 
-
 const messageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/messages/");
@@ -200,13 +199,31 @@ export const sendMessageToGroup = async (req, res) => {
   const senderId = req.user.userId;
 
   try {
-    // Check if the sender is a participant of the group
-    const isParticipant = await prisma.conversationParticipant.findFirst({
-      where: {
-        conversationId: parseInt(groupId),
-        userId: senderId,
-      },
-    });
+    const groupIdInt = parseInt(groupId, 10);
+
+    // Fetch necessary data in a single query
+    const [isParticipant, sender, group, participants] = await Promise.all([
+      prisma.conversationParticipant.findFirst({
+        where: {
+          conversationId: groupIdInt,
+          userId: senderId,
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: senderId },
+        select: { username: true },
+      }),
+      prisma.conversation.findUnique({
+        where: { id: groupIdInt },
+        select: { name: true },
+      }),
+      prisma.conversationParticipant.findMany({
+        where: {
+          conversationId: groupIdInt,
+          userId: { not: senderId },
+        },
+      }),
+    ]);
 
     if (!isParticipant) {
       return res
@@ -214,123 +231,72 @@ export const sendMessageToGroup = async (req, res) => {
         .json({ message: "You are not a participant of this group" });
     }
 
-    // Create the message in the group
     const messageData = {
       senderId,
       content,
-      conversationId: parseInt(groupId),
+      conversationId: groupIdInt,
+      replyToMessageId: replyToMessageId
+        ? parseInt(replyToMessageId)
+        : undefined,
+      mediaUrl: req.file ? `/uploads/messages/${req.file.filename}` : undefined,
     };
 
-    // Include content if provided
-    if (content) {
-      messageData.content = content;
-    }
-
-    // Include replyToMessageId if provided
-    if (replyToMessageId) {
-      messageData.replyToMessageId = parseInt(replyToMessageId);
-    }
-
-    if (req.file) {
-      messageData.mediaUrl = `/uploads/messages/${req.file.filename}`;
-    }
-
-    // Create the message without includes
-    const createdMessage = await prisma.message.create({
+    // Create the message
+    const message = await prisma.message.create({
       data: messageData,
-    });
-
-    // Fetch the full message with all necessary relations
-    const message = await prisma.message.findUnique({
-      where: { id: createdMessage.id },
       include: {
-        sender: {
-          select: { id: true, username: true },
-        },
+        sender: { select: { id: true, username: true } },
         replyToMessage: {
-          include: {
-            sender: {
-              select: { id: true, username: true },
-            },
-          },
+          include: { sender: { select: { id: true, username: true } } },
         },
         reactions: {
-          include: {
-            user: {
-              select: { id: true, username: true },
-            },
-          },
+          include: { user: { select: { id: true, username: true } } },
         },
       },
     });
 
     // Emit the new message to other participants via socket.io
-    console.log("Emitting newMessage to group:", message);
-    io.to(groupId.toString()).emit("newMessage", message);
-
-    // Fetch sender's username
-    const sender = await prisma.user.findUnique({
-      where: { id: senderId },
-      select: { username: true },
-    });
+    io.to(groupIdInt.toString()).emit("newMessage", message);
 
     const senderUsername = sender ? sender.username : "Unknown";
-
-    // Fetch group's name
-    const group = await prisma.conversation.findUnique({
-      where: { id: parseInt(groupId, 10) },
-      select: { name: true },
-    });
-
     const groupName = group ? group.name : "Unnamed Group";
 
-    // Get all participants excluding the sender
-    const participantsRes = await prisma.conversationParticipant.findMany({
-      where: {
-        conversationId: parseInt(groupId, 10),
-        userId: { not: senderId },
-      },
-    });
-
-    // Prepare notifications data
-    const notificationsData = participantsRes.map((participant) => ({
+    // Prepare notifications data for batch insertion
+    const notificationsData = participants.map((participant) => ({
       userId: participant.userId,
       content: `${senderUsername} sent a new message in group "${groupName}"`,
       createdAt: new Date(),
     }));
 
-    // Insert notifications individually to get their IDs
-    const createdNotifications = await Promise.all(
-      notificationsData.map((data) =>
-        prisma.notification.create({
-          data,
-        })
-      )
-    );
-
-    // Emit 'groupMessageNotification' to each participant with the notification ID
-    createdNotifications.forEach((notification) => {
-      io.to(notification.userId.toString()).emit(
-        "groupMessageNotification",
-        notification
-      );
+    // Batch insert notifications
+    const createdNotifications = await prisma.notification.createMany({
+      data: notificationsData,
+      skipDuplicates: true,
     });
 
-     // Send push notifications to participants
+    // Emit 'groupMessageNotification' to each participant
+    participants.forEach((participant) => {
+      io.to(participant.userId.toString()).emit("groupMessageNotification", {
+        userId: participant.userId,
+        content: `${senderUsername} sent a new message in group "${groupName}"`,
+      });
+    });
+
+    // Send push notifications to participants
     await Promise.all(
-      participantsRes.map(async (participant) => {
+      participants.map((participant) => {
         const title = groupName;
-        const body = `${senderUsername}: ${content || 'Media message'}`;
+        const body = `${senderUsername}: ${content || "Media message"}`;
         const data = {
-          conversationId: groupId.toString(),
+          conversationId: groupIdInt.toString(),
           senderId: senderId.toString(),
-          groupId: groupId.toString(),
+          groupId: groupIdInt.toString(),
         };
-        await sendPushNotification(participant.userId, title, body, data);
+        return sendPushNotification(participant.userId, title, body, data);
       })
     );
 
-    res.status(201).json({ message: "Message sent successfully." });
+    res.status(201).json({ message });
   } catch (error) {
     console.error("Error in sendMessageToGroup:", error);
     res.status(500).json({ message: "Server error" });
@@ -339,14 +305,16 @@ export const sendMessageToGroup = async (req, res) => {
 
 export const getGroupMessages = async (req, res) => {
   const userId = req.user.userId;
-  const { groupId } = req.params; // This is actually the conversationId for the group
-  const { page = 1, limit = 50 } = req.query; // Default to page 1 and limit 50
+  const { groupId } = req.params;
+  const { page = 1, limit = 50 } = req.query;
 
   try {
+    const groupIdInt = parseInt(groupId, 10);
+
     // Check if the user is a participant in the group
     const isParticipant = await prisma.conversationParticipant.findFirst({
       where: {
-        conversationId: parseInt(groupId),
+        conversationId: groupIdInt,
         userId: userId,
       },
     });
@@ -362,15 +330,13 @@ export const getGroupMessages = async (req, res) => {
     // Fetch messages in the group with pagination
     const messages = await prisma.message.findMany({
       where: {
-        conversationId: parseInt(groupId),
+        conversationId: groupIdInt,
       },
       include: {
-        sender: {
-          select: { id: true, username: true },
-        },
+        sender: { select: { id: true, username: true } },
       },
       orderBy: {
-        timestamp: "desc", // Newest messages first
+        timestamp: "desc",
       },
       skip: skip,
       take: take,
@@ -552,9 +518,8 @@ export const removeGroup = async (req, res) => {
       where: { id: parseInt(groupId) },
       data: {
         name: `deleted-${groupId}`,
-        
-      }
-    })
+      },
+    });
 
     res.status(200).json({ message: "Group removed successfully" });
   } catch (error) {

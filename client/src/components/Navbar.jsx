@@ -300,6 +300,7 @@ function Navbar() {
                   className="
                   text-xl
                   font-semibold
+                  text-center
                   dark:text-gray-900
                   mt-2 
                 "
@@ -308,6 +309,13 @@ function Navbar() {
                 </p>
               </Link>
               <ThemeToggle />
+              <Link
+                to="/"
+                onClick={toggleMenu}
+                className="hover:underline text-xl focus:outline-none dark:text-gray-900"
+              >
+                Inbox
+              </Link>
               <Link
                 to="/contacts"
                 onClick={toggleMenu}

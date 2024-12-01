@@ -146,7 +146,7 @@ function GroupChat() {
   const markMessagesAsSeen = useCallback(
     (messages) => {
       messages.forEach((msg) => {
-        if (!msg.seenBy.includes(user.id)) {
+        if (msg.id && !msg.seenBy.includes(user.id)) {
           socket.emit("groupMarkAsSeen", {
             conversationId,
             messageId: msg.id,
@@ -414,29 +414,25 @@ function GroupChat() {
     if (!input.trim() && !media) {
       return;
     }
-  
+
     if (isSending) {
       return; // Prevent multiple sends
     }
-  
+
     setIsSending(true);
-  
+
     try {
       const formData = new FormData();
       formData.append("content", input.trim());
-  
+
       if (replyingTo) {
         formData.append("replyToMessageId", replyingTo.id);
       }
-  
+
       if (media) {
         formData.append("media", media);
       }
-  
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-  
+
       const res = await axios.post(
         `/groups/${conversationId}/message`,
         formData,
@@ -444,12 +440,12 @@ function GroupChat() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       setInput("");
       setReplyingTo(null);
       setMediaPreview(null);
       setMedia(null);
-  
+
       if (isTyping) {
         setIsTyping(false);
         socket.emit("stopTyping", {
@@ -457,7 +453,7 @@ function GroupChat() {
           userId: user.id,
         });
       }
-  
+
       socket.emit("groupMarkAsSeen", {
         conversationId,
         messageId: res.data.message.id,

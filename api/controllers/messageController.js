@@ -5,7 +5,6 @@ import multer from "multer";
 import path from "path";
 import sendPushNotification from "../utils/sendPushNotification.js";
 
-
 const messageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/messages/");
@@ -38,186 +37,165 @@ export const messageUpload = multer({
 });
 
 export const sendMessage = async (req, res) => {
-  // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.log("Validation errors:", errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
   const recipientId = parseInt(req.params.recipientId, 10);
-  const { content, replyToMessageId } = req.body;
+  let { content, replyToMessageId } = req.body;
   const senderId = req.user.userId;
 
+  if (replyToMessageId) {
+    replyToMessageId = parseInt(replyToMessageId, 10);
+    if (isNaN(replyToMessageId)) {
+      return res.status(400).json({ message: "Invalid replyToMessageId." });
+    }
+  }
+
+  if (!content && !req.file) {
+    return res
+      .status(400)
+      .json({ message: "Message content or media is required." });
+  }
+
   try {
-    // Check if recipient exists
-    const recipient = await prisma.user.findUnique({
-      where: { id: recipientId },
-      select: {
-        id: true,
-        username: true,
-        fcmToken: true,
-      },
-    });
+    // Fetch sender's contacts and recipient info in parallel
+    const [senderWithContacts, recipient] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: senderId },
+        select: {
+          contacts: {
+            where: { contactUserId: recipientId },
+            select: { id: true },
+          },
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: recipientId },
+        select: {
+          id: true,
+          username: true,
+          fcmToken: true,
+        },
+      }),
+    ]);
 
     if (!recipient) {
-      console.log("Recipient not found:", recipientId);
-      return res.status(404).json({ message: "Recipient not found" });
+      return res.status(404).json({ message: "Recipient not found." });
     }
 
-    // Check if recipient is in sender's contact list
-    const isContact = await prisma.contact.findFirst({
-      where: {
-        userId: senderId,
-        contactUserId: recipientId,
-      },
-    });
-
-    if (!isContact) {
-      console.log("Recipient is not in sender's contacts:", recipientId);
+    if (!senderWithContacts?.contacts?.length) {
       return res.status(403).json({
-        message:
-          "Recipient is not in your contacts. Please add them as a contact first.",
+        message: "Recipient is not in your contacts. Please add them first.",
       });
     }
 
-    // Check for existing conversation
-    let conversations = await prisma.conversation.findMany({
+    // First, fetch the existing conversation
+    const existingConversation = await prisma.conversation.findFirst({
       where: {
         isGroup: false,
         participants: {
-          some: { userId: senderId },
-        },
-        AND: {
-          participants: {
-            some: { userId: recipientId },
+          every: {
+            userId: { in: [senderId, recipientId] },
           },
         },
       },
-      include: {
-        participants: true,
-      },
+      include: { participants: true },
     });
 
-    // Filter conversations to find one that has exactly two participants: sender and recipient
-    let conversation = conversations.find((conv) => {
-      const participantIds = conv.participants.map((p) => p.userId);
-      return (
-        participantIds.length === 2 &&
-        participantIds.includes(senderId) &&
-        participantIds.includes(recipientId)
-      );
-    });
-
-    if (!conversation) {
-      // Create new conversation
-      conversation = await prisma.conversation.create({
-        data: {
-          isGroup: false,
-          participants: {
-            create: [{ userId: senderId }, { userId: recipientId }],
+    // Then create a new conversation only if one doesn't exist
+    const conversation = !existingConversation
+      ? await prisma.conversation.create({
+          data: {
+            isGroup: false,
+            participants: {
+              create: [{ userId: senderId }, { userId: recipientId }],
+            },
           },
-        },
-        include: {
-          participants: true,
-        },
-      });
+          include: { participants: true },
+        })
+      : null;
 
-      // Emit 'newConversation' event to both participants
-      io.to(senderId.toString()).emit("newConversation", conversation);
-      io.to(recipientId.toString()).emit("newConversation", conversation);
-      console.log("Created new conversation:", conversation.id);
-    } else {
-      console.log(`Found conversation ID: ${conversation.id}`);
-    }
+    const finalConversation = existingConversation || conversation;
 
-    // Reset deletedAt for both participants
-    await prisma.conversationParticipant.updateMany({
-      where: {
-        conversationId: conversation.id,
-        userId: { in: [senderId, recipientId] },
-      },
-      data: {
-        deletedAt: null,
-      },
-    });
-
+    // Prepare message data
     const messageData = {
       senderId,
       content,
       recipientId,
-      conversationId: conversation.id,
+      conversationId: finalConversation.id,
+      ...(replyToMessageId && { replyToMessageId }),
+      ...(req.file && { mediaUrl: `/uploads/messages/${req.file.filename}` }),
     };
 
-    if (replyToMessageId) {
-      messageData.replyToMessageId = parseInt(replyToMessageId);
-    }
-
-    if (req.file) {
-      messageData.mediaUrl = `/uploads/messages/${req.file.filename}`;
-    }
-
-    if (!content && !messageData.mediaUrl) {
-      return res.status(400).json({ message: "Message content or media is required." });
-    }
-
-    // Create message with all necessary relations
-    const message = await prisma.message.create({
-      data: messageData,
-      include: {
-        sender: {
-          select: { id: true, username: true },
-        },
-        replyToMessage: {
-          include: {
-            sender: {
-              select: { id: true, username: true },
+    // Create message and update conversation participants in parallel
+    const [message] = await Promise.all([
+      prisma.message.create({
+        data: messageData,
+        include: {
+          sender: {
+            select: { id: true, username: true },
+          },
+          replyToMessage: {
+            include: {
+              sender: {
+                select: { id: true, username: true },
+              },
             },
           },
         },
-      },
-    });
+      }),
+      prisma.conversationParticipant.updateMany({
+        where: {
+          conversationId: finalConversation.id,
+          userId: { in: [senderId, recipientId] },
+        },
+        data: { deletedAt: null },
+      }),
+    ]);
 
-    console.log("Created message:", message.id);
-
+    // Handle notifications and socket events in parallel
     const messageContent = content || "Media file";
+    await Promise.all(
+      [
+        prisma.notification.create({
+          data: {
+            userId: recipientId,
+            content: `${message.sender.username} sent you a message: "${messageContent}"`,
+          },
+        }),
+        new Promise((resolve) => {
+          io.to(recipientId.toString()).emit("newMessage", message);
+          io.to(senderId.toString()).emit("newMessage", message);
+          if (!existingConversation) {
+            io.to(senderId.toString()).emit(
+              "newConversation",
+              finalConversation
+            );
+            io.to(recipientId.toString()).emit(
+              "newConversation",
+              finalConversation
+            );
+          }
+          resolve();
+        }),
+        recipient.fcmToken &&
+          sendPushNotification(
+            recipientId,
+            message.sender.username,
+            messageContent,
+            {
+              click_action: "FLUTTER_NOTIFICATION_CLICK",
+              conversationId: finalConversation.id.toString(),
+              senderId: senderId.toString(),
+              recipientId: recipientId.toString(),
+            }
+          ),
+      ].filter(Boolean)
+    );
 
-    // Create notification
-    const notification = await prisma.notification.create({
-      data: {
-        userId: recipientId,
-        content: `${message.sender.username} sent you a message: "${messageContent}"`,
-      },
-    });
-
-    // Emit real-time events first
-    io.to(recipientId.toString()).emit("newMessage", message);
-    io.to(senderId.toString()).emit("newMessage", message);
-    io.to(recipientId.toString()).emit("notification", notification);
-
-    const title = `${message.sender.username}`;
-    const body = `${messageContent}`;
-  
-    // Optional: Define additional data if needed
-    const data = {
-      click_action: "FLUTTER_NOTIFICATION_CLICK",
-      conversationId: conversation.id.toString(),
-      senderId: senderId.toString(),
-      recipientId: recipientId.toString(),
-    };
-  
-    if (recipient.fcmToken) {
-      console.log('Recipient has FCM token:', recipient.fcmToken);
-      setImmediate(() => {
-        sendPushNotification(recipientId, title, body, data);
-      });
-    } else {
-      console.log('Recipient does not have an FCM token.');
-    }
-
-    // Send HTTP response last
-    res.status(201).json({ message, conversationId: conversation.id });
-
+    res.status(201).json({ message, conversationId: finalConversation.id });
   } catch (error) {
     console.error("Error in sendMessage:", error);
     res.status(500).json({ message: "Server error" });

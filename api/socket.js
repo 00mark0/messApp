@@ -123,7 +123,18 @@ const initializeSocket = (httpServer) => {
 
     // Handle groupMarkAsSeen
     socket.on("groupMarkAsSeen", async (data) => {
-      const { conversationId, messageId, userId } = data;
+      let { conversationId, messageId, userId } = data;
+
+      // Parse IDs to integers
+      conversationId = parseInt(conversationId, 10);
+      messageId = parseInt(messageId, 10);
+      userId = parseInt(userId, 10);
+
+      // Validate IDs
+      if (isNaN(conversationId) || isNaN(messageId) || isNaN(userId)) {
+        console.warn("Invalid data received for groupMarkAsSeen:", data);
+        return;
+      }
 
       try {
         // Mark the message as seen by the user
@@ -133,31 +144,12 @@ const initializeSocket = (httpServer) => {
         const updatedMessage = await prisma.message.findUnique({
           where: { id: messageId },
           include: {
-            sender: {
-              select: {
-                id: true,
-                username: true,
-              },
-            },
+            sender: { select: { id: true, username: true } },
             replyToMessage: {
-              include: {
-                sender: {
-                  select: {
-                    id: true,
-                    username: true,
-                  },
-                },
-              },
+              include: { sender: { select: { id: true, username: true } } },
             },
             reactions: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    username: true,
-                  },
-                },
-              },
+              include: { user: { select: { id: true, username: true } } },
             },
           },
         });
@@ -175,22 +167,25 @@ const initializeSocket = (httpServer) => {
       }
     });
 
-    // groupMarkMessagesAsSeenLogic
+    // groupMarkMessagesAsSeenLogic function
     async function groupMarkMessagesAsSeenLogic(
       conversationId,
       messageId,
       userId
     ) {
+      // Ensure messageId is valid
+      if (isNaN(messageId)) {
+        console.warn(
+          "Invalid messageId in groupMarkMessagesAsSeenLogic:",
+          messageId
+        );
+        return;
+      }
+
       // Fetch the message from the database
-      const message = await prisma.message.findFirst({
-        where: {
-          id: messageId,
-          conversationId: parseInt(conversationId, 10),
-        },
-        select: {
-          id: true,
-          seenBy: true,
-        },
+      const message = await prisma.message.findUnique({
+        where: { id: messageId },
+        select: { id: true, seenBy: true },
       });
 
       if (message && !message.seenBy.includes(userId)) {
