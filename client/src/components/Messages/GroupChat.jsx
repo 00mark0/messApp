@@ -56,6 +56,7 @@ function GroupChat() {
   const [mediaPreview, setMediaPreview] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState(null);
+  const [isSending, setIsSending] = useState(false);
 
   const handleScroll = () => {
     if (scrollableRef.current) {
@@ -413,24 +414,29 @@ function GroupChat() {
     if (!input.trim() && !media) {
       return;
     }
-
+  
+    if (isSending) {
+      return; // Prevent multiple sends
+    }
+  
+    setIsSending(true);
+  
     try {
       const formData = new FormData();
       formData.append("content", input.trim());
-
+  
       if (replyingTo) {
         formData.append("replyToMessageId", replyingTo.id);
       }
-
+  
       if (media) {
         formData.append("media", media);
       }
-
-      // Log FormData contents
+  
       for (let [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
       }
-
+  
       const res = await axios.post(
         `/groups/${conversationId}/message`,
         formData,
@@ -438,11 +444,12 @@ function GroupChat() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+  
       setInput("");
       setReplyingTo(null);
       setMediaPreview(null);
-
+      setMedia(null);
+  
       if (isTyping) {
         setIsTyping(false);
         socket.emit("stopTyping", {
@@ -450,7 +457,7 @@ function GroupChat() {
           userId: user.id,
         });
       }
-
+  
       socket.emit("groupMarkAsSeen", {
         conversationId,
         messageId: res.data.message.id,
@@ -459,6 +466,8 @@ function GroupChat() {
     } catch (err) {
       console.error("Failed to send message:", err);
       setError("Failed to send message.");
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -1055,9 +1064,33 @@ function GroupChat() {
             <button
               onClick={sendMessage}
               className="bg-blue-500 text-white px-4 py-2 rounded-xl disabled:bg-gray-400 hover:bg-blue-600 focus:outline-none w-full ml-3"
-              disabled={!input.trim() && !media}
+              disabled={(!input.trim() && !media) || isSending}
             >
-              Send
+              {isSending ? (
+                <div className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Sending...
+                </div>
+              ) : (
+                "Send"
+              )}
             </button>
             {/* Media Upload Button */}
             <label
