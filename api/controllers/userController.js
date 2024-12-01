@@ -260,7 +260,7 @@ export const deleteAccount = async (req, res) => {
 };
 
 export const searchUsers = [
-  query("q").trim().isLength({ min: 1 }).escape(),
+  query("q").trim().isLength({ min: 2 }).escape(), // Require min 2 characters
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -272,10 +272,14 @@ export const searchUsers = [
     try {
       const users = await prisma.user.findMany({
         where: {
-          AND: { deletedAt: null },
-          OR: [
-            { username: { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
+          AND: [
+            { deletedAt: null },
+            {
+              OR: [
+                { username: { startsWith: q, mode: "insensitive" } }, // Changed contains to startsWith
+                { email: { startsWith: q, mode: "insensitive" } }, // Changed contains to startsWith
+              ],
+            },
           ],
         },
         select: {
