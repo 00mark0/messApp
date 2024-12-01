@@ -225,16 +225,16 @@ function Navbar() {
             {showNotifications && (
               <div
                 ref={notificationsRef}
-                className="absolute right-0 mt-2 w-48 sm:w-80 bg-white rounded-lg shadow-lg overflow-hidden z-20"
+                className="notification-container absolute right-0 mt-2 w-48 sm:w-80 bg-white rounded-lg shadow-lg overflow-hidden z-20"
               >
-                <ul className="max-h-80 overflow-y-auto notification-container">
+                <ul className="max-h-80 overflow-y-auto bg-white">
                   {notifications
                     .filter((notif) => !notif.isRead)
                     .map((notif) => (
                       <li
                         key={notif.id}
                         className={`px-4 py-2 border-b dark:border-gray-600 ${
-                          notif.isRead ? "bg-gray-100" : "bg-white"
+                          notif.isRead ? "bg-gray-400" : "bg-white"
                         }`}
                       >
                         <Link
@@ -243,10 +243,10 @@ function Navbar() {
                               ? "/contacts"
                               : "/"
                           }
-                          className="block"
+                          className="block overflow-x-auto whitespace-nowrap"
                           onClick={() => handleNotificationClick(notif)}
                         >
-                          <p className="text-sm text-gray-800">
+                          <p className="text-sm text-gray-800 min-w-full">
                             {notif.content}
                           </p>
                           <span className="text-xs text-gray-500">
