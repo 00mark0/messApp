@@ -2,7 +2,6 @@
 import prisma from "../utils/prismaClient.js";
 import { validationResult, body, query } from "express-validator";
 
-
 export const getContacts = async (req, res) => {
   const userId = req.user.userId;
 
@@ -78,11 +77,18 @@ export const removeContact = async (req, res) => {
 };
 
 export const searchContacts = [
-  query("q").trim().isLength({ min: 1 }).escape(),
+  query("q")
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage("Search query must be between 2 and 50 characters")
+    .escape(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({
+        errors: errors.array(),
+        message: "Invalid search query",
+      });
     }
 
     const { q } = req.query;
@@ -109,12 +115,15 @@ export const searchContacts = [
             },
           },
         },
+        take: 10, // Limit results
       });
 
-      // Map the contacts to return only the contact user details
       const contactList = contacts.map((contact) => contact.contact);
 
-      res.json({ contacts: contactList });
+      res.json({
+        contacts: contactList,
+        message: contactList.length === 0 ? "No contacts found" : null,
+      });
     } catch (error) {
       console.error("Error in searchContacts:", error);
       res.status(500).json({ message: "Server error" });

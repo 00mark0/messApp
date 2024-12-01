@@ -6,6 +6,9 @@ import {
   useContext,
   useCallback,
 } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
@@ -31,6 +34,9 @@ function Inbox() {
   const [typingConversations, setTypingConversations] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [searchError, setSearchError] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearchedl] = useState(false);
 
   // Function to handle tab selection
   const handleTabSelect = (tab) => {
@@ -265,20 +271,38 @@ function Inbox() {
   // Handle search form submission
   const handleSearch = async (e) => {
     e.preventDefault();
+    setSearchError("");
+    setHasSearchedl(true);
 
-    if (!query.trim()) {
-      setSearchResults([]);
+    if (query.length < 2) {
+      setSearchError("Please enter at least 2 characters");
       return;
     }
 
+    setIsSearching(true);
     try {
       const res = await axios.get(`/contacts/search?q=${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setSearchResults(res.data.contacts || []);
+
+      if (res.data.message) {
+        toast.info(res.data.message, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     } catch (err) {
-      console.error("Failed to search contacts:", err);
+      const message =
+        err.response?.data?.message || "Failed to search contacts";
+      toast.error(message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
       setSearchResults([]);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -356,6 +380,11 @@ function Inbox() {
           {/* Existing Chat Content */}
           <div className="mb-4">
             <h3 className="text-xl font-semibold mb-2">New Conversation</h3>
+
+            {searchError && (
+              <div className="text-red-500 text-sm mb-2">{searchError}</div>
+            )}
+
             <form onSubmit={handleSearch} className="flex mb-4">
               <input
                 type="text"
@@ -366,11 +395,56 @@ function Inbox() {
               />
               <button
                 type="submit"
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-r"
+                disabled={isSearching}
+                className="bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white font-semibold py-2 px-4 rounded-r"
               >
-                <FontAwesomeIcon icon={faPlus} />
+                {isSearching ? (
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  <FontAwesomeIcon icon={faPlus} />
+                )}
               </button>
             </form>
+
+            {hasSearched ? (
+              searchResults.length === 0 &&
+              !isSearching &&
+              !searchError && (
+                <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <p className="text-gray-600 dark:text-gray-300">
+                    No contacts found
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Try searching with a different name
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-gray-600 dark:text-gray-300">
+                  Search for contacts to start a conversation
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Enter a name or email to find your contacts
+                </p>
+              </div>
+            )}
+
             {searchResults.length > 0 && (
               <button
                 className="block bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-2 rounded mb-2"
