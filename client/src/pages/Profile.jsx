@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useCallback } from "react";
+import debounce from "lodash/debounce";
 import axios from "../api/axios";
 import AuthContext from "../context/AuthContext";
 import PasswordReset from "../components/Profile/PasswordReset";
@@ -24,6 +25,12 @@ function Profile() {
   const [uploadMessage, setUploadMessage] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pushNotificationStatus, setPushNotificationStatus] = useState(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+  const [isSettingUpNotifications, setIsSettingUpNotifications] =
+    useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -47,6 +54,9 @@ function Profile() {
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    if (isUpdatingProfile) return;
+
+    setIsUpdatingProfile(true);
     try {
       const response = await axios.put(
         "/user/profile",
@@ -59,6 +69,8 @@ function Profile() {
     } catch (err) {
       setUpdateMessage("Failed to update profile.");
       console.error(err);
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -68,8 +80,9 @@ function Profile() {
 
   const handleUploadPicture = async (e) => {
     e.preventDefault();
-    if (!profilePicture) return;
+    if (!profilePicture || isUploadingPicture) return;
 
+    setIsUploadingPicture(true);
     const formData = new FormData();
     formData.append("profilePicture", profilePicture);
 
@@ -90,6 +103,8 @@ function Profile() {
     } catch (err) {
       setUploadMessage("Failed to upload profile picture.");
       console.error(err);
+    } finally {
+      setIsUploadingPicture(false);
     }
   };
 
@@ -106,21 +121,32 @@ function Profile() {
     }
   };
 
-  const handleOnlineStatusToggle = async () => {
+  const debouncedStatusToggle = useCallback(
+    debounce(async (newStatus) => {
+      try {
+        await axios.put(
+          "/auth/online",
+          { isVisible: newStatus },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      } catch (err) {
+        console.error("Failed to update online status", err);
+      } finally {
+        setIsTogglingStatus(false);
+      }
+    }, 500),
+    [token]
+  );
+
+  const handleOnlineStatusToggle = () => {
+    if (isTogglingStatus) return;
+
+    setIsTogglingStatus(true);
     const newStatus = !onlineStatusToggle;
     setOnlineStatusToggle(newStatus);
-
-    try {
-      await axios.put(
-        "/auth/online",
-        { isVisible: newStatus },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-    } catch (err) {
-      console.error("Failed to update online status", err);
-    }
+    debouncedStatusToggle(newStatus);
   };
 
   // Handler for manual push notification setup
@@ -261,9 +287,16 @@ function Profile() {
           <div className="flex gap-4">
             <button
               onClick={() => setEditMode(!editMode)}
-              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mb-4"
+              disabled={isUpdatingProfile}
+              className={`bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mb-4 ${
+                isUpdatingProfile ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              {editMode ? "Cancel" : "Edit Profile"}
+              {isUpdatingProfile
+                ? "Updating..."
+                : editMode
+                ? "Cancel"
+                : "Edit Profile"}
             </button>
 
             <div className="flex flex-col justify-center items-center mb-4">
@@ -303,9 +336,12 @@ function Profile() {
               </div>
               <button
                 type="submit"
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-md"
+                disabled={isUpdatingProfile}
+                className={`w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-md ${
+                  isUpdatingProfile ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                Save Changes
+                {isUpdatingProfile ? "Saving..." : "Save Changes"}
               </button>
             </form>
           )}
@@ -331,9 +367,14 @@ function Profile() {
               />
               <button
                 type="submit"
-                className="mt-2 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded"
+                disabled={isUploadingPicture || !profilePicture}
+                className={`mt-2 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded ${
+                  isUploadingPicture || !profilePicture
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
-                Upload Picture
+                {isUploadingPicture ? "Uploading..." : "Upload Picture"}
               </button>
             </form>
           </div>
@@ -346,9 +387,14 @@ function Profile() {
             </h3>
             <button
               onClick={handleSetupPushNotifications}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded"
+              disabled={isSettingUpNotifications}
+              className={`bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded ${
+                isSettingUpNotifications ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              Set Up Push Notifications
+              {isSettingUpNotifications
+                ? "Setting up..."
+                : "Set Up Push Notifications"}
             </button>
             {pushNotificationStatus && (
               <p className="mt-2 text-center text-green-500">
